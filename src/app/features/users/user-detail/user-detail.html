@@ -1,0 +1,30 @@
+<div class="modal-backdrop">
+
+  <div class="modal">
+
+    <!-- HEADER -->
+    <div class="modal-header">
+      <h2>Détails utilisateur</h2>
+      <button (click)="closePopup()">✖</button>
+    </div>
+
+    <!-- BODY -->
+    <div class="modal-body">
+
+      <h3>{{ user.firstName }} {{ user.lastName }}</h3>
+
+      <p><b>Username :</b> {{ user.username }}</p>
+      <p><b>Email :</b> {{ user.email }}</p>
+      <p><b>Statut :</b> {{ user.active ? 'Actif' : 'Inactif' }}</p>
+      <p><b>Rôles :</b> {{ user.roles?.join(', ') }}</p>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div class="modal-footer">
+      <button (click)="closePopup()">Fermer</button>
+    </div>
+
+  </div>
+
+</div>

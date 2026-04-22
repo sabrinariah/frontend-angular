@@ -1,0 +1,125 @@
+/* BACKGROUND GLOBAL */
+.processus-modifier-container {
+  max-width: 650px;
+  margin: 50px auto;
+  padding: 35px;
+  background: linear-gradient(145deg, #ffffff, #f7f9fc);
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* TITRE */
+.processus-modifier-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 26px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+/* FORM GROUP */
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* LABEL */
+.form-group label {
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #34495e;
+}
+
+/* INPUTS */
+.form-group input[type="text"],
+.form-group input[type="date"] {
+  padding: 12px;
+  border: 1px solid #dcdde1;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+/* HOVER + FOCUS */
+.form-group input:hover {
+  border-color: #4a90e2;
+}
+
+.form-group input:focus {
+  border-color: #4a90e2;
+  box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+  outline: none;
+}
+
+/* CHECKBOX */
+.form-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #4a90e2;
+}
+
+/* ERREUR */
+.error {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+/* BOUTONS */
+button {
+  padding: 12px 18px;
+  margin-top: 20px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* ENREGISTRER */
+button[type="submit"] {
+  background: linear-gradient(135deg, #4a90e2, #357ab8);
+  color: white;
+  box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+}
+
+button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+}
+
+/* ANNULER */
+button[type="button"] {
+  background: #ecf0f1;
+  color: #2c3e50;
+}
+
+button[type="button"]:hover {
+  background: #dfe6e9;
+  transform: translateY(-2px);
+}
+
+/* DISABLED */
+button:disabled {
+  background: #bdc3c7;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}

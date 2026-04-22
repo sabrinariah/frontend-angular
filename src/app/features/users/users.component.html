@@ -1,0 +1,244 @@
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="page-header">
+
+    <div>
+      <h2 class="page-title">👥 Utilisateurs</h2>
+      <p class="page-subtitle">Gestion des comptes utilisateurs</p>
+    </div>
+
+    <button class="btn-primary-custom" (click)="addUser()">
+      ➕ Ajouter
+    </button>
+
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-emoji">👥</div>
+      <div>
+        <div class="stat-value">{{ users.length }}</div>
+        <div class="stat-label">Utilisateurs</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-emoji">✅</div>
+      <div>
+        <div class="stat-value">
+          {{ users.filter(u => u.active).length }}
+        </div>
+        <div class="stat-label">Actifs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div *ngIf="error" class="custom-alert">
+    {{ error }}
+  </div>
+
+  <!-- FILTERS (isolés) -->
+  <div class="header-right">
+
+    <!-- SEARCH -->
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text"
+        placeholder="Rechercher..."
+        [(ngModel)]="searchTerm"
+        (input)="filterUsers()"
+      />
+    </div>
+
+    <!-- ROLE FILTER -->
+    <div class="role-filter">
+      <select [(ngModel)]="selectedRole" (change)="filterUsers()">
+        <option value="">Tous les rôles</option>
+        <option value="SuperAdmin">SuperAdmin</option>
+        <option value="Gestionnaire des processus metier">Gestionnaire des processus metier</option>
+        <option value="Gestionnaire des règles métier">Gestionnaire des règles métier</option>
+      </select>
+    </div>
+
+    <!-- STATUS FILTER -->
+    <div class="status-filter">
+      <select [(ngModel)]="selectedStatus" (change)="filterUsers()">
+        <option value="">Tous les statuts</option>
+        <option value="active">Actif</option>
+        <option value="inactive">Inactif</option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-card" *ngIf="users.length > 0">
+
+    <table class="custom-table">
+
+      <thead>
+        <tr>
+          <th>Utilisateur</th>
+          <th>Email</th>
+          <th>Nom complet</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        <tr *ngFor="let user of paginatedUsers; trackBy: trackByUsername">
+
+          <td>
+            <div class="user-info">
+              <div class="avatar">
+                {{ user.username.charAt(0) | uppercase }}
+              </div>
+              <span class="user-name">{{ user.username }}</span>
+            </div>
+          </td>
+
+          <td>{{ user.email }}</td>
+          <td>{{ user.firstName }} {{ user.lastName }}</td>
+
+          <td>
+          <ng-container *ngIf="user.roles && user.roles.length > 0; else noRole"></ng-container>
+              <span class="badge-role"
+                    *ngFor="let role of user.roles"
+                    [ngClass]="role.toLowerCase()">
+                {{ role }}
+              </span>
+         
+
+            <ng-template #noRole>
+              <span class="badge-role empty">Aucun rôle</span>
+            </ng-template>
+          </td>
+
+          <td>
+            <span class="badge-status"
+                  [ngClass]="user.active ? 'active' : 'inactive'">
+              {{ user.active ? 'Actif' : 'Inactif' }}
+            </span>
+          </td>
+
+          <td class="text-center">
+            <div class="actions">
+
+              <button (click)="openDetails(user)">Voir</button>
+
+              <button class="icon-btn edit"
+                      (click)="editUser(user.username)">✏️</button>
+
+              <button class="icon-btn delete"
+                      (click)="deleteUser(user)">🗑</button>
+
+              <!-- 🔥 ISOLATION TOGGLE -->
+              <div class="switch"
+                   [class.on]="user.active"
+                   (click)="toggleUserActive(user); $event.stopPropagation()">
+                <div class="switch-circle"></div>
+              </div>
+
+            </div>
+          </td>
+
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+  <!-- EMPTY -->
+  <div *ngIf="users.length === 0" class="empty-state">
+    Aucun utilisateur trouvé
+  </div>
+
+  <!-- PAGINATION (isolée) -->
+  <div class="pagination-wrapper">
+
+    <div class="pagination" *ngIf="totalPages > 1">
+
+      <button class="page-btn"
+              (click)="goToPage(currentPage - 1)"
+              [disabled]="currentPage === 1">
+        ‹
+      </button>
+
+      <button class="page-btn"
+              *ngFor="let page of pages"
+              [class.active]="page === currentPage"
+              (click)="goToPage(page)">
+        {{ page }}
+      </button>
+
+      <button class="page-btn"
+              (click)="goToPage(currentPage + 1)"
+              [disabled]="currentPage === totalPages">
+        ›
+      </button>
+
+    </div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div *ngIf="showModal && selectedUser" class="modal-backdrop">
+
+    <div class="modal">
+
+      <div class="modal-header">
+        <h2>Détails utilisateur</h2>
+        <button class="close-btn" (click)="closeModal()">✖</button>
+      </div>
+
+      <div class="modal-body">
+
+        <div class="user-info">
+          <div class="avatar">
+            {{ selectedUser.firstName?.charAt(0) }}
+            {{ selectedUser.lastName?.charAt(0) }}
+          </div>
+
+          <h3>
+            {{ selectedUser.firstName }} {{ selectedUser.lastName }}
+          </h3>
+
+          <p class="username">@{{ selectedUser.username }}</p>
+        </div>
+
+        <div class="info">
+          <p><b>Email :</b> {{ selectedUser.email }}</p>
+
+          <p>
+            <b>Statut :</b>
+            <span [ngClass]="selectedUser.active ? 'active' : 'inactive'">
+              {{ selectedUser.active ? 'Actif' : 'Inactif' }}
+            </span>
+          </p>
+
+          <p>
+            <b>Rôles :</b>
+            {{ selectedUser.roles?.join(', ') || 'Aucun rôle' }}
+          </p>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-close" (click)="closeModal()">Fermer</button>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

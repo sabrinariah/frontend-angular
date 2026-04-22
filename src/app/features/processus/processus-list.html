@@ -1,0 +1,114 @@
+<div class="pg">
+
+  <!-- HEADER -->
+  <div class="pg-header">
+    <div class="pg-header-bg"></div>
+
+    <div class="pg-header-left">
+      <h2 class="pg-title">
+        Liste des <span>processus</span>
+      </h2>
+      <p class="pg-sub">
+        Gestion et suivi des processus
+      </p>
+    </div>
+
+    <button class="btn-add" (click)="ajouter()">
+      + Ajouter un processus
+    </button>
+  </div>
+
+  <!-- ALERT MESSAGES -->
+  <div *ngIf="message"
+       class="pg-alert"
+       [ngClass]="{
+         'alert-success': message.includes('succès'),
+         'alert-danger': message.includes('Erreur')
+       }">
+    {{ message }}
+  </div>
+
+  <!-- LOADING -->
+  <div *ngIf="loading" class="pg-loading">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- ERROR -->
+  <div *ngIf="error" class="pg-alert alert-danger">
+    {{ error }}
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div *ngIf="!loading && processusList.length === 0" class="pg-empty">
+    Aucun processus trouvé.
+  </div>
+
+  <!-- LIST -->
+  <div class="pg-list" *ngIf="!loading && processusList.length > 0">
+
+    <div class="pi" *ngFor="let p of processusList; let i = index">
+
+      <!-- INDEX -->
+      <div class="pi-num">
+        {{ i + 1 < 10 ? '0' + (i + 1) : (i + 1) }}
+      </div>
+
+      <!-- MAIN INFO -->
+      <div class="pi-main">
+        <p class="pi-name">{{ p.nom }}</p>
+
+        <div class="pi-meta">
+          <span class="pi-type">
+            Type : {{ p.typeProcessus }}
+          </span>
+
+          <span class="pi-date">
+            📅 {{ p.dateDebut | date:'shortDate' }}
+            →
+            {{ p.dateFin | date:'shortDate' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- STATUS -->
+      <span class="pi-badge" [ngClass]="p.actif ? 'badge-actif' : 'badge-inactif'">
+        <span class="bdot"></span>
+        {{ p.actif ? 'ACTIF' : 'INACTIF' }}
+      </span>
+
+      <!-- ACTIONS -->
+      <div class="pi-actions">
+
+        <button *ngIf="p.id"
+                class="pa"
+                [ngClass]="p.actif ? 'pa-desactiver' : 'pa-activer'"
+                (click)="toggle(p.id)">
+          {{ p.actif ? '⛔ Désactiver' : '✓ Activer' }}
+        </button>
+
+        <button *ngIf="p.id && p.actif"
+                class="pa pa-modifier"
+                (click)="modifier(p.id)">
+          ✏ Modifier
+        </button>
+
+        <button *ngIf="p.id"
+                class="pa pa-details"
+                (click)="detail(p.id)">
+          👁 Détails
+        </button>
+
+        <button *ngIf="p.id && p.actif"
+                class="pa pa-suppr"
+                (click)="supprimer(p.id)">
+          🗑
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

@@ -1,0 +1,92 @@
+/* 🌍 CONTAINER */
+.processus-form-container {
+  width: 450px;
+  margin: 50px auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  font-family: 'Poppins', sans-serif;
+  transition: 0.3s;
+}
+
+/* 🔥 Hover léger */
+.processus-form-container:hover {
+  transform: translateY(-3px);
+}
+
+/* 🏷 TITRE */
+h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #2c3e50;
+  font-weight: 700;
+  font-size: 22px;
+}
+
+/* 🔤 LABEL */
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+  color: #555;
+}
+
+/* 🔲 INPUT */
+input[type="text"],
+input[type="date"] {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+  transition: 0.3s;
+  background: #fafafa;
+}
+
+/* Focus input */
+input:focus {
+  border-color: #1976d2;
+  background: #fff;
+  box-shadow: 0 0 5px rgba(25, 118, 210, 0.3);
+}
+
+/* ⚠ ERROR */
+small {
+  color: red;
+  font-size: 12px;
+}
+
+/* 🎛 BUTTON */
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  color: white;
+  font-weight: 600;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+/* PRIMARY */
+button[type="submit"] {
+  background: linear-gradient(135deg, #1976d2, #42a5f5);
+}
+
+/* Hover button */
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .processus-form-container {
+    width: 90%;
+    padding: 20px;
+  }
+}

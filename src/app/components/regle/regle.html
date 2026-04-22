@@ -1,0 +1,182 @@
+<div class="regles-container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>⚙️ Gestion des Règles Métier</h1>
+    <p>Créer et gérer les règles métier de votre système</p>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+
+    <h2 class="form-title">
+      {{ isEditing ? 'Modifier une règle' : 'Créer une règle' }}
+    </h2>
+
+    <div class="form-row">
+
+      <div class="input-group">
+        <label>Code</label>
+        <input type="text"
+               [(ngModel)]="selected.code"
+               placeholder="Ex: VALIDATION_IMPORT"
+               class="form-control" />
+      </div>
+
+      <div class="input-group">
+        <label>Nom</label>
+        <input type="text"
+               [(ngModel)]="selected.nom"
+               placeholder="Nom de la règle"
+               class="form-control" />
+      </div>
+
+      <div class="input-group">
+        <label>Action</label>
+        <input type="text"
+               [(ngModel)]="selected.action"
+               placeholder="Action"
+               class="form-control" />
+      </div>
+
+      <!-- CATEGORY -->
+      <div class="input-group">
+        <label>Catégorie</label>
+        <select
+          [ngModel]="selected.categorie?.id"
+          (ngModelChange)="onCategorieChange($event)"
+          class="form-control">
+
+          <option [ngValue]="null">-- Sélectionner une catégorie --</option>
+
+          <option *ngFor="let c of categories" [ngValue]="c.id">
+            {{ c.nom }} ({{ c.type }})
+          </option>
+
+        </select>
+      </div>
+
+    </div>
+<div class="input-group">
+  <label>Version</label>
+  <input type="number"
+         [(ngModel)]="selected.version"
+         min="1"
+         class="form-control"
+         placeholder="Ex: 1" />
+</div>
+    <!-- CONDITIONS -->
+    <div class="conditions-section">
+
+      <div class="conditions-header">
+        <h3>Conditions</h3>
+        <button type="button" class="btn-add" (click)="addCondition()">
+          + Ajouter condition
+        </button>
+      </div>
+
+      <div class="conditions-list">
+        <div *ngFor="let cond of selectedConditions; let i = index" class="condition-item">
+
+          <input [(ngModel)]="cond.champ" 
+                 placeholder="Champ" 
+                 class="form-control" />
+
+          <select [(ngModel)]="cond.operateur" class="form-control">
+            <option value="==">==</option>
+            <option value="!=">!=</option>
+            <option value=">">&gt;</option>
+            <option value="<">&lt;</option>
+          </select>
+
+          <input [(ngModel)]="cond.valeur" 
+                 placeholder="Valeur" 
+                 class="form-control" />
+
+          <button type="button" class="btn-remove" (click)="removeCondition(i)">
+            ❌
+          </button>
+
+        </div>
+
+        <p *ngIf="selectedConditions.length === 0" class="no-conditions">
+          Aucune condition ajoutée pour le moment.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- SAVE BUTTON -->
+    <div class="form-actions">
+      <button class="save-btn"
+              type="button"
+              (click)="save()">
+
+        {{ isEditing ? 'Mettre à jour la règle' : 'Créer la règle' }}
+
+      </button>
+    </div>
+
+  </div>
+
+  <!-- TABLE -->
+  <div class="list-card">
+
+    <h2 class="list-title">Règles existantes</h2>
+
+    <table *ngIf="regles.length > 0" class="rules-table">
+
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Nom</th>
+          <th>Action</th>
+          <th>Catégorie</th>
+          <th>Version</th> <!-- ✅ AJOUT -->
+          <th>Statut</th>
+          <th class="actions-header">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let r of regles">
+
+          <td><strong>{{ r.code }}</strong></td>
+          <td>{{ r.nom }}</td>
+          <td>{{ r.action }}</td>
+
+          <td>
+            {{ r.categorie?.nom || 'Non définie' }}
+          </td>
+
+          <!-- ✅ VERSION -->
+          <td>
+            <span class="version-badge">
+              v{{ r.version || 1 }}
+            </span>
+          </td>
+
+          <td>
+            <span class="status" [class.active]="r.active">
+              {{ r.active ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+
+          <td class="actions">
+            <button type="button" class="btn-icon" (click)="edit(r)" title="Modifier">✏️</button>
+            <button type="button" class="btn-icon" (click)="toggleActive(r.id)" title="Changer statut">🔄</button>
+            <button type="button" class="btn-icon delete" (click)="delete(r.id)" title="Supprimer">🗑</button>
+          </td>
+
+        </tr>
+      </tbody>
+
+    </table>
+
+    <div *ngIf="regles.length === 0" class="empty-state">
+      <p>Aucune règle métier n'a été créée pour le moment.</p>
+    </div>
+
+  </div>
+
+</div>

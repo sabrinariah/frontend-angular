@@ -1,0 +1,177 @@
+<div class="import-container">
+
+  <!-- ── Stepper ── -->
+  <div class="stepper">
+    <div class="step" [class.active]="etapeActive >= 1" [class.done]="etapeActive > 1">
+      <div class="step-num">1</div>
+      <div class="step-label">Demande</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 1"></div>
+    <div class="step" [class.active]="etapeActive >= 2" [class.done]="etapeActive > 2">
+      <div class="step-num">2</div>
+      <div class="step-label">Détails</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 2"></div>
+    <div class="step" [class.active]="etapeActive >= 3" [class.done]="etapeActive > 3">
+      <div class="step-num">3</div>
+      <div class="step-label">Inspection</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 3"></div>
+    <div class="step" [class.active]="etapeActive >= 4" [class.done]="etapeActive > 4">
+      <div class="step-num">4</div>
+      <div class="step-label">Paiement</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 4"></div>
+    <div class="step" [class.active]="etapeActive >= 5">
+      <div class="step-num">5</div>
+      <div class="step-label">Validé</div>
+    </div>
+  </div>
+
+  <!-- ── Message ── -->
+  <div class="message" *ngIf="message">{{ message }}</div>
+
+  <!-- ── Étape 1 : Saisie demande ── -->
+  <div class="form-card" *ngIf="etapeActive === 1">
+    <h2>Nouvelle demande d'import</h2>
+    <div class="form-group">
+      <label>Importateur</label>
+      <input [(ngModel)]="demande.importateur" placeholder="Nom de la société" />
+    </div>
+    <div class="form-group">
+      <label>Pays d'origine</label>
+      <input [(ngModel)]="demande.paysOrigine" placeholder="Ex: Chine, France..." />
+    </div>
+    <div class="form-group">
+      <label>Type de produit</label>
+      <input [(ngModel)]="demande.typeProduit" placeholder="Ex: Électronique, Alimentaire..." />
+    </div>
+    <button class="btn-primary" (click)="demarrerProcessus()" [disabled]="loading">
+      {{ loading ? 'Démarrage...' : 'Démarrer le processus →' }}
+    </button>
+  </div>
+
+  <!-- ── Étape 2 : Saisie détails ── -->
+  <div class="form-card" *ngIf="etapeActive === 2">
+    <h2>Détails des produits</h2>
+    <div class="form-group">
+      <label>Quantité</label>
+      <input type="number" [(ngModel)]="details.quantite" />
+    </div>
+    <div class="form-group">
+      <label>Valeur (DZD)</label>
+      <input [(ngModel)]="details.valeur" placeholder="Ex: 5000000" />
+    </div>
+    <div class="form-group">
+      <label>Code SH</label>
+      <input [(ngModel)]="details.codeSH" placeholder="Ex: 8471.30.00" />
+    </div>
+    <div class="form-group">
+      <label>Fournisseur</label>
+      <input [(ngModel)]="details.fournisseur" placeholder="Nom du fournisseur" />
+    </div>
+    <div class="form-group">
+      <label>Origine finale</label>
+      <input [(ngModel)]="details.origineFinale" placeholder="Ex: Shanghai, Chine" />
+    </div>
+    <button class="btn-primary" (click)="completerDetails()" [disabled]="loading">
+      {{ loading ? 'Enregistrement...' : 'Valider les détails →' }}
+    </button>
+  </div>
+
+  <!-- ── Étape 3 : Inspection ── -->
+  <div class="form-card" *ngIf="etapeActive === 3">
+    <h2>Inspection physique</h2>
+    <div class="form-group">
+      <label>Résultat inspection</label>
+      <input [(ngModel)]="inspection.resultatInspection" placeholder="Résultat" />
+    </div>
+    <div class="form-group">
+      <label>Marchandise conforme ?</label>
+      <select [(ngModel)]="inspection.conformeMarchandise">
+        <option value="oui">Oui</option>
+        <option value="non">Non</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Observations</label>
+      <textarea [(ngModel)]="inspection.observations" rows="3"></textarea>
+    </div>
+    <button class="btn-primary" (click)="completerInspection()" [disabled]="loading">
+      {{ loading ? 'Enregistrement...' : 'Valider inspection →' }}
+    </button>
+  </div>
+
+  <!-- ── Étape 4 : Paiement ── -->
+  <div class="form-card" *ngIf="etapeActive === 4">
+    <h2>Paiement des droits de douane</h2>
+
+    <!-- Résumé droits -->
+    <div class="resume-card" *ngIf="variables.totalDroits">
+      <div class="resume-item">
+        <span>Droits de douane</span>
+        <strong>{{ variables.droitsDouane | number:'1.2-2' }} DZD</strong>
+      </div>
+      <div class="resume-item">
+        <span>TVA (19%)</span>
+        <strong>{{ variables.tva | number:'1.2-2' }} DZD</strong>
+      </div>
+      <div class="resume-item total">
+        <span>TOTAL À PAYER</span>
+        <strong>{{ variables.totalDroits | number:'1.2-2' }} DZD</strong>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Référence paiement</label>
+      <input [(ngModel)]="paiement.referencePaiement" placeholder="REF-..." />
+    </div>
+    <div class="form-group">
+      <label>Montant payé (DZD)</label>
+      <input [(ngModel)]="paiement.montantPaye" placeholder="Montant" />
+    </div>
+    <div class="form-group">
+      <label>Date paiement</label>
+      <input type="date" [(ngModel)]="paiement.datePaiement" />
+    </div>
+    <button class="btn-primary" (click)="completerPaiement()" [disabled]="loading">
+      {{ loading ? 'Traitement...' : 'Confirmer paiement →' }}
+    </button>
+  </div>
+
+  <!-- ── Étape 5 : Terminé ── -->
+  <div class="form-card success" *ngIf="etapeActive === 5">
+    <div class="success-icon">✅</div>
+    <h2>Dossier import validé !</h2>
+    <p>Autorisation d'entrée accordée</p>
+
+    <div class="docs-list">
+      <h3>Documents générés</h3>
+      <div class="doc-item">
+        <span>Déclaration d'import</span>
+        <strong>{{ variables.declarationImport }}</strong>
+      </div>
+      <div class="doc-item">
+        <span>Bon de dédouanement</span>
+        <strong>{{ variables.bonDedouanement }}</strong>
+      </div>
+      <div class="doc-item">
+        <span>Certificat d'import</span>
+        <strong>{{ variables.certificatImport }}</strong>
+      </div>
+      <div class="doc-item">
+        <span>Licence d'import</span>
+        <strong>{{ variables.licenceImport }}</strong>
+      </div>
+      <div class="doc-item">
+        <span>Attestation d'origine</span>
+        <strong>{{ variables.attestationOrigine }}</strong>
+      </div>
+    </div>
+
+    <button class="btn-secondary" (click)="etapeActive = 1; message = ''">
+      Nouvelle demande
+    </button>
+  </div>
+
+</div>

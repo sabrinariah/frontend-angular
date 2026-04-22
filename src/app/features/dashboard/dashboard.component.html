@@ -1,0 +1,133 @@
+<div class="dashboard">
+ 
+  <!-- HEADER -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="header-greeting">
+        <span class="greeting-icon">👋</span>
+        <div>
+          <h1>Bienvenue, <span class="username">{{ keycloakService.getUsername() }}</span></h1>
+          <p class="subtitle">Plateforme de gestion du commerce international</p>
+        </div>
+      </div>
+      <div class="header-meta">
+       
+        <div class="status-dot"></div>
+        <span class="status-label">Système actif</span>
+      </div>
+    </div>
+  </header>
+ 
+  <!-- KPI STRIP -->
+  <section class="kpi-strip">
+    <div class="kpi-item">
+      <span class="kpi-value">1 248</span>
+      <span class="kpi-label">Importations ce mois</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-value">984</span>
+      <span class="kpi-label">Exportations ce mois</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-value">37</span>
+      <span class="kpi-label">Règles actives</span>
+    </div>
+    <div class="kpi-divider"></div>
+    <div class="kpi-item">
+      <span class="kpi-value">12</span>
+      <span class="kpi-label">Utilisateurs connectés</span>
+    </div>
+  </section>
+ 
+  <!-- ACTION CARDS -->
+  <section class="cards">
+ 
+    <div class="card import" routerLink="/import">
+      <div class="card-icon-wrap import-icon">
+        <span class="card-icon">📦</span>
+      </div>
+      <div class="card-body">
+        <h3>Import</h3>
+        <p>Gestion des importations</p>
+      </div>
+      <div class="card-arrow">→</div>
+      <div class="card-accent import-accent"></div>
+    </div>
+ 
+    <div class="card export" routerLink="/export">
+      <div class="card-icon-wrap export-icon">
+        <span class="card-icon">🚚</span>
+      </div>
+      <div class="card-body">
+        <h3>Export</h3>
+        <p>Gestion des exportations</p>
+      </div>
+      <div class="card-arrow">→</div>
+      <div class="card-accent export-accent"></div>
+    </div>
+ 
+    <div class="card rules" routerLink="/rules">
+      <div class="card-icon-wrap rules-icon">
+        <span class="card-icon">⚙️</span>
+      </div>
+      <div class="card-body">
+        <h3>Règles</h3>
+        <p>Règles douanières</p>
+      </div>
+      <div class="card-arrow">→</div>
+      <div class="card-accent rules-accent"></div>
+    </div>
+ 
+    <div class="card users" routerLink="/users">
+      <div class="card-icon-wrap users-icon">
+        <span class="card-icon">👥</span>
+      </div>
+      <div class="card-body">
+        <h3>Utilisateurs</h3>
+        <p>Gestion des comptes</p>
+      </div>
+      <div class="card-arrow">→</div>
+      <div class="card-accent users-accent"></div>
+    </div>
+ 
+  </section>
+ 
+  <!-- HERO / ABOUT -->
+  <section class="hero">
+    <div class="hero-image-wrap">
+      <img src="assets/images/import-export.jpg" alt="Port de commerce international" />
+      <div class="hero-image-overlay"></div>
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Plateforme opérationnelle
+      </div>
+    </div>
+ 
+    <div class="hero-text">
+      <div class="hero-tag">À propos</div>
+      <h2>Une plateforme pensée pour le commerce mondial</h2>
+      <p>
+        Automatisez vos workflows, gérez les flux d'import/export, appliquez
+        les règles métiers douanières et supervisez vos utilisateurs depuis
+        un seul espace centralisé.
+      </p>
+      <div class="hero-features">
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          Workflows automatisés
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          Conformité douanière
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">✓</span>
+          Supervision en temps réel
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+</div>

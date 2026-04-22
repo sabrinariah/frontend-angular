@@ -1,0 +1,58 @@
+<div class="tache-form">
+  <h3>{{ tache.id ? 'Modifier Tâche' : 'Ajouter Tâche' }}</h3>
+
+  <form (ngSubmit)="onSubmit()" #form="ngForm">
+    <!-- Champ ID visible seulement si existant -->
+    <div class="form-group" *ngIf="tache.id">
+      <label for="id">ID</label>
+      <input
+        id="id"
+        name="id"
+        class="form-control"
+        [value]="tache.id"
+        readonly
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="nom">Nom</label>
+      <input
+        id="nom"
+        name="nom"
+        class="form-control"
+        [(ngModel)]="tache.nom"
+        placeholder="Nom"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="description">Description</label>
+      <input
+        id="description"
+        name="description"
+        class="form-control"
+        [(ngModel)]="tache.description"
+        placeholder="Description"
+        required
+      />
+    </div>
+
+    <div class="d-flex justify-content-between mt-2">
+      <!-- Bouton Ajouter / Modifier -->
+      <button type="submit" class="btn btn-orange" [disabled]="form.invalid">
+        {{ tache.id ? 'Modifier' : 'Ajouter' }}
+      </button>
+
+      <!-- Bouton Supprimer visible uniquement si on modifie -->
+      <button
+        type="button"
+        class="btn btn-danger"
+        *ngIf="tache.id"
+        (click)="onDelete()"
+      >
+        Supprimer
+      </button>
+    </div>
+  </form>
+</div>

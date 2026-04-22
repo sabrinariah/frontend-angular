@@ -1,0 +1,223 @@
+<div class="import-export-container">
+
+  <!-- ═══════ CHOIX IMPORT / EXPORT ═══════ -->
+  <div class="choice-container" *ngIf="modeSelectionne === null">
+
+    <div class="header">
+      <h2>Choisissez le type de processus</h2>
+      <p>Lancez un workflow d'import ou d'export en un clic</p>
+    </div>
+
+    <div class="choice-cards">
+
+      <!-- IMPORT -->
+      <div class="choice-card import" (click)="choisirImport()">
+        <div class="icon">📦</div>
+        <h3>Importation</h3>
+        <p>Créer et gérer un processus d'importation</p>
+
+        <div class="card-footer">
+          <span class="badge import-badge">Start Import</span>
+        </div>
+      </div>
+
+      <!-- EXPORT -->
+      <div class="choice-card export" (click)="choisirExport()">
+        <div class="icon">🚢</div>
+        <h3>Exportation</h3>
+        <p>Créer et gérer un processus d'exportation</p>
+
+        <div class="card-footer">
+          <span class="badge export-badge">Start Export</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- ═══════ IMPORT PROCESS ═══════ -->
+  <!-- ═════════════════════════════════════ -->
+
+  <ng-container *ngIf="modeSelectionne === 'import'">
+
+    <!-- Stepper Import -->
+    <div class="stepper">
+      <div class="step" [class.active]="etapeActive >= 1" [class.done]="etapeActive > 1">
+        <div class="step-num">1</div><div class="step-label">Demande</div>
+      </div>
+      <div class="step-line"></div>
+
+      <div class="step" [class.active]="etapeActive >= 2" [class.done]="etapeActive > 2">
+        <div class="step-num">2</div><div class="step-label">Détails</div>
+      </div>
+      <div class="step-line"></div>
+
+      <div class="step" [class.active]="etapeActive >= 3" [class.done]="etapeActive > 3">
+        <div class="step-num">3</div><div class="step-label">Inspection</div>
+      </div>
+      <div class="step-line"></div>
+
+      <div class="step" [class.active]="etapeActive >= 4" [class.done]="etapeActive > 4">
+        <div class="step-num">4</div><div class="step-label">Paiement</div>
+      </div>
+      <div class="step-line"></div>
+
+      <div class="step" [class.active]="etapeActive >= 5">
+        <div class="step-num">5</div><div class="step-label">Validé</div>
+      </div>
+    </div>
+
+    <!-- Étape 1 -->
+    <div class="form-card" *ngIf="etapeActive === 1">
+      <h2>Nouvelle demande import</h2>
+
+      <input [(ngModel)]="demande.importateur" placeholder="Importateur">
+      <input [(ngModel)]="demande.paysOrigine" placeholder="Pays origine">
+      <input [(ngModel)]="demande.typeProduit" placeholder="Type produit">
+
+      <button (click)="demarrerProcessus()">Démarrer</button>
+    </div>
+
+    <!-- Étape 2 -->
+    <div class="form-card" *ngIf="etapeActive === 2">
+      <h2>Détails</h2>
+
+      <input [(ngModel)]="details.quantite" placeholder="Quantité">
+      <input [(ngModel)]="details.valeur" placeholder="Valeur">
+      <input [(ngModel)]="details.codeSH" placeholder="Code SH">
+
+      <button (click)="completerDetails()">Valider</button>
+    </div>
+
+    <!-- Étape 3 -->
+    <div class="form-card" *ngIf="etapeActive === 3">
+      <h2>Inspection</h2>
+
+      <select [(ngModel)]="inspection.conformeMarchandise">
+        <option value="oui">Oui</option>
+        <option value="non">Non</option>
+      </select>
+
+      <button (click)="completerInspection()">Valider</button>
+    </div>
+
+    <!-- Étape 4 -->
+    <div class="form-card" *ngIf="etapeActive === 4">
+      <h2>Paiement</h2>
+
+      <input [(ngModel)]="paiement.referencePaiement" placeholder="Référence">
+      <input [(ngModel)]="paiement.montantPaye" placeholder="Montant">
+
+      <button (click)="completerPaiement()">Confirmer</button>
+    </div>
+
+    <!-- Étape 5 -->
+    <div class="form-card success" *ngIf="etapeActive === 5">
+      <h2>✅ Import terminé</h2>
+      <button (click)="reinitialiser()">Nouvelle demande</button>
+    </div>
+
+  </ng-container>
+
+  <!-- ═════════════════════════════════════ -->
+  <!-- ═══════ EXPORT PROCESS ═══════ -->
+  <!-- ═════════════════════════════════════ -->
+
+  <ng-container *ngIf="modeSelectionne === 'export'">
+
+    <!-- Stepper Export -->
+    <div class="stepper">
+      <div class="step" [class.active]="etapeActive >= 1"><div class="step-num">1</div><div>Demande</div></div>
+      <div class="step" [class.active]="etapeActive >= 2"><div class="step-num">2</div><div>Détails</div></div>
+      <div class="step" [class.active]="etapeActive >= 3"><div class="step-num">3</div><div>Vérification</div></div>
+      <div class="step" [class.active]="etapeActive >= 4"><div class="step-num">4</div><div>Frais</div></div>
+      <div class="step" [class.active]="etapeActive >= 5"><div class="step-num">5</div><div>Documents</div></div>
+      <div class="step" [class.active]="etapeActive >= 6"><div class="step-num">6</div><div>Validé</div></div>
+    </div>
+
+    <!-- Étape 1 -->
+    <div class="form-card" *ngIf="etapeActive === 1">
+      <h2>Export - Demande</h2>
+
+      <input [(ngModel)]="demande.exportateur" placeholder="Exportateur">
+      <input [(ngModel)]="demande.paysDestination" placeholder="Pays destination">
+      <input [(ngModel)]="demande.typeProduit" placeholder="Type produit">
+
+      <button (click)="demarrerProcessusExport()">Démarrer</button>
+    </div>
+
+    <!-- Étape 2 -->
+    <div class="form-card" *ngIf="etapeActive === 2">
+      <h2>Détails</h2>
+
+      <input [(ngModel)]="details.quantite" placeholder="Quantité">
+      <input [(ngModel)]="details.valeur" placeholder="Valeur">
+      <input [(ngModel)]="details.codeSH" placeholder="Code SH">
+
+      <button (click)="completerTacheEtape(details, 3)">Valider</button>
+    </div>
+
+    <!-- Étape 3 -->
+    <div class="form-card" *ngIf="etapeActive === 3">
+      <h2>Vérification</h2>
+
+      <label>
+        <input type="radio" [(ngModel)]="verification.exportAutorise" value="true"> Autorisé
+      </label>
+
+      <label>
+        <input type="radio" [(ngModel)]="verification.exportAutorise" value="false"> Refusé
+      </label>
+
+      <input *ngIf="verification.exportAutorise === 'false'"
+             [(ngModel)]="verification.motifRefus"
+             placeholder="Motif refus">
+
+      <button (click)="completerTacheEtape({
+        exportAutorise: verification.exportAutorise === 'true',
+        motifRefus: verification.motifRefus
+      }, 4)">Valider</button>
+    </div>
+
+    <!-- Étape 4 -->
+    <div class="form-card" *ngIf="etapeActive === 4">
+      <h2>Frais</h2>
+
+      <input [(ngModel)]="frais.confirmation" placeholder="CONFIRME">
+
+      <button (click)="completerTacheEtape(frais, 5)">Confirmer</button>
+    </div>
+
+    <!-- Étape 5 -->
+    <div class="form-card" *ngIf="etapeActive === 5">
+      <h2>Documents</h2>
+
+      <label>
+        <input type="radio" [(ngModel)]="validationDocs.documentsValides" value="true"> Valide
+      </label>
+
+      <label>
+        <input type="radio" [(ngModel)]="validationDocs.documentsValides" value="false"> Non valide
+      </label>
+
+      <textarea [(ngModel)]="validationDocs.observations"></textarea>
+
+      <button (click)="completerTacheEtape(validationDocs, 6)">Terminer</button>
+    </div>
+
+    <!-- Étape 6 -->
+    <div class="form-card success" *ngIf="etapeActive === 6">
+      <h2>🎉 Export validé</h2>
+
+      <p>{{ demande.exportateur }}</p>
+      <p>{{ demande.paysDestination }}</p>
+
+      <button (click)="reinitialiser()">Nouvelle demande</button>
+    </div>
+
+  </ng-container>
+
+</div>

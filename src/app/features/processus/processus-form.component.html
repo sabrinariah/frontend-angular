@@ -1,0 +1,29 @@
+<div class="processus-form-container">
+  <h2>➕ Créer un nouveau processus</h2>
+
+  <form [formGroup]="processusForm" (ngSubmit)="submitForm()">
+
+    <div class="form-group">
+      <label>Nom du processus</label>
+      <input type="text" formControlName="nom" placeholder="Ex: Gestion client" />
+    </div>
+
+    <div class="form-group">
+      <label>Type de processus</label>
+      <input type="text" formControlName="typeProcessus" placeholder="Ex: Automatisé" />
+    </div>
+
+    <div class="form-group">
+      <label>Date de début</label>
+      <input type="date" formControlName="dateDebut" />
+    </div>
+
+    <div class="form-group">
+      <label>Date de fin</label>
+      <input type="date" formControlName="dateFin" />
+    </div>
+
+    <button type="submit" class="btn-submit">🚀 Ajouter le processus</button>
+
+  </form>
+</div>

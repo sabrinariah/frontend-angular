@@ -1,0 +1,53 @@
+<div class="processus-modifier-container">
+  <h2>Modifier le processus</h2>
+
+  <form [formGroup]="form" (ngSubmit)="saveChanges()">
+
+    <!-- Nom -->
+    <div class="form-group">
+      <label for="nom">Nom du processus</label>
+      <input id="nom" type="text" formControlName="nom" />
+      <div *ngIf="form.get('nom')?.invalid && form.get('nom')?.touched" class="error">
+        Le nom est requis.
+      </div>
+    </div>
+
+    <!-- Type de processus -->
+    <div class="form-group">
+      <label for="typeProcessus">Type de processus</label>
+      <input id="typeProcessus" type="text" formControlName="typeProcessus" />
+      <div *ngIf="form.get('typeProcessus')?.invalid && form.get('typeProcessus')?.touched" class="error">
+        Le type de processus est requis.
+      </div>
+    </div>
+
+    <!-- Date début -->
+    <div class="form-group">
+      <label for="dateDebut">Date de début</label>
+      <input id="dateDebut" type="date" formControlName="dateDebut" />
+      <div *ngIf="form.get('dateDebut')?.invalid && form.get('dateDebut')?.touched" class="error">
+        La date de début est requise.
+      </div>
+    </div>
+
+    <!-- Date fin -->
+    <div class="form-group">
+      <label for="dateFin">Date de fin</label>
+      <input id="dateFin" type="date" formControlName="dateFin" />
+      <div *ngIf="form.get('dateFin')?.invalid && form.get('dateFin')?.touched" class="error">
+        La date de fin est requise.
+      </div>
+    </div>
+
+    <!-- Actif -->
+    <div class="form-group">
+      <label for="actif">Actif</label>
+      <input id="actif" type="checkbox" formControlName="actif" />
+    </div>
+
+    <!-- Boutons -->
+    <button type="submit" [disabled]="form.invalid">Enregistrer les modifications</button>
+    <button type="button" (click)="router.navigate(['/processus'])">Annuler</button>
+
+  </form>
+</div>

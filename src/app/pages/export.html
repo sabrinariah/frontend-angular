@@ -1,0 +1,223 @@
+<div class="export-container">
+
+  <!-- ── Stepper amélioré (plus accessible et responsive) ── -->
+  <div class="stepper" role="tablist" aria-label="Étapes du processus d'export">
+    <div class="step" [class.active]="etapeActive >= 1" [class.done]="etapeActive > 1"
+         role="tab" [attr.aria-selected]="etapeActive === 1">
+      <div class="step-num" aria-hidden="true">{{ etapeActive > 1 ? '✓' : '1' }}</div>
+      <div class="step-label">Demande</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 1" aria-hidden="true"></div>
+
+    <div class="step" [class.active]="etapeActive >= 2" [class.done]="etapeActive > 2"
+         role="tab" [attr.aria-selected]="etapeActive === 2">
+      <div class="step-num" aria-hidden="true">{{ etapeActive > 2 ? '✓' : '2' }}</div>
+      <div class="step-label">Détails</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 2" aria-hidden="true"></div>
+
+    <div class="step" [class.active]="etapeActive >= 3" [class.done]="etapeActive > 3"
+         role="tab" [attr.aria-selected]="etapeActive === 3">
+      <div class="step-num" aria-hidden="true">{{ etapeActive > 3 ? '✓' : '3' }}</div>
+      <div class="step-label">Vérification</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 3" aria-hidden="true"></div>
+
+    <div class="step" [class.active]="etapeActive >= 4" [class.done]="etapeActive > 4"
+         role="tab" [attr.aria-selected]="etapeActive === 4">
+      <div class="step-num" aria-hidden="true">{{ etapeActive > 4 ? '✓' : '4' }}</div>
+      <div class="step-label">Frais</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 4" aria-hidden="true"></div>
+
+    <div class="step" [class.active]="etapeActive >= 5" [class.done]="etapeActive > 5"
+         role="tab" [attr.aria-selected]="etapeActive === 5">
+      <div class="step-num" aria-hidden="true">{{ etapeActive > 5 ? '✓' : '5' }}</div>
+      <div class="step-label">Documents</div>
+    </div>
+    <div class="step-line" [class.done]="etapeActive > 5" aria-hidden="true"></div>
+
+    <div class="step" [class.active]="etapeActive >= 6"
+         role="tab" [attr.aria-selected]="etapeActive === 6">
+      <div class="step-num" aria-hidden="true">6</div>
+      <div class="step-label">Validé</div>
+    </div>
+  </div>
+
+  <!-- ── Messages améliorés avec rôle live ── -->
+  <div class="message success" *ngIf="message && !message.includes('❌')" role="status" aria-live="polite">
+    {{ message }}
+  </div>
+  <div class="message error" *ngIf="message && message.includes('❌')" role="alert" aria-live="assertive">
+    {{ message }}
+  </div>
+
+  <!-- ════ Étape 1 : Nouvelle demande ════ -->
+  <div class="form-card" *ngIf="etapeActive === 1">
+    <div class="card-header">
+      <h2>Nouvelle demande</h2>
+      <p class="subtitle">Remplissez les informations pour démarrer le processus</p>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="exportateur">Exportateur</label>
+        <input id="exportateur" [(ngModel)]="demande.exportateur" placeholder="Exportateur" />
+      </div>
+      <div class="form-group">
+        <label for="paysDestination">Pays destination</label>
+        <input id="paysDestination" [(ngModel)]="demande.paysDestination" placeholder="Pays destination" />
+      </div>
+      <div class="form-group full">
+        <label for="typeProduit">Type de produit</label>
+        <select id="typeProduit" [(ngModel)]="demande.typeProduit">
+          <option value="" disabled>-- Type produit --</option>
+          <option>Textile</option>
+          <option>Alimentaire</option>
+          <option>Électronique</option>
+          <option>Matières premières</option>
+          <option>Produits chimiques</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button class="btn-primary" (click)="demarrerProcessus()"
+              [disabled]="loading || !demande.exportateur || !demande.paysDestination || !demande.typeProduit"
+              [attr.aria-disabled]="loading || !demande.exportateur || !demande.paysDestination || !demande.typeProduit">
+        <span>Démarrer</span>
+        <span *ngIf="loading" class="loader" aria-label="Chargement"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════ Étape 2 : Détails produits ════ -->
+  <div class="form-card" *ngIf="etapeActive === 2">
+    <div class="card-header">
+      <h2>Détails produits</h2>
+      <p class="subtitle">Précisez quantité, valeur et code SH</p>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="quantite">Quantité</label>
+        <input type="number" id="quantite" [(ngModel)]="details.quantite" placeholder="Quantité" />
+      </div>
+      <div class="form-group">
+        <label for="valeur">Valeur</label>
+        <input id="valeur" [(ngModel)]="details.valeur" placeholder="Valeur" />
+      </div>
+      <div class="form-group">
+        <label for="codeSH">Code SH</label>
+        <input id="codeSH" [(ngModel)]="details.codeSH" placeholder="Code SH" />
+      </div>
+      <div class="form-group">
+        <label for="destinationFinale">Destination finale</label>
+        <input id="destinationFinale" [(ngModel)]="details.destinationFinale" placeholder="Destination finale" />
+      </div>
+    </div>
+    <div class="card-footer">
+      <button class="btn-primary" (click)="completerTacheEtape(details, 3)">Valider</button>
+    </div>
+  </div>
+
+  <!-- ════ Étape 3 : Vérification ════ -->
+  <div class="form-card" *ngIf="etapeActive === 3">
+    <div class="card-header">
+      <h2>Vérification</h2>
+      <p class="subtitle">Autorisez ou refusez l'exportation</p>
+    </div>
+    <div class="radio-group" role="radiogroup" aria-label="Autorisation d'export">
+      <label class="radio-label">
+        <input type="radio" [(ngModel)]="verification.exportAutorise" value="true" />
+        <span class="radio-ok">Autorisé</span>
+      </label>
+      <label class="radio-label">
+        <input type="radio" [(ngModel)]="verification.exportAutorise" value="false" />
+        <span class="radio-ko">Refusé</span>
+      </label>
+    </div>
+    <div *ngIf="verification.exportAutorise === 'false'" class="form-group full">
+      <label for="motifRefus">Motif de refus</label>
+      <input id="motifRefus" [(ngModel)]="verification.motifRefus" placeholder="Motif refus" />
+    </div>
+    <div class="card-footer">
+      <button class="btn-primary"
+              (click)="completerTacheEtape({
+                exportAutorise: verification.exportAutorise === 'true',
+                motifRefus: verification.motifRefus
+              }, 4)">Valider</button>
+    </div>
+  </div>
+
+  <!-- ════ Étape 4 : Frais ════ -->
+  <div class="form-card" *ngIf="etapeActive === 4">
+    <div class="card-header">
+      <h2>Frais</h2>
+      <p class="subtitle">Confirmez le montant total des frais</p>
+    </div>
+    <div *ngIf="variables?.totalFrais" class="frais-grid">
+      <div class="frais-item total">
+        <span class="frais-label">Total</span>
+        <span class="frais-value">{{ variables.totalFrais | number:'1.2-2' }}</span>
+      </div>
+    </div>
+    <div class="form-group full">
+      <label for="confirmationFrais">Tapez <strong>CONFIRME</strong> pour valider</label>
+      <input id="confirmationFrais" [(ngModel)]="frais.confirmation" placeholder="CONFIRME" />
+    </div>
+    <div class="card-footer">
+      <button class="btn-primary" (click)="completerTacheEtape(frais, 5)">Confirmer</button>
+    </div>
+  </div>
+
+  <!-- ════ Étape 5 : Documents ════ -->
+  <div class="form-card" *ngIf="etapeActive === 5">
+    <div class="card-header">
+      <h2>Documents</h2>
+      <p class="subtitle">Validez les documents requis</p>
+    </div>
+    <div class="radio-group" role="radiogroup" aria-label="Validation des documents">
+      <label class="radio-label">
+        <input type="radio" [(ngModel)]="validationDocs.documentsValides" value="true" />
+        <span class="radio-ok">Valide</span>
+      </label>
+      <label class="radio-label">
+        <input type="radio" [(ngModel)]="validationDocs.documentsValides" value="false" />
+        <span class="radio-ko">Non valide</span>
+      </label>
+    </div>
+    <div class="form-group full">
+      <label for="observations">Observations</label>
+      <textarea id="observations" [(ngModel)]="validationDocs.observations" placeholder="Observations"></textarea>
+    </div>
+    <div class="card-footer">
+      <button class="btn-primary" (click)="completerTacheEtape(validationDocs, 6)">Terminer</button>
+    </div>
+  </div>
+
+  <!-- ════ Étape 6 : Export validé ════ -->
+  <div class="form-card success-card" *ngIf="etapeActive === 6">
+    <div class="success-icon" aria-hidden="true">🎉</div>
+    <h2>Export validé</h2>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <span>Exportateur</span>
+        <strong>{{ demande.exportateur }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Pays destination</span>
+        <strong>{{ demande.paysDestination }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Type produit</span>
+        <strong>{{ demande.typeProduit }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Total frais</span>
+        <strong>{{ variables?.totalFrais | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+    <div class="card-footer">
+      <button class="btn-primary" (click)="reinitialiser()">Nouvelle demande</button>
+    </div>
+  </div>
+
+</div>

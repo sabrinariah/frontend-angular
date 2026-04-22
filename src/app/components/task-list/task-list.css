@@ -1,0 +1,189 @@
+/* ====================== GLOBAL ====================== */
+body {
+  background: #f8fafd;
+  color: #2c3e50;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+/* ====================== TITLE ====================== */
+h2 {
+  text-align: center;
+  margin: 0 0 30px 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #1e2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ====================== TOOLBAR ====================== */
+.toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolbar input,
+.toolbar select {
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: white;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.toolbar input:focus,
+.toolbar select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.toolbar input {
+  flex: 1;
+  min-width: 260px;
+}
+
+.toolbar select {
+  min-width: 180px;
+}
+
+.toolbar button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.toolbar button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+/* ====================== TASK CARD ====================== */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.task-card {
+  background: white;
+  border-radius: 14px;
+  padding: 20px 24px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.task-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+/* Badge statut */
+.badge {
+  position: absolute;
+  top: 16px;
+  left: 24px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-green {
+  background: #10b981;
+  color: white;
+}
+
+.status-yellow {
+  background: #f59e0b;
+  color: white;
+}
+
+.status-blue {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Contenu tâche */
+.task-info {
+  margin-left: 80px; /* pour laisser de la place au badge */
+}
+
+.task-info h3 {
+  margin: 0 0 6px 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e2937;
+}
+
+.task-info p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Bouton Traiter */
+.btn-traiter {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 9999px;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-traiter:hover {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.empty::before {
+  content: "📭";
+  display: block;
+  font-size: 3rem;
+  margin-bottom: 12px;
+}

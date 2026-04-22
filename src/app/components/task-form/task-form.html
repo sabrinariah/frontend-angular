@@ -1,0 +1,12 @@
+<p>task-form works!</p>
+<h2>✅ Compléter la tâche</h2>
+
+<div>
+  <label>Validation :</label>
+  <input [(ngModel)]="formData.validation" placeholder="OK / REFUS">
+</div>
+
+<button (click)="complete()">Valider</button>
+
+<br><br>
+<a routerLink="/tasks">⬅️ Retour</a>
