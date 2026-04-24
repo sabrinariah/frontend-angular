@@ -50,4 +50,7 @@ export class ProcessusFormComponent {
       alert('Veuillez remplir tous les champs correctement.');
     }
   }
+  goBack() {
+  this.router.navigate(['/processus']);
+}
 }

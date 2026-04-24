@@ -1,59 +1,230 @@
 <div class="login-container">
 
-  <!-- Left side: Formulaire -->
+  <!-- LEFT SIDE -->
   <div class="left-side">
     <div class="form-wrapper">
+
       <h1 class="welcome-text">Bienvenue</h1>
       <p class="subtitle">Connectez-vous pour continuer</p>
+
+      <!-- ERREUR LOGIN -->
+      <div class="alert alert-error" *ngIf="loginError">{{ loginError }}</div>
 
       <form (ngSubmit)="login()" class="login-form">
 
         <!-- Username -->
         <div class="input-group">
-          <label for="username">Nom d'utilisateur</label>
+          <label>Nom d'utilisateur</label>
           <div class="input-box">
             <span class="icon">👤</span>
-            <input 
-              type="text" 
-              id="username"
-              [(ngModel)]="username" 
-              name="username" 
-              placeholder="ahlem"
-              required>
+            <input type="text" [(ngModel)]="username"
+                   name="username" required>
           </div>
         </div>
 
         <!-- Password -->
         <div class="input-group">
-          <label for="password">Mot de passe</label>
+          <label>Mot de passe</label>
           <div class="input-box">
             <span class="icon">🔒</span>
-            <input 
-              type="password" 
-              id="password"
-              [(ngModel)]="password" 
-              name="password" 
-              placeholder="••••••••"
-              required>
+            <input type="password" [(ngModel)]="password"
+                   name="password" required>
           </div>
         </div>
 
-       
+        <button type="submit" class="login-btn" [disabled]="loading">
+          <span *ngIf="!loading">Se connecter</span>
+          <span *ngIf="loading">Connexion...</span>
+        </button>
 
-        <button type="submit" class="login-btn">Se connecter</button>
-
-        <!-- Social login -->
-        <div class="social-login">
-          <p class="or">Ou se connecter avec</p>
-          
+        <!-- LINKS -->
+        <div class="login-links">
+          <a class="link" (click)="openForgot()">
+            Mot de passe oublié ?
+          </a>
+          <a class="link register" (click)="openRegister()">
+            Créer un compte
+          </a>
         </div>
+
       </form>
     </div>
   </div>
 
-  <!-- Right side: Illustration -->
+  <!-- RIGHT SIDE -->
   <div class="right-side">
     <div class="background"></div>
-    <!-- Tu peux mettre ici une illustration plus grande ou garder l'image de fond -->
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL REGISTER
+══════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showRegisterModal" (click)="closeRegister()">
+  <div class="modal modal-register" (click)="$event.stopPropagation()">
+
+    <button class="close-btn" (click)="closeRegister()">✖</button>
+
+    <!-- HEADER -->
+    <div class="modal-header">
+      <div class="modal-icon">&#9881;</div>
+      <h2>Créer un compte</h2>
+      <p class="modal-subtitle">Rejoignez la plateforme de gestion</p>
+    </div>
+
+    <div class="alert alert-success" *ngIf="registerSuccess">
+      <span>&#10003;</span> {{ registerSuccess }}
+    </div>
+    <div class="alert alert-error" *ngIf="registerError">
+      <span>&#9888;</span> {{ registerError }}
+    </div>
+
+    <form (ngSubmit)="registerUser()" class="modal-form">
+
+      <!-- Prénom + Nom -->
+      <div class="modal-row">
+        <div class="modal-field">
+          <label>Prénom</label>
+          <div class="modal-input-box">
+            <span class="icon">&#128100;</span>
+            <input type="text" placeholder="Prénom"
+                   [(ngModel)]="firstName" name="firstName" required>
+          </div>
+        </div>
+        <div class="modal-field">
+          <label>Nom</label>
+          <div class="modal-input-box">
+            <span class="icon">&#128100;</span>
+            <input type="text" placeholder="Nom"
+                   [(ngModel)]="lastName" name="lastName" required>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="modal-field">
+        <label>Email</label>
+        <div class="modal-input-box">
+          <span class="icon">&#64;</span>
+          <input type="email" placeholder="exemple@mail.com"
+                 [(ngModel)]="email" name="email" required>
+        </div>
+      </div>
+
+      <!-- Rôle -->
+      <div class="modal-field">
+        <label>Rôle</label>
+        <div class="modal-input-box">
+          <span class="icon">&#127775;</span>
+          <select [(ngModel)]="selectedRole" name="role">
+            <option *ngFor="let r of availableRoles" [value]="r.value">
+              {{ r.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="modal-field">
+        <label>Mot de passe</label>
+        <div class="modal-input-box">
+          <span class="icon">&#128274;</span>
+          <input type="password" placeholder="Minimum 6 caractères"
+                 [(ngModel)]="regPassword" name="regPassword" required>
+        </div>
+        <!-- Barre de force -->
+        <div class="strength-bar" *ngIf="regPassword">
+          <div class="strength-segment"
+               [class.active]="getRegStrength() === 'weak' || getRegStrength() === 'medium' || getRegStrength() === 'strong'"
+               [class.weak]="getRegStrength() === 'weak'"
+               [class.medium]="getRegStrength() === 'medium'"
+               [class.strong]="getRegStrength() === 'strong'">
+          </div>
+          <div class="strength-segment"
+               [class.active]="getRegStrength() === 'medium' || getRegStrength() === 'strong'"
+               [class.medium]="getRegStrength() === 'medium'"
+               [class.strong]="getRegStrength() === 'strong'">
+          </div>
+          <div class="strength-segment"
+               [class.active]="getRegStrength() === 'strong'"
+               [class.strong]="getRegStrength() === 'strong'">
+          </div>
+        </div>
+        <small class="strength-label" *ngIf="regPassword"
+               [class.weak]="getRegStrength() === 'weak'"
+               [class.medium]="getRegStrength() === 'medium'"
+               [class.strong-label]="getRegStrength() === 'strong'">
+          {{ getRegStrength() === 'weak' ? 'Faible' : getRegStrength() === 'medium' ? 'Moyen' : 'Fort' }}
+        </small>
+      </div>
+
+      <!-- Confirmer mot de passe -->
+      <div class="modal-field">
+        <label>Confirmer le mot de passe</label>
+        <div class="modal-input-box"
+             [class.input-ok]="confirmPassword && passwordsMatch()"
+             [class.input-err]="confirmPassword && !passwordsMatch()">
+          <span class="icon">&#128274;</span>
+          <input type="password" placeholder="Confirmez le mot de passe"
+                 [(ngModel)]="confirmPassword" name="confirmPassword" required>
+          <span class="match-icon" *ngIf="confirmPassword && passwordsMatch()">&#10003;</span>
+          <span class="match-icon err" *ngIf="confirmPassword && !passwordsMatch()">&#10005;</span>
+        </div>
+        <small class="text-error" *ngIf="confirmPassword && !passwordsMatch()">
+          Les mots de passe ne correspondent pas
+        </small>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn-submit"
+              [disabled]="registerLoading || !passwordsMatch() || !regPassword || !email || !firstName || !lastName">
+        <span *ngIf="!registerLoading">S'inscrire</span>
+        <span *ngIf="registerLoading" class="spinner-text">Création en cours...</span>
+      </button>
+
+    </form>
+
+    <div class="modal-footer">
+      Déjà un compte ?
+      <a class="link" (click)="closeRegister()">Se connecter</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     MODAL FORGOT PASSWORD
+══════════════════════════════════════ -->
+<div class="modal-overlay" *ngIf="showForgotModal" (click)="closeForgot()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <button class="close-btn" (click)="closeForgot()">✖</button>
+    <h2>Mot de passe oublié</h2>
+    <p class="subtitle">Un lien de réinitialisation sera envoyé à votre email</p>
+
+    <div class="alert alert-success" *ngIf="forgotSuccess">{{ forgotSuccess }}</div>
+    <div class="alert alert-error"   *ngIf="forgotError">{{ forgotError }}</div>
+
+    <form (ngSubmit)="sendForgotPassword()" class="modal-form">
+
+      <div class="input-group">
+        <div class="input-box">
+          <span class="icon">📧</span>
+          <input type="email" placeholder="Votre email"
+                 [(ngModel)]="forgotEmail" name="forgotEmail" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="forgotLoading">
+        <span *ngIf="!forgotLoading">Envoyer le lien</span>
+        <span *ngIf="forgotLoading">Envoi...</span>
+      </button>
+
+      <div class="login-links">
+        <a class="link" (click)="closeForgot()">← Retour à la connexion</a>
+      </div>
+
+    </form>
   </div>
 </div>

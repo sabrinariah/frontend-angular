@@ -1,114 +1,246 @@
-<div class="pg">
+<!-- composant HTML -->
+<div class="wrap">
 
-  <!-- HEADER -->
-  <div class="pg-header">
-    <div class="pg-header-bg"></div>
-
-    <div class="pg-header-left">
-      <h2 class="pg-title">
-        Liste des <span>processus</span>
-      </h2>
-      <p class="pg-sub">
-        Gestion et suivi des processus
-      </p>
+  <!-- HEADER MODERN -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div class="hdr-badge">Gestion & Suivi</div>
+      <h1 class="hdr-title">Liste des <span class="hdr-highlight">processus</span></h1>
+      <p class="hdr-sub">Gérez et suivez l'ensemble de vos processus en temps réel</p>
     </div>
 
-    <button class="btn-add" (click)="ajouter()">
-      + Ajouter un processus
-    </button>
-  </div>
-
-  <!-- ALERT MESSAGES -->
-  <div *ngIf="message"
-       class="pg-alert"
-       [ngClass]="{
-         'alert-success': message.includes('succès'),
-         'alert-danger': message.includes('Erreur')
-       }">
-    {{ message }}
-  </div>
-
-  <!-- LOADING -->
-  <div *ngIf="loading" class="pg-loading">
-    <div class="spinner"></div>
-    <p>Chargement...</p>
-  </div>
-
-  <!-- ERROR -->
-  <div *ngIf="error" class="pg-alert alert-danger">
-    {{ error }}
-  </div>
-
-  <!-- EMPTY STATE -->
-  <div *ngIf="!loading && processusList.length === 0" class="pg-empty">
-    Aucun processus trouvé.
-  </div>
-
-  <!-- LIST -->
-  <div class="pg-list" *ngIf="!loading && processusList.length > 0">
-
-    <div class="pi" *ngFor="let p of processusList; let i = index">
-
-      <!-- INDEX -->
-      <div class="pi-num">
-        {{ i + 1 < 10 ? '0' + (i + 1) : (i + 1) }}
+    <div class="hdr-right">
+      <div class="search-container">
+        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          placeholder="Rechercher un processus..."
+          [(ngModel)]="searchTerm"
+          class="search-input-modern"
+        />
       </div>
 
-      <!-- MAIN INFO -->
-      <div class="pi-main">
-        <p class="pi-name">{{ p.nom }}</p>
+      <button class="btn-primary-modern" (click)="ajouter()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Nouveau processus
+      </button>
+    </div>
+  </div>
 
-        <div class="pi-meta">
-          <span class="pi-type">
-            Type : {{ p.typeProcessus }}
-          </span>
+  <!-- STATS CARDS -->
+  <div class="stats-grid">
+    <div class="stat-card-modern">
+      <div class="stat-icon total">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+          <line x1="3" y1="9" x2="21" y2="9"></line>
+          <line x1="3" y1="15" x2="21" y2="15"></line>
+          <line x1="9" y1="21" x2="9" y2="3"></line>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ filteredProcessus().length }}</span>
+        <span class="stat-label">Total processus</span>
+      </div>
+    </div>
 
-          <span class="pi-date">
-            📅 {{ p.dateDebut | date:'shortDate' }}
-            →
-            {{ p.dateFin | date:'shortDate' }}
-          </span>
+    <div class="stat-card-modern">
+      <div class="stat-icon actif">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ getActifCount() }}</span>
+        <span class="stat-label">Actifs</span>
+      </div>
+    </div>
+
+    <div class="stat-card-modern">
+      <div class="stat-icon inactif">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">{{ getInactifCount() }}</span>
+        <span class="stat-label">Inactifs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS MODERN -->
+  <div *ngIf="message" class="alert-modern success">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>{{ message }}</span>
+  </div>
+
+  <div *ngIf="error" class="alert-modern error">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="8" x2="12" y2="12"></line>
+      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    </svg>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- LOADING MODERN -->
+  <div *ngIf="loading" class="loading-modern">
+    <div class="spinner-modern"></div>
+    <p>Chargement des processus...</p>
+  </div>
+
+  <!-- EMPTY STATE MODERN -->
+  <div *ngIf="!loading && filteredProcessus().length === 0" class="empty-modern">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+      <line x1="3" y1="9" x2="21" y2="9"></line>
+      <line x1="3" y1="15" x2="21" y2="15"></line>
+      <line x1="9" y1="21" x2="9" y2="3"></line>
+    </svg>
+    <h3>Aucun processus trouvé</h3>
+    <p>Commencez par créer un nouveau processus</p>
+    <button class="btn-outline" (click)="ajouter()">+ Créer un processus</button>
+  </div>
+
+  <!-- CARDS GRID MODERN -->
+  <div class="grid-modern" *ngIf="!loading && filteredProcessus().length > 0">
+    <div class="card-modern" *ngFor="let p of filteredProcessus(); let i = index">
+      <div class="card-status" [ngClass]="p.actif ? 'status-actif' : 'status-inactif'"></div>
+
+      <div class="card-header">
+        <div class="card-number">#{{ i + 1 }}</div>
+        <div class="badge-modern" [ngClass]="p.actif ? 'badge-actif-modern' : 'badge-inactif-modern'">
+          <span class="badge-dot"></span>
+          {{ p.actif ? 'Actif' : 'Inactif' }}
         </div>
       </div>
 
-      <!-- STATUS -->
-      <span class="pi-badge" [ngClass]="p.actif ? 'badge-actif' : 'badge-inactif'">
-        <span class="bdot"></span>
-        {{ p.actif ? 'ACTIF' : 'INACTIF' }}
-      </span>
+      <div class="card-body-modern">
+        <h3 class="card-title">{{ p.nom }}</h3>
 
-      <!-- ACTIONS -->
-      <div class="pi-actions">
+        <div class="card-meta-modern">
+          <div class="meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>{{ p.typeProcessus }}</span>
+          </div>
 
-        <button *ngIf="p.id"
-                class="pa"
-                [ngClass]="p.actif ? 'pa-desactiver' : 'pa-activer'"
-                (click)="toggle(p.id)">
-          {{ p.actif ? '⛔ Désactiver' : '✓ Activer' }}
-        </button>
+          <div class="meta-item">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>{{ p.dateDebut | date:'dd/MM/yyyy' }} → {{ p.dateFin | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
 
-        <button *ngIf="p.id && p.actif"
-                class="pa pa-modifier"
-                (click)="modifier(p.id)">
-          ✏ Modifier
-        </button>
+        <div class="card-divider"></div>
 
-        <button *ngIf="p.id"
-                class="pa pa-details"
-                (click)="detail(p.id)">
-          👁 Détails
-        </button>
+        <div class="card-actions">
+          <button class="action-btn" (click)="toggle(p.id!)" [ngClass]="{'btn-toggle': true}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="5" width="22" height="14" rx="2" ry="2"></rect>
+              <circle cx="16" cy="12" r="2"></circle>
+            </svg>
+            {{ p.actif ? 'Désactiver' : 'Activer' }}
+          </button>
 
-        <button *ngIf="p.id && p.actif"
-                class="pa pa-suppr"
-                (click)="supprimer(p.id)">
-          🗑
-        </button>
+          <button class="action-btn" (click)="modifier(p.id!)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+              <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
+            </svg>
+            Modifier
+          </button>
 
+          <button class="action-btn" (click)="detail(p.id!)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            Détails
+          </button>
+
+          <button class="action-btn btn-danger-modern" (click)="supprimer(p.id!)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Supprimer
+          </button>
+
+          <button class="action-btn btn-task-modern" (click)="openTache(p)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Tâche
+          </button>
+        </div>
+
+        <!-- TACHE INLINE MODERN -->
+        <div class="tache-inline-modern" *ngIf="selectedProcessusForTacheId === p.id">
+          <div class="tache-header">
+            <h4>Ajouter une tâche à "{{ p.nom }}"</h4>
+            <button class="close-tache" (click)="closeTache()">✕</button>
+          </div>
+          <app-tache-form (save)="onTacheAdded($event)"></app-tache-form>
+        </div>
       </div>
+    </div>
+  </div>
+</div>
 
+<!-- MODAL DETAILS MODERN -->
+<div class="modal-overlay-modern" *ngIf="selectedProcessus" (click)="closePopup()">
+  <div class="modal-modern" (click)="$event.stopPropagation()">
+    <div class="modal-header-modern">
+      <h3>Détails du processus</h3>
+      <button class="modal-close" (click)="closePopup()">✕</button>
     </div>
 
-  </div>
+    <div class="modal-body-modern">
+      <div class="detail-item">
+        <span class="detail-label">Nom</span>
+        <span class="detail-value">{{ selectedProcessus.nom }}</span>
+      </div>
 
+      <div class="detail-item">
+        <span class="detail-label">Type</span>
+        <span class="detail-value">{{ selectedProcessus.typeProcessus }}</span>
+      </div>
+
+      <div class="detail-item">
+        <span class="detail-label">Période</span>
+        <span class="detail-value">
+          {{ selectedProcessus.dateDebut | date:'dd/MM/yyyy' }} → {{ selectedProcessus.dateFin | date:'dd/MM/yyyy' }}
+        </span>
+      </div>
+
+      <div class="detail-item">
+        <span class="detail-label">Statut</span>
+        <div class="badge-modern" [ngClass]="selectedProcessus.actif ? 'badge-actif-modern' : 'badge-inactif-modern'">
+          <span class="badge-dot"></span>
+          {{ selectedProcessus.actif ? 'ACTIF' : 'INACTIF' }}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

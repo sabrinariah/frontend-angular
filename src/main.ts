@@ -31,7 +31,7 @@ import { RegleMetierComponent } from './app/components/regle/regle';
 import { StartProcessComponent } from './app/components/start-process/start-process';
 import { TaskListComponent } from './app/components/task-list/task-list';
 import { BpmnViewerComponent } from './app/components/bpmn-viewer/bpmn-viewer';   // ← CORRIGÉ ICI
-
+import { RegisterComponent } from './app//register/register';
 // 🆕 IMPORT / EXPORT
 import { ImportComponent } from './app/pages/import/import';
 import { ExportComponent } from './app/pages/export.component';
@@ -50,6 +50,7 @@ const routes: Routes = [
   canActivate: [AuthGuardService],
    // 🔥 optionnel
 },
+{ path: 'register', component: RegisterComponent },
   // 🔥 CAMUNDA
   { path: 'start-process', component: StartProcessComponent, canActivate: [AuthGuardService] },
   { path: 'tasks', component: TaskListComponent, canActivate: [AuthGuardService] },

@@ -100,40 +100,44 @@ export class RegleMetierComponent implements OnInit {
   }
 
   // ================= SAVE =================
-  save(): void {
-    if (!this.isFormValid()) return;
+ save(): void {
+  if (!this.isFormValid()) return;
 
-    this.loading = true;
+  this.loading = true;
 
-    // ✅ gestion version
-    const version = this.isEditing
-      ? (this.selected.version ?? 1) + 1
-      : 1;
+  const payload = {
+    code: this.selected.code,
+    nom: this.selected.nom,
+    action: this.selected.action,
+    active: this.selected.active,
+    categorie: {
+      id: this.selected.categorie?.id
+    },
+    conditions: this.selectedConditions
+  };
 
-    const payload = {
-      code: this.selected.code,
-      nom: this.selected.nom,
-      action: this.selected.action,
-      active: this.selected.active,
-      version: version, // ✅ ajout version
-      categorie: {
-        id: this.selected.categorie?.id
-      },
-      conditions: this.selectedConditions
-    };
-
-    const request$ = this.isEditing && this.selected.id
-      ? this.regleService.update(this.selected.id, payload)
-      : this.regleService.create(payload);
-
-    request$.subscribe({
+  // 👉 MODIFIER
+  if (this.isEditing && this.selected.id) {
+    this.regleService.update(this.selected.id, payload).subscribe({
       next: () => this.afterSave(),
       error: (err) => {
-        console.error('Erreur save:', err);
+        console.error(err);
+        this.loading = false;
+      }
+    });
+
+  } 
+  // 👉 AJOUTER
+  else {
+    this.regleService.create(payload).subscribe({
+      next: () => this.afterSave(),
+      error: (err) => {
+        console.error(err);
         this.loading = false;
       }
     });
   }
+}
 
   // ================= AFTER SAVE =================
   afterSave(): void {

@@ -585,10 +585,28 @@
   font-size: 14px;
   font-weight: 700;
   color: #1e293b;
+  flex: 1;
 }
- 
-.form-card-body {
-  padding: 1.25rem 1.5rem;
+
+.btn-cancel {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #94a3b8;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel:hover {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e0;
 }
  
 /* =============================================

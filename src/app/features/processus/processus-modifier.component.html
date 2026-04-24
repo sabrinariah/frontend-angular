@@ -1,53 +1,81 @@
-<div class="processus-modifier-container">
+<div class="edit-wrapper">
+
+  <div class="edit-card">
+
+```
+<!-- HEADER -->
+<div class="edit-header">
   <h2>Modifier le processus</h2>
+  <p>Mettre à jour les informations du processus</p>
+</div>
 
-  <form [formGroup]="form" (ngSubmit)="saveChanges()">
+<form [formGroup]="form" (ngSubmit)="saveChanges()">
 
-    <!-- Nom -->
+  <div class="form-grid">
+
+    <!-- NOM -->
     <div class="form-group">
-      <label for="nom">Nom du processus</label>
-      <input id="nom" type="text" formControlName="nom" />
+      <label>Nom du processus</label>
+      <input type="text" formControlName="nom" />
       <div *ngIf="form.get('nom')?.invalid && form.get('nom')?.touched" class="error">
-        Le nom est requis.
+        Champ obligatoire
       </div>
     </div>
 
-    <!-- Type de processus -->
+    <!-- TYPE -->
     <div class="form-group">
-      <label for="typeProcessus">Type de processus</label>
-      <input id="typeProcessus" type="text" formControlName="typeProcessus" />
+      <label>Type</label>
+      <input type="text" formControlName="typeProcessus" />
       <div *ngIf="form.get('typeProcessus')?.invalid && form.get('typeProcessus')?.touched" class="error">
-        Le type de processus est requis.
+        Champ obligatoire
       </div>
     </div>
 
-    <!-- Date début -->
+    <!-- DATE DEBUT -->
     <div class="form-group">
-      <label for="dateDebut">Date de début</label>
-      <input id="dateDebut" type="date" formControlName="dateDebut" />
-      <div *ngIf="form.get('dateDebut')?.invalid && form.get('dateDebut')?.touched" class="error">
-        La date de début est requise.
-      </div>
+      <label>Date début</label>
+      <input type="date" formControlName="dateDebut" />
     </div>
 
-    <!-- Date fin -->
+    <!-- DATE FIN -->
     <div class="form-group">
-      <label for="dateFin">Date de fin</label>
-      <input id="dateFin" type="date" formControlName="dateFin" />
-      <div *ngIf="form.get('dateFin')?.invalid && form.get('dateFin')?.touched" class="error">
-        La date de fin est requise.
-      </div>
+      <label>Date fin</label>
+      <input type="date" formControlName="dateFin" />
     </div>
 
-    <!-- Actif -->
-    <div class="form-group">
-      <label for="actif">Actif</label>
-      <input id="actif" type="checkbox" formControlName="actif" />
-    </div>
+  </div>
 
-    <!-- Boutons -->
-    <button type="submit" [disabled]="form.invalid">Enregistrer les modifications</button>
-    <button type="button" (click)="router.navigate(['/processus'])">Annuler</button>
+  <!-- SWITCH ACTIF -->
+  <div class="switch-group">
+    <label>Statut</label>
 
-  </form>
+    <label class="switch">
+      <input type="checkbox" formControlName="actif">
+      <span class="slider"></span>
+    </label>
+
+    <span class="status-text">
+      {{ form.get('actif')?.value ? 'Actif' : 'Inactif' }}
+    </span>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="form-actions">
+
+    <button type="button" class="btn-cancel"
+            (click)="router.navigate(['/processus'])">
+      Annuler
+    </button>
+
+    <button type="submit" class="btn-save" [disabled]="form.invalid">
+      Enregistrer
+    </button>
+
+  </div>
+
+</form>
+```
+
+  </div>
+
 </div>

@@ -1,29 +1,161 @@
-<div class="processus-form-container">
-  <h2>➕ Créer un nouveau processus</h2>
+<!-- composant HTML -->
+<div class="form-container">
+  <div class="form-card-modern">
 
-  <form [formGroup]="processusForm" (ngSubmit)="submitForm()">
-
-    <div class="form-group">
-      <label>Nom du processus</label>
-      <input type="text" formControlName="nom" placeholder="Ex: Gestion client" />
+    <!-- HEADER MODERN -->
+    <div class="form-header-modern">
+      <div class="header-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
+          <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
+        </svg>
+      </div>
+      <div class="header-content">
+        <h2>Créer un processus</h2>
+        <p>Ajoutez un nouveau processus à votre système de gestion</p>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>Type de processus</label>
-      <input type="text" formControlName="typeProcessus" placeholder="Ex: Automatisé" />
-    </div>
+    <!-- FORM -->
+    <form [formGroup]="processusForm" (ngSubmit)="submitForm()">
 
-    <div class="form-group">
-      <label>Date de début</label>
-      <input type="date" formControlName="dateDebut" />
-    </div>
+      <div class="form-grid-modern">
 
-    <div class="form-group">
-      <label>Date de fin</label>
-      <input type="date" formControlName="dateFin" />
-    </div>
+        <div class="form-group-modern">
+          <label class="label-modern">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4v16h16V4H4z"></path>
+              <line x1="8" y1="9" x2="16" y2="9"></line>
+              <line x1="8" y1="13" x2="16" y2="13"></line>
+              <line x1="8" y1="17" x2="12" y2="17"></line>
+            </svg>
+            Nom du processus
+          </label>
+          <input 
+            type="text" 
+            formControlName="nom" 
+            placeholder="Ex: Gestion client, Facturation, RH..."
+            class="input-modern"
+            [class.input-error]="processusForm.get('nom')?.invalid && processusForm.get('nom')?.touched"
+          />
+          <div class="error-message" *ngIf="processusForm.get('nom')?.invalid && processusForm.get('nom')?.touched">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Le nom est requis
+          </div>
+        </div>
 
-    <button type="submit" class="btn-submit">🚀 Ajouter le processus</button>
+        <div class="form-group-modern">
+          <label class="label-modern">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            Type de processus
+          </label>
+          <select formControlName="typeProcessus" class="input-modern select-modern">
+            <option value="" disabled>Sélectionnez un type</option>
+            <option value="export">export</option>
+            <option value="import">import</option>
+            <option value="transport">transport</option>
+          </select>
+          <div class="error-message" *ngIf="processusForm.get('typeProcessus')?.invalid && processusForm.get('typeProcessus')?.touched">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Le type est requis
+          </div>
+        </div>
 
-  </form>
+        <div class="form-group-modern">
+          <label class="label-modern">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Date de début
+          </label>
+          <input 
+            type="date" 
+            formControlName="dateDebut" 
+            class="input-modern"
+            [class.input-error]="processusForm.get('dateDebut')?.invalid && processusForm.get('dateDebut')?.touched"
+          />
+          <div class="error-message" *ngIf="processusForm.get('dateDebut')?.invalid && processusForm.get('dateDebut')?.touched">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Date de début requise
+          </div>
+        </div>
+
+        <div class="form-group-modern">
+          <label class="label-modern">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            Date de fin
+          </label>
+          <input 
+            type="date" 
+            formControlName="dateFin" 
+            class="input-modern"
+            [class.input-error]="processusForm.get('dateFin')?.invalid && processusForm.get('dateFin')?.touched"
+          />
+          <div class="error-message" *ngIf="processusForm.get('dateFin')?.invalid && processusForm.get('dateFin')?.touched">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            Date de fin requise
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DATE VALIDATION WARNING -->
+      <div class="date-warning" *ngIf="processusForm.get('dateDebut')?.value && processusForm.get('dateFin')?.value && processusForm.get('dateDebut')?.value > processusForm.get('dateFin')?.value">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        La date de début ne peut pas être postérieure à la date de fin
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="form-actions-modern">
+        <button type="button" class="btn-back-modern" (click)="goBack()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Retour
+        </button>
+
+        <button type="submit" class="btn-submit-modern" [disabled]="processusForm.invalid">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Créer le processus
+        </button>
+      </div>
+
+    </form>
+
+  </div>
 </div>

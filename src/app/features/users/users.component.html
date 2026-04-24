@@ -204,8 +204,9 @@
 
         <div class="user-info">
           <div class="avatar">
-            {{ selectedUser.firstName?.charAt(0) }}
-            {{ selectedUser.lastName?.charAt(0) }}
+     {{ selectedUser.firstName.charAt(0) }}     // ✅ Correct
+{{ selectedUser.lastName.charAt(0) }}      // ✅ Correct
+       // ✅ Correct
           </div>
 
           <h3>

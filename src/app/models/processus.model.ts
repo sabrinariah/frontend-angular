@@ -8,4 +8,5 @@ export interface Processus {
   dateFin: string;
   actif: boolean;
    taches?: Tache[];
+    processusId?: number;
 }

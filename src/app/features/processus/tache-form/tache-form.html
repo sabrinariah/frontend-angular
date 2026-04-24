@@ -44,15 +44,17 @@
         {{ tache.id ? 'Modifier' : 'Ajouter' }}
       </button>
 
-      <!-- Bouton Supprimer visible uniquement si on modifie -->
-      <button
-        type="button"
-        class="btn btn-danger"
-        *ngIf="tache.id"
-        (click)="onDelete()"
-      >
-        Supprimer
-      </button>
+      <div class="button-group">
+        <!-- Bouton Supprimer visible uniquement si on modifie -->
+        <button
+          type="button"
+          class="btn btn-danger"
+          *ngIf="tache.id"
+          (click)="onDelete()"
+        >
+          Supprimer
+        </button>
+      </div>
     </div>
   </form>
 </div>
