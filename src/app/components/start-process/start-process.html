@@ -1,0 +1,16 @@
+<p>start-process works!</p>
+<h2>Démarrer Processus Export</h2>
+
+<div>
+  <label>Client :</label>
+  <input [(ngModel)]="formData.client" placeholder="Nom client">
+</div>
+
+<div>
+  <label>Montant :</label>
+  <input [(ngModel)]="formData.montant" type="number">
+</div>
+<button (click)="demarrerProcess()">🚀 Démarrer (TEST)</button>
+
+<br><br>
+<a routerLink="/tasks">➡️ Voir les tâches</a>

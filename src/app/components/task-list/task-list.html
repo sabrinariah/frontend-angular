@@ -1,0 +1,79 @@
+<div class="container">
+  <h2>📋 Gestion des tâches</h2>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <input 
+      type="text" 
+      placeholder="🔍 Rechercher une tâche..."
+      [(ngModel)]="searchText"
+      class="search-input">
+
+    <select [(ngModel)]="filterStatus" class="status-select">
+      <option value="">Tous les statuts</option>
+      <option value="nouveau">🆕 Nouveau</option>
+      <option value="encours">🟢 En cours</option>
+      <option value="attente">🟡 En attente</option>
+    </select>
+
+    <button (click)="loadTasks()" class="btn-refresh">
+      🔄 Rafraîchir
+    </button>
+  </div>
+
+  <!-- Message si aucune tâche -->
+  <div *ngIf="filteredTasks().length === 0" class="empty-state">
+    Aucune tâche trouvée
+  </div>
+
+  <!-- Liste des tâches -->
+  <div class="task-list">
+    <div *ngFor="let task of filteredTasks()" 
+         class="task-card"
+         [class.active]="selectedTask?.id === task.id">
+
+      <!-- Badge statut -->
+      <span class="badge" [ngClass]="getStatusClass(task)">
+        {{ getStatusLabel(task) }}
+      </span>
+
+      <div class="task-info">
+        <h3>{{ task.name }}</h3>
+        <p class="task-id">ID : {{ task.id | slice:0:15 }}...</p>
+      </div>
+
+      <div class="task-actions">
+        <!-- Bouton pour ouvrir l'ancienne Tasklist Camunda -->
+        <button class="btn-camunda" 
+                (click)="openInCamundaTasklist(task.id); $event.stopImmediatePropagation()">
+          📋 Camunda Tasklist
+        </button>
+
+        <!-- Bouton pour afficher le diagramme BPMN -->
+        <button class="btn-traiter" 
+                (click)="selectAndShowWorkflow(task); $event.stopImmediatePropagation()">
+          🔄 Voir Workflow
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANNEAU WORKFLOW ==================== -->
+  <div *ngIf="selectedTask" class="workflow-panel">
+    <div class="workflow-header">
+      <h3>🔄 Workflow du processus</h3>
+      <button (click)="selectedTask = null" class="btn-close">✕ Fermer</button>
+    </div>
+
+    <div class="workflow-content">
+      <app-bpmn-viewer
+        [processDefinitionId]="selectedTask.processDefinitionId"
+        [processInstanceId]="selectedTask.processInstanceId">
+      </app-bpmn-viewer>
+    </div>
+
+    <div class="task-details">
+      <strong>Tâche actuelle :</strong> {{ selectedTask.name }}
+    </div>
+  </div>
+</div>

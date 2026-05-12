@@ -1,0 +1,70 @@
+<div class="import-export-container">
+
+  <div class="header">
+    <h2>Gestion des Processus</h2>
+    <p>Choisissez une action pour démarrer</p>
+  </div>
+
+  <div class="choice-cards">
+
+    <!-- IMPORT -->
+    <div class="choice-card import" [routerLink]="['/import']">
+      <div class="card-top-bar"></div>
+
+      <div class="icon-wrapper import-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"
+             fill="none" stroke="#534AB7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l0 13"/>
+          <path d="M7.5 11.5l4.5 4.5l4.5 -4.5"/>
+          <path d="M3 19h18"/>
+          <rect x="3" y="3" width="7" height="5" rx="1"/>
+        </svg>
+      </div>
+
+      <h3>Importation</h3>
+      <p>Créer et gérer un processus d'importation</p>
+
+      <div class="card-footer">
+        <button class="card-btn import-btn" (click)="goToImport()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M13 6l6 6l-6 6"/>
+          </svg>
+          Start Import
+        </button>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="choice-card export" [routerLink]="['/export']">
+      <div class="card-top-bar"></div>
+
+      <div class="icon-wrapper export-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24"
+             fill="none" stroke="#0F6E56" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 20a2.4 2.4 0 0 0 2 1h16a2.4 2.4 0 0 0 2-1l-4-9H6z"/>
+          <path d="M12 4v9"/>
+          <path d="M8 11l4-4l4 4"/>
+          <path d="M6 11l-4 9"/>
+          <path d="M18 11l4 9"/>
+          <path d="M7 20l2-9"/>
+          <path d="M17 20l-2-9"/>
+        </svg>
+      </div>
+
+      <h3>Exportation</h3>
+      <p>Créer et gérer un processus d'exportation</p>
+
+      <div class="card-footer">
+        <button class="card-btn export-btn" (click)="goToExport()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/><path d="M13 6l6 6l-6 6"/>
+          </svg>
+          Start Export
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>

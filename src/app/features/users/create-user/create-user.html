@@ -1,0 +1,108 @@
+<div class="main-content">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div class="header-icon">👤</div>
+    <div>
+      <h1 class="form-title">CRÉER UN UTILISATEUR</h1>
+      <p class="form-subtitle">
+        Remplissez les informations pour créer un nouveau compte
+      </p>
+    </div>
+  </div>
+
+  <!-- CARD -->
+  <div class="inscription-container">
+
+    <!-- BOUTON RETOUR -->
+    <button class="btn-back" (click)="goBack()">← Retour</button>
+
+    <form (ngSubmit)="createUser()" class="inscription-form">
+
+      <!-- SECTION -->
+      <div class="section-content">
+        <div class="section-title">Informations du compte</div>
+
+        <!-- ROW 1 -->
+        <div class="form-row">
+          <div class="form-field half-width">
+            <label>👤 Username</label>
+            <input type="text"
+                   [(ngModel)]="username"
+                   name="username"
+                   placeholder="Nom d'utilisateur"
+                   required>
+          </div>
+
+          <div class="form-field half-width">
+            <label>📧 Email</label>
+            <input type="email"
+                   [(ngModel)]="email"
+                   name="email"
+                   placeholder="email@exemple.com"
+                   required>
+          </div>
+        </div>
+
+        <!-- ROW 2 -->
+        <div class="form-row">
+          <div class="form-field half-width">
+            <label>🪪 Nom</label>
+            <input type="text"
+                   [(ngModel)]="lastName"
+                   name="lastName"
+                   placeholder="Nom"
+                   required>
+          </div>
+
+          <div class="form-field half-width">
+            <label>🪪 Prénom</label>
+            <input type="text"
+                   [(ngModel)]="firstName"
+                   name="firstName"
+                   placeholder="Prénom"
+                   required>
+          </div>
+        </div>
+
+        <!-- ROW 3 -->
+        <div class="form-row">
+          <div class="form-field half-width">
+            <label>🔒 Mot de passe</label>
+            <input type="password"
+                   [(ngModel)]="password"
+                   name="password"
+                   placeholder="Mot de passe"
+                   required>
+          </div>
+
+          <div class="form-field half-width">
+            <label>🛡 Rôle</label>
+            <select [(ngModel)]="role" name="role">
+              <option *ngFor="let r of roles" [value]="r">{{ r }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROLE PREVIEW -->
+      <div class="role-preview" *ngIf="role">
+        <span class="preview-label">Aperçu :</span>
+        <span class="badge-role">{{ role }}</span>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="form-actions">
+        <button type="button" class="btn-back-form" (click)="goBack()">
+          Annuler
+        </button>
+
+        <button type="submit" class="btn-submit">
+          Créer
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+</div>

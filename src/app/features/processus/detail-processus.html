@@ -1,0 +1,200 @@
+<!-- LOADING -->
+<div *ngIf="loading" class="loading-container">
+  <div class="loader"></div>
+  <p>Chargement des données...</p>
+</div>
+
+<!-- ERREUR -->
+<div *ngIf="!loading && error" class="error-alert">
+  <div class="error-icon">⚠️</div>
+  <span>{{ error }}</span>
+</div>
+
+<!-- AUCUNE DONNÉE -->
+<div *ngIf="!loading && !processus && !error?.length" class="empty-state-global">
+  <div class="empty-icon">📄</div>
+  <p class="empty-title">Aucune donnée trouvée</p>
+  <p class="empty-sub">Le processus demandé est introuvable ou supprimé.</p>
+</div>
+
+<!-- CONTENU PRINCIPAL -->
+<ng-container *ngIf="!loading && processus as p">
+
+  <div class="page-container">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+
+      <div class="header-left">
+        <div class="header-icon">📊</div>
+
+        <div>
+          <h2 class="page-title">Détails du Processus</h2>
+
+          <p class="page-subtitle">
+            {{ p.nom }}
+            <span class="sub-dot"></span>
+            {{ p.typeProcessus }}
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-back" (click)="goBack()">⬅ Retour</button>
+      </div>
+
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-strip">
+
+      <div class="stat-card">
+        <span class="stat-label">Durée</span>
+        <span class="stat-sub">
+          {{ p.dateDebut | date:'dd/MM' }} → {{ p.dateFin | date:'dd/MM/yy' }}
+        </span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-label">Tâches</span>
+        <span class="stat-value">{{ taches.length }}</span>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-label">Statut</span>
+
+        <span class="stat-value"
+              [class.stat-value-actif]="p.actif"
+              [class.stat-value-inactif]="!p.actif">
+          {{ p.actif ? 'Actif' : 'Inactif' }}
+        </span>
+
+      </div>
+
+    </div>
+
+    <!-- INFO PROCESSUS -->
+    <div class="info-card">
+
+      <div class="info-card-body">
+
+        <div class="info-col">
+          <div class="info-field">
+            <span class="info-label">Nom</span>
+            <span class="info-value">{{ p.nom }}</span>
+          </div>
+
+          <div class="info-field">
+            <span class="info-label">Type</span>
+            <span class="info-value">{{ p.typeProcessus }}</span>
+          </div>
+        </div>
+
+        <div class="info-divider-v"></div>
+
+        <div class="info-col">
+          <div class="info-field">
+            <span class="info-label">Début</span>
+            <span class="info-value">{{ p.dateDebut | date:'dd/MM/yyyy' }}</span>
+          </div>
+
+          <div class="info-field">
+            <span class="info-label">Fin</span>
+            <span class="info-value">{{ p.dateFin | date:'dd/MM/yyyy' }}</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="info-card-footer">
+
+        <div class="status-group">
+
+          <span class="badge-actif" *ngIf="p.actif">
+            🟢 Actif
+          </span>
+
+          <span class="badge-inactif" *ngIf="!p.actif">
+            🔴 Inactif
+          </span>
+
+        </div>
+
+        <button class="btn-toggle" (click)="toggleActif()">
+          {{ p.actif ? 'Désactiver' : 'Activer' }}
+        </button>
+
+      </div>
+
+    </div>
+
+    <!-- SECTION TACHES -->
+    <div class="section-bar">
+      <h3>Tâches</h3>
+      <span>{{ taches.length }}</span>
+    </div>
+
+    <!-- EMPTY TASKS -->
+    <div *ngIf="taches.length === 0" class="empty-tasks">
+      <p>Aucune tâche disponible</p>
+    </div>
+
+    <!-- LISTE TACHES -->
+    <div class="task-list">
+
+      <div *ngFor="let t of taches; let i = index" class="task-item">
+
+        <div class="task-num">{{ i + 1 }}</div>
+
+        <div class="task-body">
+
+          <div class="task-info">
+            <span class="task-name">{{ t.nom }}</span>
+            <span class="task-desc">{{ t.description }}</span>
+          </div>
+
+          <div class="task-actions">
+
+            <button (click)="editTache(t)">✏ Modifier</button>
+
+            <button (click)="deleteTache(t)">🗑 Supprimer</button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- FORMULAIRE -->
+    <div class="form-card">
+
+      <div class="form-card-header">
+
+        <span>
+          {{ selectedTacheIndex !== null ? 'Modifier tâche' : 'Ajouter tâche' }}
+        </span>
+
+        <button *ngIf="selectedTacheIndex !== null"
+                (click)="cancelEdit()">
+          ✕
+        </button>
+
+      </div>
+
+      <div class="form-card-body">
+
+        <app-tache-form
+          #tacheForm
+          (save)="onAddTache($event)"
+          (delete)="deleteTache($event)">
+        </app-tache-form>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</ng-container>
