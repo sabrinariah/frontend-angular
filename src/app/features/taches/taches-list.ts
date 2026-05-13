@@ -1,218 +1,116 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
-import { ExportService } from '../../core/services/export.service';
-import { CamundaTask } from '../../models/export.models';
+import { RouterLink } from '@angular/router';
+import { ExportService, CamundaTask } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-taches-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './taches-list.html',
-  styleUrls: ['./taches-list.css']
+  imports: [CommonModule, FormsModule, RouterLink],
+  template: `
+  <div class="container">
+    <h2>Liste des Tâches Camunda</h2>
+    <button (click)="load()" class="btn btn-primary">🔄 Rafraîchir</button>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th><th>Nom</th><th>Process Instance</th>
+          <th>Assigné à</th><th>Créée</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let t of taches">
+          <td>{{ t.id | slice:0:8 }}</td>
+          <td>{{ t.name }}</td>
+          <td>{{ t.processInstanceId | slice:0:8 }}</td>
+          <td>
+            <span *ngIf="t.assignee" class="badge-assignee">{{ t.assignee }}</span>
+            <span *ngIf="!t.assignee" class="badge-unassigned">Non assigné</span>
+          </td>
+          <td>{{ t.created | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>
+            <button *ngIf="!t.assignee" (click)="reclamer(t)" class="btn btn-sm btn-info">Réclamer</button>
+            <button (click)="ouvrirCamunda(t.id)" class="btn btn-sm btn-warning">Ouvrir</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div *ngIf="taches.length === 0 && !loading" class="empty-message">
+      <p>Aucune tâche disponible</p>
+    </div>
+
+    <div *ngIf="loading" class="loading-message">
+      <p>Chargement des tâches...</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      <p>{{ error }}</p>
+    </div>
+  </div>
+  `,
+  styles: [`
+    .container { padding: 20px; }
+    .table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .table th, .table td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+    .table th { background: #f4f4f4; }
+    .btn { padding: 6px 12px; margin: 2px; border: none; cursor: pointer; border-radius: 4px; text-decoration: none; display: inline-block; color: white; }
+    .btn-primary { background: #007bff; }
+    .btn-warning { background: #ffc107; color: black; }
+    .btn-info { background: #17a2b8; }
+    .btn-sm { font-size: 12px; padding: 4px 8px; }
+    .badge-assignee { background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; }
+    .badge-unassigned { background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; }
+    .empty-message { text-align: center; padding: 40px; color: #888; }
+    .loading-message { text-align: center; padding: 40px; color: #17a2b8; }
+    .error-message { text-align: center; padding: 20px; color: #dc3545; background: #f8d7da; border-radius: 4px; }
+  `]
 })
 export class TachesListComponent implements OnInit {
+  private exportService = inject(ExportService);
 
-  // =========================
-  // DATA
-  // =========================
   taches: CamundaTask[] = [];
-  selectedTask: CamundaTask | null = null;
-
-  dialogVisible = false;
-  vars: any = {};
-
-  searchText: string = '';
-  filterStatus: string = '';
-
-  // état du bouton Valider (évite double-clic)
-  isValidating = false;
-
-  constructor(
-    private exportService: ExportService
-  ) {}
+  loading = false;
+  error = '';
 
   ngOnInit(): void {
     this.load();
   }
 
-  // =========================
-  // LOAD CAMUNDA TASKS
-  // =========================
   load(): void {
+    this.loading = true;
+    this.error = '';
     this.exportService.mesTaches().subscribe({
-      next: (res) => {
-        console.log("🔥 Camunda response =", res);
-        this.taches = res || [];
+      next: (data) => {
+        this.taches = data || [];
+        this.loading = false;
+        console.log('✅ Tâches chargées:', this.taches.length);
       },
       error: (err) => {
-        console.error("❌ Erreur API Camunda =", err);
+        console.error('❌ Erreur chargement tâches:', err);
+        this.error = 'Impossible de charger les tâches.';
+        this.loading = false;
       }
     });
   }
 
-  // =========================
-  // RECLAMER TASK
-  // =========================
-  reclamer(t: CamundaTask): void {
-    if (!t?.id) return;
-
-    this.exportService.reclamerTache(t.id).subscribe({
+  reclamer(task: CamundaTask): void {
+    this.exportService.reclamerTache(task.id).subscribe({
       next: () => {
-        alert('✅ Tâche réclamée avec succès');
+        console.log('✅ Tâche réclamée');
         this.load();
       },
       error: (err) => {
-        console.error('❌ Erreur claim Camunda :', err);
-        alert('Erreur lors de la réclamation : ' + (err.message || 'inconnue'));
+        console.error('❌ Erreur réclamation:', err);
+        this.error = 'Impossible de réclamer la tâche.';
       }
     });
   }
 
-  // =========================
-  // OUVRIR DIALOG (clic Compléter)
-  // =========================
-  completerTache(t: CamundaTask): void {
-    this.selectedTask = t;
-    this.vars = {};            // reset variables
-    this.dialogVisible = true;
-  }
-
-  // =========================
-  // FERMER DIALOG
-  // =========================
-  fermerDialog(): void {
-    this.dialogVisible = false;
-    this.selectedTask = null;
-    this.vars = {};
-    this.isValidating = false;
-  }
-
-  // =========================
-  // VALIDER (envoie à Camunda)
-  // =========================
-valider(): void {
-
-  if (!this.selectedTask?.id) return;
-
-  if (this.isValidating) return;
-
-  this.isValidating = true;
-
-  try {
-
-    // 🔥 ouvre la tâche dans Camunda Tasklist
-    this.exportService.ouvrirTacheCamunda(this.selectedTask.id);
-
-    console.log('✅ Redirection vers Camunda');
-
-    this.fermerDialog();
-
-  } catch (err: any) {
-
-    console.error('❌ Erreur ouverture Camunda :', err);
-
-    alert(
-      'Erreur : ' +
-      (err?.message || 'Impossible d’ouvrir la tâche Camunda')
-    );
-
-    this.isValidating = false;
+  ouvrirCamunda(taskId: string): void {
+    this.exportService.ouvrirTacheCamunda(taskId);
   }
 }
 
-  // =========================
-  // FILTER
-  // =========================
-  filteredTasks(): CamundaTask[] {
-    return this.taches.filter(task => {
-      const name = (task.name || '').toLowerCase();
-      const matchSearch = name.includes(this.searchText.toLowerCase());
-
-      const status = this.getStatus(task);
-      const matchFilter = !this.filterStatus || status === this.filterStatus;
-
-      return matchSearch && matchFilter;
-    });
-  }
-
-  // =========================
-  // STATUS
-  // =========================
-  getStatus(task: CamundaTask): string {
-    const name = (task.name || '').toLowerCase();
-    if (name.includes('validation')) return 'encours';
-    if (name.includes('examen')) return 'attente';
-    return 'nouveau';
-  }
-
-  getStatusLabel(task: CamundaTask): string {
-    const s = this.getStatus(task);
-    if (s === 'encours') return 'En cours';
-    if (s === 'attente') return 'En attente';
-    return 'Nouveau';
-  }
-
-  getStatusClass(task: CamundaTask): string {
-    const s = this.getStatus(task);
-    if (s === 'encours') return 'encours';
-    if (s === 'attente') return 'attente';
-    return 'nouveau';
-  }
-
-  // =========================
-  // VARIABLES DYNAMIQUES (selon taskDefinitionKey)
-  // =========================
-  hasVariable(name: string): boolean {
-    const key = this.selectedTask?.taskDefinitionKey || '';
-
-    if (name === 'documentsComplets') {
-      return /Saisie|Empotage|BESC/.test(key);
-    }
-    if (name === 'controleConforme') {
-      return /Controle|Inspection/.test(key);
-    }
-    if (name === 'paiementEffectue') {
-      return /Paiement/.test(key);
-    }
-    return false;
-  }
-
-  // =========================
-  // KANBAN (préservé)
-  // =========================
-  getKanbanColumns() {
-    return {
-      todo: this.filteredTasks().filter(t => this.getStatus(t) === 'nouveau'),
-      inProgress: this.filteredTasks().filter(t => this.getStatus(t) === 'encours'),
-      done: this.filteredTasks().filter(t => this.getStatus(t) === 'attente')
-    };
-  }
-
-  // =========================
-  // PAGINATION (préservé)
-  // =========================
-  page = 1;
-  pageSize = 6;
-
-  get paginatedTasks() {
-    const tasks = this.filteredTasks();
-    const start = (this.page - 1) * this.pageSize;
-    return tasks.slice(start, start + this.pageSize);
-  }
-
-  nextPage() {
-    this.page++;
-  }
-
-  prevPage() {
-    if (this.page > 1) this.page--;
-  }
-
-
-ouvrirCamunda(taskId: string) {
-  const url = `http://localhost:8081/camunda/app/tasklist/default/#/?task=${taskId}`;
-  window.open(url, '_blank');
-}
-}

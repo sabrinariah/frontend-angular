@@ -24,15 +24,15 @@ import { CreateUserComponent } from './app/features/users/create-user/create-use
 import { UserDetailComponent } from './app/features/users/user-detail/user-detail';
 import { ProcessusListComponent } from './app/features/processus/processus-list.component';
 import { ProcessusFormComponent } from './app/features/processus/processus-form.component';
-import { DetailProcessusComponent } from './app/features/processus/processus-detail';
+import { TachesListComponent } from './app/features/taches/taches-list';
+
 import { ProcessusModifierComponent } from './app/features/processus/processus-modifier.component';
 import { RegleMetierComponent } from './app/components/regle/regle';
 // 🔥 CAMUNDA
-import { StartProcessComponent } from './app/components/start-process/start-process';
-import { TaskListComponent } from './app/components/task-list/task-list';
+
 import { BpmnViewerComponent } from './app/components/bpmn-viewer/bpmn-viewer';   // ← CORRIGÉ ICI
 import { RegisterComponent } from './app//register/register';
-import { TachesListComponent } from './app/features/taches/taches-list';
+
 // 🆕 IMPORT / EXPORT
 import { ImportComponent } from './app/pages/import/import';
 import { ExportComponent } from './app/pages/export.component';
@@ -42,45 +42,41 @@ const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   { path: 'login', component: LoginComponent },
-  { path: 'users/:username', component: UserDetailComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuardService] },
-  // ⚙️ REGLES METIER
-  { 
-    path: 'regles', 
-    component: RegleMetierComponent, 
-    canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des réglesmetier'] }
-  },
   { path: 'register', component: RegisterComponent },
+
+  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuardService] },
+
+  // ⚙️ REGLES METIER
+  { path: 'regles', component: RegleMetierComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des réglesmetier'] } },
+
   // 🔥 CAMUNDA
-  { path: 'start-process', component: StartProcessComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'tasks', component: TaskListComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { 
-    path: 'bpmn-viewer/:processDefinitionId', 
-    component: BpmnViewerComponent, 
-    canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] }
-  },
-  { 
-  path: 'taches-list', 
-  component: TachesListComponent, 
-  canActivate: [AuthGuardService], 
-  data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] }
-},
+  { path: 'bpmn-viewer/:processDefinitionId', component: BpmnViewerComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+
+
   // 🆕 IMPORT / EXPORT
-  { path: 'import', component: ImportComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'export', component: ExportComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'import-export', component: ImportExportComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  { path: 'import', component: ImportComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  { path: 'export', component: ExportComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  { path: 'import-export', component: ImportExportComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+
   // 👤 USERS
   { path: 'users', component: UsersComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
+  { path: 'users/:username', component: UserDetailComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
   { path: 'create-user', component: CreateUserComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
   { path: 'users/edit/:username', component: EditUserComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
 
   // ⚙️ PROCESSUS
-  { path: 'processus', component: ProcessusListComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'processus/new', component: ProcessusFormComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'processus/:id/edit', component: ProcessusModifierComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'processus/:id', component: DetailProcessusComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  { path: 'processus', component: ProcessusListComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  { path: 'processus/new', component: ProcessusFormComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  { path: 'processus/:id/edit', component: ProcessusModifierComponent, canActivate: [AuthGuardService],
+    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  { path: 'taches-list', component: TachesListComponent },
 
   { path: '**', redirectTo: 'dashboard' }
 ];
