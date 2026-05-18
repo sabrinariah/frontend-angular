@@ -1,246 +1,907 @@
 <!-- composant HTML -->
-<div class="wrap">
+<div class="page-wrapper">
 
-  <!-- HEADER MODERN -->
-  <div class="hdr">
-    <div class="hdr-left">
-      <div class="hdr-badge">Gestion & Suivi</div>
-      <h1 class="hdr-title">Liste des <span class="hdr-highlight">processus</span></h1>
-      <p class="hdr-sub">Gérez et suivez l'ensemble de vos processus en temps réel</p>
-    </div>
-
-    <div class="hdr-right">
-      <div class="search-container">
-        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-        </svg>
-        <input
-          type="text"
-          placeholder="Rechercher un processus..."
-          [(ngModel)]="searchTerm"
-          class="search-input-modern"
-        />
+  <!-- ====================== TOASTS ====================== -->
+  <div class="toast-container">
+    <div *ngFor="let t of toasts" class="toast" [class]="'toast-' + t.type">
+      <div class="toast-icon">
+        {{ t.type === 'success' ? '✅' : t.type === 'info' ? 'ℹ️' : t.type === 'warning' ? '⚠️' : '❌' }}
       </div>
-
-      <button class="btn-primary-modern" (click)="ajouter()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Nouveau processus
-      </button>
+      <div class="toast-body">
+        <div class="toast-msg">{{ t.message }}</div>
+        <div *ngIf="t.detail" class="toast-detail">{{ t.detail }}</div>
+      </div>
+      <button class="toast-close" (click)="removeToast(t.id)">✕</button>
     </div>
   </div>
 
-  <!-- STATS CARDS -->
-  <div class="stats-grid">
-    <div class="stat-card-modern">
-      <div class="stat-icon total">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-          <line x1="3" y1="9" x2="21" y2="9"></line>
-          <line x1="3" y1="15" x2="21" y2="15"></line>
-          <line x1="9" y1="21" x2="9" y2="3"></line>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <span class="stat-value">{{ filteredProcessus().length }}</span>
-        <span class="stat-label">Total processus</span>
+  <!-- ====================== HEADER ====================== -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="header-icon">📊</div>
+      <div>
+        <h1>Gestion des Processus Métier</h1>
+        <p class="header-subtitle">Suivez, gérez et orchestrez vos processus d'importation</p>
       </div>
     </div>
+    <a routerLink="/processus/new" class="btn btn-primary btn-add">
+      <span class="btn-icon">+</span> Nouveau Processus
+    </a>
+  </div>
 
-    <div class="stat-card-modern">
-      <div class="stat-icon actif">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-          <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <span class="stat-value">{{ getActifCount() }}</span>
-        <span class="stat-label">Actifs</span>
-      </div>
+  <!-- ====================== KPIs ====================== -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-icon">📋</div>
+      <div class="kpi-body"><div class="kpi-value">{{ processus.length }}</div><div class="kpi-label">Total Processus</div></div>
     </div>
-
-    <div class="stat-card-modern">
-      <div class="stat-icon inactif">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"></circle>
-          <line x1="12" y1="8" x2="12" y2="12"></line>
-          <line x1="12" y1="16" x2="12.01" y2="16"></line>
-        </svg>
-      </div>
-      <div class="stat-content">
-        <span class="stat-value">{{ getInactifCount() }}</span>
-        <span class="stat-label">Inactifs</span>
-      </div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-body"><div class="kpi-value">{{ countActifs() }}</div><div class="kpi-label">Actifs</div></div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <div class="kpi-icon">⏸️</div>
+      <div class="kpi-body"><div class="kpi-value">{{ countInactifs() }}</div><div class="kpi-label">Inactifs</div></div>
+    </div>
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-icon">📌</div>
+      <div class="kpi-body"><div class="kpi-value">{{ totalTaches() }}</div><div class="kpi-label">Total Tâches</div></div>
     </div>
   </div>
 
-  <!-- ALERTS MODERN -->
-  <div *ngIf="message" class="alert-modern success">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-      <polyline points="22 4 12 14.01 9 11.01"></polyline>
-    </svg>
-    <span>{{ message }}</span>
+  <!-- ====================== TOOLBAR ====================== -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input [(ngModel)]="searchTerm" placeholder="Rechercher un processus..." class="search-input" />
+    </div>
+    <div class="filter-group">
+      <button (click)="filterStatus = 'all'"      [class.active]="filterStatus === 'all'"      class="filter-btn">Tous</button>
+      <button (click)="filterStatus = 'active'"   [class.active]="filterStatus === 'active'"   class="filter-btn">Actifs</button>
+      <button (click)="filterStatus = 'inactive'" [class.active]="filterStatus === 'inactive'" class="filter-btn">Inactifs</button>
+    </div>
   </div>
 
-  <div *ngIf="error" class="alert-modern error">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"></circle>
-      <line x1="12" y1="8" x2="12" y2="12"></line>
-      <line x1="12" y1="16" x2="12.01" y2="16"></line>
-    </svg>
-    <span>{{ error }}</span>
+  <!-- ====================== TABLE ====================== -->
+  <div class="table-wrapper">
+    <table class="pro-table">
+      <thead>
+        <tr>
+          <th class="col-id">ID</th>
+          <th class="col-nom">Nom du processus</th>
+          <th class="col-type">Type</th>
+          <th class="col-statut">Statut</th>
+          <th class="col-dates">Date début</th>
+          <th class="col-dates">Date fin</th>
+          <th class="col-taches">Tâches</th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngIf="filteredProcessus().length > 0">
+          <tr *ngFor="let p of filteredProcessus(); let i = index"
+              class="table-row" [class.row-inactive]="!p.actif" [class.row-even]="i % 2 === 0">
+            <td class="col-id"><span class="row-id">#{{ p.id }}</span></td>
+            <td class="col-nom">
+              <div class="nom-cell">
+                <div class="nom-accent" [class.accent-inactive]="!p.actif"></div>
+                <div class="nom-text">{{ p.nom }}</div>
+              </div>
+            </td>
+            <td class="col-type"><span class="type-badge">{{ p.typeProcessus }}</span></td>
+            <td class="col-statut">
+              <span class="status-pill" [class.pill-active]="p.actif" [class.pill-inactive]="!p.actif">
+                <span class="status-dot"></span>{{ p.actif ? 'Actif' : 'Inactif' }}
+              </span>
+            </td>
+            <td class="col-dates"><span class="date-chip">{{ p.dateDebut || '—' }}</span></td>
+            <td class="col-dates"><span class="date-chip">{{ p.dateFin || '—' }}</span></td>
+            <td class="col-taches">
+              <span class="tache-badge" [class.tache-zero]="!taskCounts[p.id!]">{{ taskCounts[p.id!] || 0 }}</span>
+            </td>
+            <td class="col-actions">
+              <div class="actions-row">
+                <button (click)="openTachesPopup(p)" class="tbl-btn tbl-workflow" title="Voir le workflow BPMN">👁️ Workflow</button>
+                <a [routerLink]="['/processus', p.id, 'edit']" class="tbl-btn tbl-edit" title="Modifier">✏️</a>
+                <button (click)="toggle(p.id!)" class="tbl-btn tbl-toggle" title="{{ p.actif ? 'Désactiver' : 'Activer' }}">{{ p.actif ? '⏸️' : '▶️' }}</button>
+                <button (click)="delete(p.id!)" class="tbl-btn tbl-del" title="Supprimer">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+        <tr *ngIf="filteredProcessus().length === 0">
+          <td colspan="8" class="empty-row">
+            <div class="empty-state-inline">
+              <span class="empty-icon-big">📭</span>
+              <p *ngIf="searchTerm || filterStatus !== 'all'">Aucun résultat — ajustez vos filtres.</p>
+              <p *ngIf="!searchTerm && filterStatus === 'all'">Aucun processus. Créez le premier !</p>
+              <a routerLink="/processus/new" class="btn btn-primary btn-sm">+ Créer un processus</a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-footer" *ngIf="filteredProcessus().length > 0">
+      <span class="table-count">{{ filteredProcessus().length }} processus affiché{{ filteredProcessus().length > 1 ? 's' : '' }}
+        <span *ngIf="filteredProcessus().length !== processus.length" class="table-count-filter">(sur {{ processus.length }} au total)</span>
+      </span>
+    </div>
   </div>
 
-  <!-- LOADING MODERN -->
-  <div *ngIf="loading" class="loading-modern">
-    <div class="spinner-modern"></div>
-    <p>Chargement des processus...</p>
-  </div>
+  <!-- ====================== POPUP BPMN WORKFLOW ====================== -->
+  <div *ngIf="selectedProcessus" class="popup-overlay" (click)="closePopup()">
+    <div class="popup-content popup-wide" (click)="$event.stopPropagation()">
 
-  <!-- EMPTY STATE MODERN -->
-  <div *ngIf="!loading && filteredProcessus().length === 0" class="empty-modern">
-    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <rect x="3" y="3" width="18" height="18" rx="2"></rect>
-      <line x1="3" y1="9" x2="21" y2="9"></line>
-      <line x1="3" y1="15" x2="21" y2="15"></line>
-      <line x1="9" y1="21" x2="9" y2="3"></line>
-    </svg>
-    <h3>Aucun processus trouvé</h3>
-    <p>Commencez par créer un nouveau processus</p>
-    <button class="btn-outline" (click)="ajouter()">+ Créer un processus</button>
-  </div>
-
-  <!-- CARDS GRID MODERN -->
-  <div class="grid-modern" *ngIf="!loading && filteredProcessus().length > 0">
-    <div class="card-modern" *ngFor="let p of filteredProcessus(); let i = index">
-      <div class="card-status" [ngClass]="p.actif ? 'status-actif' : 'status-inactif'"></div>
-
-      <div class="card-header">
-        <div class="card-number">#{{ i + 1 }}</div>
-        <div class="badge-modern" [ngClass]="p.actif ? 'badge-actif-modern' : 'badge-inactif-modern'">
-          <span class="badge-dot"></span>
-          {{ p.actif ? 'Actif' : 'Inactif' }}
+      <div class="popup-header">
+        <div class="popup-header-info">
+          <h3>🔀 {{ selectedProcessus.nom }}</h3>
+          <span class="processus-type-badge">{{ selectedProcessus.typeProcessus }}</span>
+        </div>
+        <div class="popup-header-right">
+          <span class="tache-counter">{{ taches.length }} tâche{{ taches.length > 1 ? 's' : '' }}</span>
+          <button (click)="exportBpmn()" class="btn btn-export btn-sm" [disabled]="taches.length === 0">⬇️ Exporter BPMN</button>
+          <button (click)="openBpmnInViewer()" class="btn btn-view-bpmn btn-sm" [disabled]="taches.length === 0">👁️ Voir BPMN</button>
+          <button (click)="openNewTacheForm()" class="btn btn-success btn-sm">+ Nouvelle tâche</button>
+          <button (click)="closePopup()" class="btn-close">✕</button>
         </div>
       </div>
 
-      <div class="card-body-modern">
-        <h3 class="card-title">{{ p.nom }}</h3>
+      <div *ngIf="errorMessage" class="alert-danger">{{ errorMessage }}</div>
+      <div *ngIf="successMessage" class="alert-success">{{ successMessage }}</div>
 
-        <div class="card-meta-modern">
-          <div class="meta-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            <span>{{ p.typeProcessus }}</span>
+      <div class="view-tabs">
+        <button (click)="viewMode = 'svg'"  [class.active]="viewMode === 'svg'"  class="view-tab-btn">📊 Vue Dynamique (Tâches)</button>
+        <button (click)="viewMode = 'bpmn'" [class.active]="viewMode === 'bpmn'" class="view-tab-btn">📁 Diagramme BPMN (fichier)</button>
+      </div>
+
+      <div *ngIf="taches.length > 0" class="stats-bar">
+        <div class="stat-item"><span class="stat-num">{{ taches.length }}</span><span class="stat-label">Total</span></div>
+        <div class="stat-item stat-attente"><span class="stat-num">{{ countByStatut('EN_ATTENTE') }}</span><span class="stat-label">En attente</span></div>
+        <div class="stat-item stat-cours"><span class="stat-num">{{ countByStatut('EN_COURS') }}</span><span class="stat-label">En cours</span></div>
+        <div class="stat-item stat-termine"><span class="stat-num">{{ countByStatut('TERMINE') }}</span><span class="stat-label">Terminées</span></div>
+        <div class="stat-item stat-gateway"><span class="stat-num">{{ countGateways() }}</span><span class="stat-label">Gateways</span></div>
+      </div>
+
+      <div *ngIf="taches.length > 0" class="progress-section">
+        <div class="progress-label">Progression globale : <strong>{{ progressPercent() }}%</strong></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" [style.width.%]="progressPercent()"></div></div>
+      </div>
+
+      <!-- ====== VUE 1 : SVG DYNAMIQUE ====== -->
+      <div *ngIf="viewMode === 'svg' && taches.length > 0" class="bpmn-panel">
+        <div class="bpmn-legend-bar">
+          <div class="lg-item">
+            <svg width="22" height="22"><circle cx="11" cy="11" r="10" fill="#10b981" stroke="#059669" stroke-width="1.5"/><text x="11" y="15" text-anchor="middle" fill="white" font-size="10">▶</text></svg>
+            <span>Début</span>
+          </div>
+          <div class="lg-item">
+            <svg width="22" height="22"><rect x="1" y="1" width="20" height="20" rx="4" fill="#4f46e5" stroke="#4338ca" stroke-width="1"/></svg>
+            <span>Tâche</span>
+          </div>
+          <div class="lg-item">
+            <svg width="22" height="22"><rect x="1" y="1" width="20" height="20" rx="4" fill="#0ea5e9" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="3,2"/><text x="11" y="15" text-anchor="middle" fill="white" font-size="9" font-weight="800">SP</text></svg>
+            <span>SubProcess</span>
+          </div>
+          <div class="lg-item">
+            <svg width="22" height="22"><polygon points="11,1 21,11 11,21 1,11" fill="white" stroke="#374151" stroke-width="1.5"/><text x="11" y="15" text-anchor="middle" fill="#374151" font-size="12">✕</text></svg>
+            <span>Gateway</span>
+          </div>
+          <div class="lg-item">
+            <svg width="22" height="22"><circle cx="11" cy="11" r="9" fill="none" stroke="#374151" stroke-width="3.5"/><circle cx="11" cy="11" r="5" fill="#374151"/></svg>
+            <span>Fin</span>
+          </div>
+          <div class="lg-sep"></div>
+          <div class="lg-item">
+            <svg width="32" height="14"><line x1="2" y1="7" x2="30" y2="7" stroke="#10b981" stroke-width="2.5"/><polygon points="26,4 32,7 26,10" fill="#10b981"/></svg>
+            <span style="color:#10b981;font-weight:700">OUI</span>
+          </div>
+          <div class="lg-item">
+            <svg width="32" height="14"><line x1="2" y1="7" x2="30" y2="7" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5,3"/><polygon points="26,4 32,7 26,10" fill="#ef4444"/></svg>
+            <span style="color:#ef4444;font-weight:700">NON</span>
+          </div>
+          <span class="lg-hint">💡 Cliquez sur une tâche pour l'éditer</span>
+        </div>
+
+        <div class="bpmn-scroll-container">
+          <svg
+            [attr.width]="bpmnDiagram.viewWidth"
+            [attr.height]="bpmnDiagram.viewHeight"
+            [attr.viewBox]="'0 0 ' + bpmnDiagram.viewWidth + ' ' + bpmnDiagram.viewHeight"
+            xmlns="http://www.w3.org/2000/svg"
+            class="bpmn-svg">
+
+            <defs>
+              <marker id="bpmn-arrow" viewBox="0 0 12 12" refX="10" refY="6"
+                      markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+                <path d="M1 1L11 6L1 11" fill="none" stroke="#64748b" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </marker>
+              <marker id="bpmn-arrow-oui" viewBox="0 0 12 12" refX="10" refY="6"
+                      markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+                <path d="M1 1L11 6L1 11" fill="none" stroke="#10b981" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </marker>
+              <marker id="bpmn-arrow-non" viewBox="0 0 12 12" refX="10" refY="6"
+                      markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+                <path d="M1 1L11 6L1 11" fill="none" stroke="#ef4444" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </marker>
+              <filter id="task-shadow" x="-10%" y="-10%" width="130%" height="150%">
+                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.12)"/>
+              </filter>
+              <filter id="sp-shadow" x="-10%" y="-10%" width="130%" height="150%">
+                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(99,102,241,0.25)"/>
+              </filter>
+              <linearGradient id="svgBg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#f8faff"/>
+                <stop offset="100%" stop-color="#eef2ff"/>
+              </linearGradient>
+            </defs>
+
+            <rect x="0" y="0" [attr.width]="bpmnDiagram.viewWidth" [attr.height]="bpmnDiagram.viewHeight"
+                  fill="url(#svgBg)" rx="12"/>
+            <rect x="0" y="0" [attr.width]="bpmnDiagram.viewWidth" [attr.height]="bpmnDiagram.viewHeight"
+                  fill="none" stroke="#e2e8f0" stroke-width="1" rx="12"/>
+            <line x1="0" y1="40" [attr.x2]="bpmnDiagram.viewWidth" y2="40" stroke="#e2e8f0" stroke-width="1"/>
+            <text x="14" y="26" font-size="11" fill="#94a3b8"
+                  font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                  font-weight="700" letter-spacing="1">
+              PROCESSUS : {{ selectedProcessus?.nom | uppercase }}
+            </text>
+
+            <!-- ARÊTES -->
+            <g *ngFor="let edge of bpmnDiagram.edges">
+              <ng-container *ngIf="getEdgePath(edge) as ep">
+                <path *ngIf="edge.branchType !== 'normal'"
+                      [attr.d]="ep.d" fill="none"
+                      [attr.stroke]="edge.branchType === 'oui' ? '#bbf7d0' : '#fecaca'"
+                      stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                <path [attr.d]="ep.d" fill="none"
+                      [attr.stroke]="getEdgeColor(edge)"
+                      [attr.stroke-width]="getEdgeStrokeWidth(edge)"
+                      [attr.stroke-dasharray]="getEdgeDashArray(edge)"
+                      stroke-linecap="round" stroke-linejoin="round"
+                      [attr.marker-end]="getEdgeMarker(edge)"/>
+                <g *ngIf="edge.label">
+                  <rect [attr.x]="ep.labelX - (edge.label!.length * 3.8 + 6)"
+                        [attr.y]="ep.labelY - 10"
+                        [attr.width]="edge.label!.length * 7.6 + 12"
+                        height="20" rx="5"
+                        [attr.fill]="getEdgeLabelBg(edge)"
+                        [attr.stroke]="getEdgeColor(edge)"
+                        stroke-width="1" opacity="0.95"/>
+                  <text [attr.x]="ep.labelX" [attr.y]="ep.labelY"
+                        text-anchor="middle" dominant-baseline="central"
+                        font-size="11" [attr.fill]="getEdgeColor(edge)"
+                        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                        font-weight="700" letter-spacing="0.3">
+                    {{ truncate(edge.label!, 28) }}
+                  </text>
+                </g>
+              </ng-container>
+            </g>
+
+            <!-- ÉLÉMENTS -->
+            <g *ngFor="let el of bpmnDiagram.elements">
+
+              <!-- START EVENT -->
+              <g *ngIf="el.type === 'startEvent'">
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2 + 2"
+                        fill="#d1fae5" stroke="none"/>
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2"
+                        fill="#10b981" stroke="#059669" stroke-width="2"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 1"
+                      text-anchor="middle" dominant-baseline="central" font-size="18" fill="white">▶</text>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 18"
+                      text-anchor="middle" font-size="11" fill="#374151"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                      font-weight="700" letter-spacing="0.5">DÉBUT</text>
+              </g>
+
+              <!-- END EVENT -->
+              <g *ngIf="el.type === 'endEvent'">
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2 + 2"
+                        fill="#f1f5f9" stroke="none"/>
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2"
+                        fill="none" stroke="#374151" stroke-width="4"/>
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2 - 5"
+                        fill="#374151"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 18"
+                      text-anchor="middle" font-size="11" fill="#374151"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                      font-weight="700" letter-spacing="0.5">FIN</text>
+              </g>
+
+              <!-- TASK -->
+              <g *ngIf="el.type === 'task'" class="bpmn-task-group"
+                 (click)="el.tache && openTaskForm(el.tache)" style="cursor:pointer">
+                <rect [attr.x]="el.x + 3" [attr.y]="el.y + 4" [attr.width]="el.width" [attr.height]="el.height"
+                      rx="10" fill="rgba(0,0,0,0.08)"/>
+                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" [attr.height]="el.height"
+                      rx="10" [attr.fill]="getTaskFill(el.tache)" [attr.stroke]="getTaskStroke(el.tache)" stroke-width="2.5"
+                      filter="url(#task-shadow)"/>
+                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" height="6"
+                      [attr.fill]="getTaskStroke(el.tache)" rx="10"/>
+                <rect [attr.x]="el.x" [attr.y]="el.y + 3" [attr.width]="el.width" height="3"
+                      [attr.fill]="getTaskStroke(el.tache)"/>
+                <rect [attr.x]="el.x + 8" [attr.y]="el.y + 12" width="26" height="18" rx="9"
+                      [attr.fill]="getTaskStroke(el.tache)"/>
+                <text [attr.x]="el.x + 21" [attr.y]="el.y + 21"
+                      text-anchor="middle" dominant-baseline="central"
+                      font-size="10" fill="white" font-weight="800"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+                  {{ el.tache?.ordre }}
+                </text>
+                <text [attr.x]="el.x + el.width - 8" [attr.y]="el.y + 21"
+                      text-anchor="end" dominant-baseline="central"
+                      font-size="8.5" fill="#6b7280" font-weight="700"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" letter-spacing="0.3">
+                  {{ el.tache?.type }}</text>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + 44"
+                      text-anchor="middle" dominant-baseline="central"
+                      font-size="12" font-weight="700"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                      [attr.fill]="getTaskTextColor(el.tache)">
+                  {{ truncate(el.label, 22) }}
+                </text>
+                <text *ngIf="el.tache?.assignee"
+                      [attr.x]="el.x + el.width/2" [attr.y]="el.y + 58"
+                      text-anchor="middle" dominant-baseline="central"
+                      font-size="9.5" fill="#6b7280"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+                  👤 {{ truncate(el.tache!.assignee!, 18) }}</text>
+                <g *ngIf="el.tache && getChamps(el.tache).length > 0">
+                  <rect [attr.x]="el.x + 8" [attr.y]="el.y + el.height - 22" width="40" height="14" rx="7" fill="#eef2ff"/>
+                  <text [attr.x]="el.x + 28" [attr.y]="el.y + el.height - 15"
+                        text-anchor="middle" dominant-baseline="central"
+                        font-size="9" fill="#4f46e5" font-weight="700"
+                        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+                    📝 {{ el.tache && getChamps(el.tache).length }}</text>
+                </g>
+                <g *ngIf="el.tache && hasFormData(el.tache)">
+                  <rect [attr.x]="el.x + 54" [attr.y]="el.y + el.height - 22" width="32" height="14" rx="7" fill="#d1fae5"/>
+                  <text [attr.x]="el.x + 70" [attr.y]="el.y + el.height - 15"
+                        text-anchor="middle" dominant-baseline="central"
+                        font-size="9" fill="#059669" font-weight="700"
+                        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">✓ OK</text>
+                </g>
+                <text [attr.x]="el.x + el.width - 12" [attr.y]="el.y + el.height - 12"
+                      text-anchor="end" dominant-baseline="central" font-size="15">
+                  {{ el.tache?.statut === 'TERMINE' ? '✅' : el.tache?.statut === 'EN_COURS' ? '⚡' : '⏳' }}
+                </text>
+              </g>
+
+              <!-- ✅ SUBPROCESS (CLIQUABLE) -->
+              <g *ngIf="el.type === 'subprocess'" class="bpmn-subprocess-group"
+                 (click)="onSubprocessClick(el)"
+                 style="cursor:pointer">
+                <rect [attr.x]="el.x + 2" [attr.y]="el.y + 3" [attr.width]="el.width" [attr.height]="el.height"
+                      rx="8" [attr.fill]="getSubprocessColor(el)" opacity="0.15"/>
+                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" [attr.height]="el.height"
+                      rx="8"
+                      [attr.fill]="getSubprocessColor(el) + '18'"
+                      [attr.stroke]="getSubprocessColor(el)"
+                      stroke-width="2" stroke-dasharray="6,3"
+                      filter="url(#sp-shadow)"/>
+                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" height="5"
+                      rx="8" [attr.fill]="getSubprocessColor(el)"/>
+                <rect [attr.x]="el.x" [attr.y]="el.y + 3" [attr.width]="el.width" height="2"
+                      [attr.fill]="getSubprocessColor(el)"/>
+                <rect [attr.x]="el.x + 6" [attr.y]="el.y + 9" width="22" height="12" rx="6"
+                      [attr.fill]="getSubprocessColor(el)"/>
+                <text [attr.x]="el.x + 17" [attr.y]="el.y + 15"
+                      text-anchor="middle" dominant-baseline="central"
+                      font-size="7" fill="white" font-weight="900"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">SP</text>
+                <text [attr.x]="el.x + el.width - 6" [attr.y]="el.y + 15"
+                      text-anchor="end" dominant-baseline="central"
+                      font-size="7.5" [attr.fill]="getSubprocessColor(el)" font-weight="700"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">{{ el.sublabel }}</text>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + 35"
+                      text-anchor="middle" dominant-baseline="central"
+                      font-size="10.5" font-weight="700"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                      [attr.fill]="getSubprocessColor(el)">
+                  {{ truncate(el.label, 18) }}
+                </text>
+                <rect [attr.x]="el.x + el.width/2 - 8" [attr.y]="el.y + el.height - 14"
+                      width="16" height="10" rx="3"
+                      [attr.stroke]="getSubprocessColor(el)" stroke-width="1.5" fill="white"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height - 9"
+                      text-anchor="middle" dominant-baseline="central"
+                      font-size="8" [attr.fill]="getSubprocessColor(el)" font-weight="800">+</text>
+              </g>
+
+              <!-- GATEWAY -->
+              <g *ngIf="el.type === 'gateway'"
+                 (click)="el.sourceTache && openTaskForm(el.sourceTache)" style="cursor:pointer">
+                <polygon [attr.points]="getDiamondPoints(el.x - 4, el.y - 4, el.width + 8, el.height + 8)"
+                         fill="#f1f5f9" stroke="none"/>
+                <polygon [attr.points]="getDiamondPoints(el.x, el.y, el.width, el.height)"
+                         fill="white" stroke="#374151" stroke-width="2"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 2"
+                      text-anchor="middle" dominant-baseline="central"
+                      font-size="22" fill="#374151" font-weight="700"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">✕</text>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 20"
+                      text-anchor="middle" font-size="11" fill="#374151"
+                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-weight="600">
+                  {{ truncate(el.question || 'Condition ?', 26) }}
+                </text>
+              </g>
+
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ====== VUE 2 : VIEWER BPMN ====== -->
+      <div *ngIf="viewMode === 'bpmn'" class="bpmn-file-panel">
+        <div *ngIf="selectedProcessus?.fileBpmn; else noFileTpl">
+          <div class="bpmn-file-info">
+            <span class="file-badge">📁 Fichier source :</span>
+            <code class="file-path">{{ generatedBpmnUrl && selectedProcessus?.fileBpmn === generatedBpmnUrl ? '🔄 BPMN généré en mémoire' : selectedProcessus?.fileBpmn }}</code>
+            <button *ngIf="generatedBpmnUrl && selectedProcessus?.fileBpmn === generatedBpmnUrl"
+                    (click)="clearGeneratedBpmn()" class="btn-clear-bpmn">✕ Effacer</button>
+          </div>
+          <app-bpmn-viewer [fileUrl]="selectedProcessus!.fileBpmn!"></app-bpmn-viewer>
+        </div>
+        <ng-template #noFileTpl>
+          <div class="no-file-box">
+            <span class="empty-icon-big">📭</span>
+            <h4>Aucun fichier BPMN associé</h4>
+            <p>Ce processus n'a pas encore de fichier <code>.bpmn</code> lié.</p>
+            <div class="no-file-actions">
+              <button (click)="openBpmnInViewer()" class="btn btn-view-bpmn btn-sm" [disabled]="taches.length === 0">👁️ Voir BPMN ici</button>
+              <button (click)="exportBpmn()" class="btn btn-export btn-sm" [disabled]="taches.length === 0">⬇️ Télécharger BPMN</button>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+
+      <div *ngIf="viewMode === 'svg' && taches.length === 0" class="empty-workflow">
+        <span class="empty-icon-big">📭</span>
+        <p>Aucune tâche dans ce processus.</p>
+        <button (click)="openNewTacheForm()" class="btn btn-primary">+ Ajouter la première tâche</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ====================== POPUP ÉDITEUR TÂCHE ====================== -->
+  <div *ngIf="formTaskOpen" class="popup-overlay popup-overlay-2" (click)="closeTaskForm()">
+    <div class="popup-content popup-form-content" (click)="$event.stopPropagation()">
+      <div class="popup-header">
+        <div class="popup-header-info">
+          <h3>{{ isNewTask ? '➕ Nouvelle tâche' : '📝 Modifier : ' + formTaskOpen.nom }}</h3>
+          <span class="processus-type-badge">{{ formTaskOpen.type }}</span>
+        </div>
+        <div class="popup-header-right">
+          <button *ngIf="!isNewTask && formTaskOpen.id" (click)="confirmDeleteTache(formTaskOpen)" class="btn btn-danger btn-sm">🗑️ Supprimer</button>
+          <button (click)="closeTaskForm()" class="btn-close">✕</button>
+        </div>
+      </div>
+
+      <div *ngIf="formError" class="alert-danger">{{ formError }}</div>
+
+      <div class="editor-tabs">
+        <button (click)="editorTab = 'info'"    [class.active]="editorTab === 'info'">ℹ️ Informations</button>
+        <button (click)="editorTab = 'champs'"  [class.active]="editorTab === 'champs'">📝 Champs <span class="tab-badge">{{ currentChamps.length }}</span></button>
+        <button (click)="editorTab = 'regles'"  [class.active]="editorTab === 'regles'">⚙️ Règles <span class="tab-badge">{{ currentRegles.length }}</span></button>
+        <button (click)="editorTab = 'donnees'" [class.active]="editorTab === 'donnees'" *ngIf="!isNewTask && currentChamps.length > 0">💾 Saisie données</button>
+      </div>
+
+      <!-- ONGLET INFO -->
+      <div *ngIf="editorTab === 'info'" class="dynamic-form">
+        <div class="form-section">
+          <h4>Informations générales</h4>
+          <label>Nom de la tâche *</label>
+          <input [(ngModel)]="formTaskOpen.nom" class="form-control" placeholder="Ex: Vérification documents"/>
+          <label>Description</label>
+          <textarea [(ngModel)]="formTaskOpen.description" rows="2" class="form-control"></textarea>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Type</label>
+              <select [(ngModel)]="formTaskOpen.type" class="form-control">
+                <option value="HUMAINE">HUMAINE</option>
+                <option value="SYSTEME">SYSTÈME</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Statut</label>
+              <select [(ngModel)]="formTaskOpen.statut" class="form-control">
+                <option value="EN_ATTENTE">EN_ATTENTE</option>
+                <option value="EN_COURS">EN_COURS</option>
+                <option value="TERMINE">TERMINE</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Ordre *</label>
+              <input type="number" [(ngModel)]="formTaskOpen.ordre" class="form-control" min="1"/>
+            </div>
+            <div class="form-group">
+              <label>Assigné à</label>
+              <input [(ngModel)]="formTaskOpen.assignee" class="form-control" placeholder="Personne / service"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ONGLET CHAMPS -->
+      <div *ngIf="editorTab === 'champs'" class="dynamic-form">
+        <div class="info-box">💡 Définissez les champs que l'utilisateur devra remplir pour les règles gateway.</div>
+        <button (click)="addChamp()" class="btn btn-secondary btn-sm">+ Ajouter un champ</button>
+        <div *ngFor="let c of currentChamps; let i = index" class="param-card">
+          <div class="param-head">
+            <strong>Champ #{{ i + 1 }}</strong>
+            <button (click)="removeChamp(i)" class="mini-btn mini-danger">🗑️</button>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Libellé *</label><input [(ngModel)]="c.label" class="form-control"/></div>
+            <div class="form-group"><label>Identifiant *</label><input [(ngModel)]="c.id" class="form-control"/></div>
+            <div class="form-group">
+              <label>Type</label>
+              <select [(ngModel)]="c.type" class="form-control">
+                <option value="string">Texte court</option>
+                <option value="textarea">Texte long</option>
+                <option value="number">Nombre</option>
+                <option value="date">Date</option>
+                <option value="boolean">Oui/Non</option>
+                <option value="enum">Liste de choix</option>
+              </select>
+            </div>
+            <div class="form-group form-check">
+              <label><input type="checkbox" [(ngModel)]="c.required"/> Obligatoire</label>
+            </div>
+          </div>
+          <div *ngIf="c.type === 'enum'" class="sub-section">
+            <label>Options (séparées par virgule)</label>
+            <input [ngModel]="enumOptionsToString(c)" (ngModelChange)="stringToEnumOptions(c, $event)" class="form-control"/>
+          </div>
+        </div>
+        <div *ngIf="currentChamps.length === 0" class="empty-mini">Aucun champ défini.</div>
+      </div>
+
+      <!-- ONGLET RÈGLES -->
+      <div *ngIf="editorTab === 'regles'" class="dynamic-form">
+        <div class="info-box">
+          ⚙️ <strong>Logique SI / SINON</strong> : Le gateway peut aller vers une ou plusieurs tâches existantes <strong>ou</strong> lancer un <strong>SubProcess</strong> (tâches virtuelles non listées dans le flux principal).
+        </div>
+
+        <div class="actions-bar">
+          <button (click)="addRegle()" class="btn btn-secondary btn-sm">+ Ajouter une règle</button>
+        </div>
+
+        <div *ngFor="let r of currentRegles; let ri = index" class="rule-card">
+
+          <div class="rule-head">
+            <input [(ngModel)]="r.nom" class="form-control rule-name" placeholder="Nom de la règle (ex: Dossier conforme)"/>
+            <label class="switch-label"><input type="checkbox" [(ngModel)]="r.actif"/> Active</label>
+            <button (click)="removeRegle(ri)" class="mini-btn mini-danger">🗑️</button>
           </div>
 
-          <div class="meta-item">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span>{{ p.dateDebut | date:'dd/MM/yyyy' }} → {{ p.dateFin | date:'dd/MM/yyyy' }}</span>
+          <div class="mode-toggle">
+            <button type="button" (click)="toggleModeRegle(r, 'simple')"
+                    [class.mode-active]="r.modeRegle === 'simple'" class="mode-btn">
+              ⚙️ Règle simple (champ/opérateur)
+            </button>
+            <button type="button" (click)="toggleModeRegle(r, 'metier')"
+                    [class.mode-active]="r.modeRegle === 'metier'" class="mode-btn"
+                    [disabled]="reglesMetierDisponibles.length === 0">
+              📜 Règle métier ({{ reglesMetierDisponibles.length }} dispo)
+            </button>
+          </div>
+
+          <div class="rule-body">
+
+            <!-- MODE SIMPLE -->
+            <div *ngIf="r.modeRegle === 'simple'">
+              <div class="rule-line-builder">
+                <span class="tag tag-if">SI</span>
+                <select [(ngModel)]="r.champId" class="form-control inline">
+                  <option value="">-- Choisir un champ --</option>
+                  <option *ngFor="let ch of currentChamps" [value]="ch.id">{{ ch.label }}</option>
+                </select>
+                <select [(ngModel)]="r.operateur" class="form-control inline">
+                  <option value="==">est égal à</option>
+                  <option value="!=">est différent de</option>
+                  <option value=">">supérieur à</option>
+                  <option value="<">inférieur à</option>
+                  <option value=">=">sup. ou égal</option>
+                  <option value="<=">inf. ou égal</option>
+                  <option value="contains">contient</option>
+                  <option value="isEmpty">est vide</option>
+                  <option value="isNotEmpty">n'est pas vide</option>
+                </select>
+                <input *ngIf="r.operateur !== 'isEmpty' && r.operateur !== 'isNotEmpty'"
+                       [(ngModel)]="r.valeur" class="form-control inline" placeholder="Valeur"/>
+              </div>
+              <div *ngIf="currentChamps.length === 0" class="warning-box-mini">
+                ⚠️ Ajoutez d'abord un champ pour utiliser une règle simple.
+              </div>
+            </div>
+
+            <!-- MODE MÉTIER -->
+            <div *ngIf="r.modeRegle === 'metier'" class="metier-section">
+              <div class="metier-header">
+                <span class="tag tag-if">SI</span>
+                <span class="metier-text">{{ (r.regleMetierIds?.length || 0) }} règle(s) métier sélectionnée(s)</span>
+                <div *ngIf="(r.regleMetierIds?.length || 0) > 1" class="logique-toggle">
+                  <button type="button" (click)="r.logiqueCombinaison = 'ET'" [class.logique-active]="r.logiqueCombinaison === 'ET'" class="logique-btn">ET (toutes vraies)</button>
+                  <button type="button" (click)="r.logiqueCombinaison = 'OU'" [class.logique-active]="r.logiqueCombinaison === 'OU'" class="logique-btn">OU (au moins une)</button>
+                </div>
+              </div>
+              <div class="filter-categorie">
+                <label>Filtrer par catégorie :</label>
+                <select [(ngModel)]="filtreCategorieRegle" class="form-control inline">
+                  <option value="TOUS">Toutes</option>
+                  <option *ngFor="let cat of getCategoriesDistinctes()" [value]="cat">{{ iconCategorie(cat) }} {{ cat }}</option>
+                </select>
+              </div>
+              <div class="regle-metier-list">
+                <div *ngFor="let rm of getReglesMetierFiltrees()"
+                     class="regle-metier-item" [class.regle-selected]="isRegleMetierSelected(r, rm.id)"
+                     (click)="rm.id && toggleRegleMetier(r, rm.id)">
+                  <div class="regle-metier-check">
+                    <input type="checkbox" [checked]="isRegleMetierSelected(r, rm.id)"
+                           (click)="$event.stopPropagation()" (change)="rm.id && toggleRegleMetier(r, rm.id)"/>
+                  </div>
+                  <div class="regle-metier-icon" [style.background]="couleurCategorie(rm.categorie?.type) + '22'" [style.color]="couleurCategorie(rm.categorie?.type)">{{ iconCategorie(rm.categorie?.type) }}</div>
+                  <div class="regle-metier-body">
+                    <div class="regle-metier-name"><strong>{{ rm.code }}</strong> — {{ rm.nom }}</div>
+                    <div class="regle-metier-meta">
+                      <span class="regle-cat-badge" [style.background]="couleurCategorie(rm.categorie?.type) + '22'" [style.color]="couleurCategorie(rm.categorie?.type)">{{ rm.categorie?.type || '—' }}</span>
+                      <span class="regle-cond-count">{{ rm.conditions?.length || 0 }} condition(s)</span>
+                      <span class="regle-action-badge">⚡ {{ rm.action }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div *ngIf="getReglesMetierFiltrees().length === 0" class="empty-mini">Aucune règle métier dans cette catégorie.</div>
+              </div>
+              <div class="action-douaniere-section">
+                <label>⚡ Action douanière :</label>
+                <input [(ngModel)]="r.actionDouaniere" class="form-control" placeholder="Ex: CIRCUIT_VERT..."/>
+                <div class="action-suggestions" *ngIf="getActionsSuggestionsForRegle(r).length > 0">
+                  <span class="hint-label">Suggestions :</span>
+                  <button *ngFor="let act of getActionsSuggestionsForRegle(r)" type="button" (click)="r.actionDouaniere = act" class="suggestion-chip">{{ act }}</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- TYPE DE CIBLE -->
+            <div class="cible-type-selector">
+              <div class="cible-type-label">Type de cible :</div>
+              <div class="cible-type-buttons">
+                <button type="button" class="cible-type-btn" [class.active]="r.cibleType !== 'subprocess'" (click)="r.cibleType = 'suivante'">
+                  🎯 Tâches du flux
+                </button>
+                <button type="button" class="cible-type-btn cible-type-sp" [class.active]="r.cibleType === 'subprocess'" (click)="r.cibleType = 'subprocess'">
+                  🔲 SubProcess (tâches virtuelles)
+                </button>
+              </div>
+            </div>
+
+            <!-- BLOC SI/SINON : TÂCHES DU FLUX -->
+            <div *ngIf="r.cibleType !== 'subprocess'" class="si-sinon-bloc">
+              <div class="branch-line branch-oui branch-oui-multi">
+                <div class="branch-line-header">
+                  <span class="tag tag-then-oui">✓ SI VRAI</span>
+                  <span class="branch-desc">→ Aller à <strong>une ou plusieurs</strong> tâches :</span>
+                </div>
+                <div class="multi-cible-list">
+                  <div *ngFor="let t of autresTaches()"
+                       class="multi-cible-item" [class.multi-cible-selected]="isOuiCibleSelected(r, t.ordre!)"
+                       (click)="toggleOuiCible(r, t.ordre!)">
+                    <input type="checkbox" [checked]="isOuiCibleSelected(r, t.ordre!)"
+                           (click)="$event.stopPropagation()" (change)="toggleOuiCible(r, t.ordre!)"/>
+                    <span class="multi-cible-order">#{{ t.ordre }}</span>
+                    <span class="multi-cible-name">{{ t.nom }}</span>
+                    <span class="multi-cible-type">{{ t.type }}</span>
+                  </div>
+                  <div *ngIf="autresTaches().length === 0" class="empty-mini-cible">Aucune autre tâche disponible.</div>
+                </div>
+                <div class="branch-resolved">
+                  <span class="branch-resolved-label">Cible(s) :</span>
+                  <span class="branch-resolved-value">{{ getOuiCiblesLabel(r) }}</span>
+                </div>
+                <div *ngIf="(r.tacheOuiOrdres?.length || 0) > 1" class="parallel-info">
+                  ⚡ <strong>{{ r.tacheOuiOrdres?.length }} tâches en parallèle</strong> dans le diagramme.
+                </div>
+              </div>
+
+              <div class="branch-line branch-non">
+                <span class="tag tag-then-non">✗ SINON</span>
+                <span class="branch-desc">→ Aller à :</span>
+                <select [(ngModel)]="r.tacheSinonOrdre" class="form-control inline branch-select">
+                  <option [ngValue]="0">-- Fin du processus --</option>
+                  <option *ngFor="let t of autresTaches()" [ngValue]="t.ordre">#{{ t.ordre }} - {{ t.nom }}</option>
+                </select>
+                <span class="branch-cible-info branch-cible-non" *ngIf="r.tacheSinonOrdre && r.tacheSinonOrdre > 0">
+                  → <strong>#{{ r.tacheSinonOrdre }} {{ getTacheNameByOrdre(r.tacheSinonOrdre) }}</strong>
+                </span>
+                <span class="branch-cible-end" *ngIf="!r.tacheSinonOrdre || r.tacheSinonOrdre === 0">→ <em>Fin du processus</em></span>
+              </div>
+            </div>
+
+            <!-- ✅ BLOC SI/SINON : SUBPROCESS (corrigé visuellement) -->
+            <div *ngIf="r.cibleType === 'subprocess'" class="subprocess-bloc">
+
+              <!-- SubProcess OUI -->
+              <div class="subprocess-section subprocess-oui-section">
+                <div class="subprocess-section-header">
+                  <span class="tag tag-then-oui">✓ SI VRAI → SubProcess</span>
+                  <div class="subprocess-nom-row">
+                    <label class="sp-label">Nom du SubProcess OUI :</label>
+                    <input [(ngModel)]="r.subprocessOuiNom" class="form-control sp-nom-input"
+                           placeholder="Ex: Contrôle renforcé"/>
+                  </div>
+                </div>
+                <div class="subprocess-tasks-list">
+                  <div *ngFor="let vt of r.subprocessOuiTaches || []; let vi = index" class="sp-task-row">
+                    <span class="sp-task-idx">{{ vi + 1 }}</span>
+                    <div class="sp-task-field">
+                      <label class="sp-mini-label">Nom de la tâche</label>
+                      <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
+                    </div>
+                    <div class="sp-task-field sp-task-field-narrow">
+                      <label class="sp-mini-label">Type</label>
+                      <select [(ngModel)]="vt.type" class="form-control sp-task-type">
+                        <option value="HUMAINE">HUMAINE</option>
+                        <option value="SYSTEME">SYSTEME</option>
+                      </select>
+                    </div>
+                    <div class="sp-task-field">
+                      <label class="sp-mini-label">Assigné à (optionnel)</label>
+                      <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Personne / service"/>
+                    </div>
+                    <button type="button" class="mini-btn mini-danger sp-task-delete" (click)="removeSubprocessOuiTache(r, vi)" title="Supprimer">🗑️</button>
+                  </div>
+                  <div *ngIf="!r.subprocessOuiTaches || r.subprocessOuiTaches.length === 0" class="empty-mini-cible">
+                    Aucune tâche dans ce SubProcess.
+                  </div>
+                </div>
+                <button type="button" class="btn-add-sp-task" (click)="addSubprocessOuiTache(r)">
+                  <span>+</span> Ajouter une tâche au SubProcess OUI
+                </button>
+              </div>
+
+              <!-- SubProcess SINON -->
+              <div class="subprocess-section subprocess-non-section">
+                <div class="subprocess-section-header">
+                  <span class="tag tag-then-non">✗ SINON → SubProcess (optionnel)</span>
+                  <div class="subprocess-nom-row">
+                    <label class="sp-label">Nom du SubProcess SINON :</label>
+                    <input [(ngModel)]="r.subprocessSinonNom" class="form-control sp-nom-input"
+                           placeholder="Ex: Procédure de rejet (optionnel)"/>
+                  </div>
+                </div>
+                <div class="subprocess-tasks-list">
+                  <div *ngFor="let vt of r.subprocessSinonTaches || []; let vi = index" class="sp-task-row">
+                    <span class="sp-task-idx sp-non-idx">{{ vi + 1 }}</span>
+                    <div class="sp-task-field">
+                      <label class="sp-mini-label">Nom de la tâche</label>
+                      <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
+                    </div>
+                    <div class="sp-task-field sp-task-field-narrow">
+                      <label class="sp-mini-label">Type</label>
+                      <select [(ngModel)]="vt.type" class="form-control sp-task-type">
+                        <option value="HUMAINE">HUMAINE</option>
+                        <option value="SYSTEME">SYSTEME</option>
+                      </select>
+                    </div>
+                    <div class="sp-task-field">
+                      <label class="sp-mini-label">Assigné à (optionnel)</label>
+                      <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Personne / service"/>
+                    </div>
+                    <button type="button" class="mini-btn mini-danger sp-task-delete" (click)="removeSubprocessSinonTache(r, vi)" title="Supprimer">🗑️</button>
+                  </div>
+                  <div *ngIf="!r.subprocessSinonTaches || r.subprocessSinonTaches.length === 0" class="empty-mini-cible">
+                    Aucune tâche (le processus continuera après le gateway).
+                  </div>
+                </div>
+                <button type="button" class="btn-add-sp-task btn-add-sp-non" (click)="addSubprocessSinonTache(r)">
+                  <span>+</span> Ajouter une tâche au SubProcess SINON
+                </button>
+              </div>
+
+              <div class="subprocess-info-box">
+                💡 Les tâches des SubProcesses sont <strong>virtuelles</strong> : elles apparaissent dans le diagramme BPMN mais ne font pas partie de la liste principale des tâches.
+              </div>
+            </div>
+
           </div>
         </div>
 
-        <div class="card-divider"></div>
+        <div *ngIf="currentRegles.length === 0" class="empty-mini">Aucune règle définie.</div>
+      </div>
 
-        <div class="card-actions">
-          <button class="action-btn" (click)="toggle(p.id!)" [ngClass]="{'btn-toggle': true}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="1" y="5" width="22" height="14" rx="2" ry="2"></rect>
-              <circle cx="16" cy="12" r="2"></circle>
-            </svg>
-            {{ p.actif ? 'Désactiver' : 'Activer' }}
-          </button>
-
-          <button class="action-btn" (click)="modifier(p.id!)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 14.66V20a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5.34"></path>
-              <polygon points="18 2 22 6 12 16 8 16 8 12 18 2"></polygon>
-            </svg>
-            Modifier
-          </button>
-
-          <button class="action-btn" (click)="detail(p.id!)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-            Détails
-          </button>
-
-          <button class="action-btn btn-danger-modern" (click)="supprimer(p.id!)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            Supprimer
-          </button>
-
-          <button class="action-btn btn-task-modern" (click)="openTache(p)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-            </svg>
-            Tâche
-          </button>
-        </div>
-
-        <!-- TACHE INLINE MODERN -->
-        <div class="tache-inline-modern" *ngIf="selectedProcessusForTacheId === p.id">
-          <div class="tache-header">
-            <h4>Ajouter une tâche à "{{ p.nom }}"</h4>
-            <button class="close-tache" (click)="closeTache()">✕</button>
+      <!-- ONGLET DONNÉES -->
+      <div *ngIf="editorTab === 'donnees'" class="dynamic-form">
+        <div class="info-box">💾 Remplissez les valeurs. La règle déterminera la tâche suivante.</div>
+        <div class="form-section">
+          <h4>📋 Données de la tâche</h4>
+          <div *ngFor="let field of currentChamps" class="dyn-field">
+            <label [class.required]="field.required">{{ field.label }}<span *ngIf="field.required" class="req-star">*</span></label>
+            <input *ngIf="field.type === 'string'"  [(ngModel)]="formValues[field.id]" class="form-control"/>
+            <textarea *ngIf="field.type === 'textarea'" [(ngModel)]="formValues[field.id]" rows="3" class="form-control"></textarea>
+            <input *ngIf="field.type === 'date'"   type="date"   [(ngModel)]="formValues[field.id]" class="form-control"/>
+            <input *ngIf="field.type === 'number'" type="number" [(ngModel)]="formValues[field.id]" class="form-control"/>
+            <select *ngIf="field.type === 'boolean'" [(ngModel)]="formValues[field.id]" class="form-control">
+              <option [ngValue]="true">Oui</option><option [ngValue]="false">Non</option>
+            </select>
+            <select *ngIf="field.type === 'enum'" [(ngModel)]="formValues[field.id]" class="form-control">
+              <option *ngFor="let opt of field.options" [ngValue]="opt.value">{{ opt.label }}</option>
+            </select>
           </div>
-          <app-tache-form (save)="onTacheAdded($event)"></app-tache-form>
         </div>
+
+        <div *ngIf="getEvaluationResult() as ev" class="match-box-active" [class.match-box-non]="!ev.match">
+          <div class="match-header">🎯 {{ ev.match ? 'Règle VALIDÉE — branche SI VRAI' : 'Règle NON validée — branche SINON' }}</div>
+          <div class="match-rule-name">{{ ev.regle.nom || 'Règle sans nom' }}</div>
+          <div class="match-arrow">↓</div>
+          <div class="match-target" *ngIf="ev.match">
+            ✓ Passage à :
+            <ng-container *ngIf="ev.regle.cibleType === 'subprocess'">
+              <strong>SubProcess OUI : {{ ev.regle.subprocessOuiNom || 'SubProcess' }}</strong>
+            </ng-container>
+            <ng-container *ngIf="ev.regle.cibleType !== 'subprocess'">
+              <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) > 1">
+                <strong>{{ ev.regle.tacheOuiOrdres?.length }} tâches en parallèle</strong>
+                <div class="match-multi-list">
+                  <div *ngFor="let ord of ev.regle.tacheOuiOrdres" class="match-multi-item">• #{{ ord }} {{ getTacheNameByOrdre(ord) }}</div>
+                </div>
+              </ng-container>
+              <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) === 1">
+                <strong>#{{ ev.regle.tacheOuiOrdres![0] }} - {{ getTacheNameByOrdre(ev.regle.tacheOuiOrdres![0]) }}</strong>
+              </ng-container>
+              <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) === 0">
+                <span *ngIf="getTacheSuivante() as ts"><strong>#{{ ts.ordre }} - {{ ts.nom }}</strong></span>
+                <em *ngIf="!getTacheSuivante()">Fin du processus</em>
+              </ng-container>
+            </ng-container>
+          </div>
+          <div class="match-target" *ngIf="!ev.match">
+            ✗ Passage à :
+            <ng-container *ngIf="ev.regle.cibleType === 'subprocess'">
+              <strong>{{ ev.regle.subprocessSinonNom ? 'SubProcess SINON : ' + ev.regle.subprocessSinonNom : 'Fin du processus' }}</strong>
+            </ng-container>
+            <ng-container *ngIf="ev.regle.cibleType !== 'subprocess'">
+              <ng-container *ngIf="ev.regle.tacheSinonOrdre && ev.regle.tacheSinonOrdre > 0">
+                <strong>#{{ ev.regle.tacheSinonOrdre }} - {{ getTacheNameByOrdre(ev.regle.tacheSinonOrdre) }}</strong>
+              </ng-container>
+              <em *ngIf="!ev.regle.tacheSinonOrdre || ev.regle.tacheSinonOrdre === 0">Fin du processus</em>
+            </ng-container>
+          </div>
+        </div>
+        <div *ngIf="currentRegles.length === 0" class="no-match-box">ℹ️ Aucune règle — tâche suivante dans l'ordre.</div>
+      </div>
+
+      <div class="form-actions">
+        <button (click)="closeTaskForm()" class="btn btn-secondary">Annuler</button>
+        <button (click)="saveTaskForm()" class="btn btn-primary">{{ isNewTask ? '➕ Créer' : '💾 Enregistrer' }}</button>
       </div>
     </div>
   </div>
-</div>
 
-<!-- MODAL DETAILS MODERN -->
-<div class="modal-overlay-modern" *ngIf="selectedProcessus" (click)="closePopup()">
-  <div class="modal-modern" (click)="$event.stopPropagation()">
-    <div class="modal-header-modern">
-      <h3>Détails du processus</h3>
-      <button class="modal-close" (click)="closePopup()">✕</button>
-    </div>
-
-    <div class="modal-body-modern">
-      <div class="detail-item">
-        <span class="detail-label">Nom</span>
-        <span class="detail-value">{{ selectedProcessus.nom }}</span>
+  <!-- ====================== POPUP CONFIRM SUPPRESSION ====================== -->
+  <div *ngIf="tacheToDelete" class="popup-overlay popup-overlay-3" (click)="cancelDeleteTache()">
+    <div class="popup-content popup-confirm" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">⚠️</div>
+      <h3>Supprimer cette tâche ?</h3>
+      <p>Vous êtes sur le point de supprimer :</p>
+      <div class="confirm-task-info">
+        <span class="confirm-order">#{{ tacheToDelete.ordre }}</span>
+        <strong>{{ tacheToDelete.nom }}</strong>
       </div>
-
-      <div class="detail-item">
-        <span class="detail-label">Type</span>
-        <span class="detail-value">{{ selectedProcessus.typeProcessus }}</span>
-      </div>
-
-      <div class="detail-item">
-        <span class="detail-label">Période</span>
-        <span class="detail-value">
-          {{ selectedProcessus.dateDebut | date:'dd/MM/yyyy' }} → {{ selectedProcessus.dateFin | date:'dd/MM/yyyy' }}
-        </span>
-      </div>
-
-      <div class="detail-item">
-        <span class="detail-label">Statut</span>
-        <div class="badge-modern" [ngClass]="selectedProcessus.actif ? 'badge-actif-modern' : 'badge-inactif-modern'">
-          <span class="badge-dot"></span>
-          {{ selectedProcessus.actif ? 'ACTIF' : 'INACTIF' }}
-        </div>
+      <p class="confirm-warning">⚠️ Cette action est <strong>irréversible</strong>.</p>
+      <div class="form-actions">
+        <button (click)="cancelDeleteTache()" class="btn btn-secondary">Annuler</button>
+        <button (click)="executeDeleteTache()" class="btn btn-danger" [disabled]="deleting">
+          <span *ngIf="!deleting">🗑️ Confirmer</span>
+          <span *ngIf="deleting">⏳ Suppression...</span>
+        </button>
       </div>
     </div>
   </div>
+
 </div>

@@ -9,7 +9,8 @@ export interface Tache {
   ordre: number;
   processusId: number;
   templateId?: string;     
-  formData?: string;       }
+  formData?: string; 
+regleMetierId?: number;        }
 export interface Processus {
   id?: number;
   nom: string;
@@ -18,4 +19,6 @@ export interface Processus {
   dateFin?: string;
   actif?: boolean;
   bpmnProcessId?: string;
+   fileBpmn?: string;
+ 
 }
