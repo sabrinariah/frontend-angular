@@ -25,18 +25,45 @@ import { UserDetailComponent } from './app/features/users/user-detail/user-detai
 import { ProcessusListComponent } from './app/features/processus/processus-list.component';
 import { ProcessusFormComponent } from './app/features/processus/processus-form.component';
 import { TachesListComponent } from './app/features/taches/taches-list';
-
 import { ProcessusModifierComponent } from './app/features/processus/processus-modifier.component';
 import { RegleMetierComponent } from './app/components/regle/regle';
-// 🔥 CAMUNDA
 
-import { BpmnViewerComponent } from './app/components/bpmn-viewer/bpmn-viewer';   // ← CORRIGÉ ICI
-import { RegisterComponent } from './app//register/register';
+// 🔥 CAMUNDA
+import { BpmnViewerComponent } from './app/components/bpmn-viewer/bpmn-viewer';
+import { RegisterComponent } from './app/register/register';
 
 // 🆕 IMPORT / EXPORT
 import { ImportComponent } from './app/pages/import/import';
 import { ExportComponent } from './app/pages/export.component';
 import { ImportExportComponent } from './app/pages/import-export.component';
+
+// ════════════════════════════════════════════════════════════════
+// 🔐 CONSTANTES DES RÔLES — UNE SEULE SOURCE DE VÉRITÉ
+// ════════════════════════════════════════════════════════════════
+const ROLE_SUPER_ADMIN = 'SuperAdmin';
+const ROLE_GEST_PROCESSUS = 'Gestionnaire des processus metier';
+const ROLE_GEST_REGLES = 'Gestionnaire des règles métier'; // ✅ Avec accents corrects (comme Keycloak)
+
+// Groupes de rôles réutilisables
+const ROLES_ADMIN_ONLY = [ROLE_SUPER_ADMIN];
+
+const ROLES_PROCESSUS = [
+  ROLE_SUPER_ADMIN,
+  ROLE_GEST_PROCESSUS
+];
+
+const ROLES_REGLES = [
+  ROLE_SUPER_ADMIN,
+  ROLE_GEST_PROCESSUS,  // ✅ Le gest. processus a aussi accès aux règles
+  ROLE_GEST_REGLES
+];
+
+const ROLES_IMPORT_EXPORT = [
+  ROLE_SUPER_ADMIN,
+  ROLE_GEST_PROCESSUS,
+  ROLE_GEST_REGLES  // ✅ Les 2 gestionnaires + admin
+];
+
 // ====================== ROUTES ======================
 const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -44,39 +71,101 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
 
-  { path: 'dashboard', component: DashboardComponent, canActivate: [AuthGuardService] },
+  // 📊 DASHBOARD — accessible à tous les connectés
+  {
+    path: 'dashboard',
+    component: DashboardComponent,
+    canActivate: [AuthGuardService]
+  },
 
-  // ⚙️ REGLES METIER
-  { path: 'regles', component: RegleMetierComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des réglesmetier'] } },
+  // ⚙️ RÈGLES MÉTIER
+  {
+    path: 'regles',
+    component: RegleMetierComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_REGLES }
+  },
 
-  // 🔥 CAMUNDA
-  { path: 'bpmn-viewer/:processDefinitionId', component: BpmnViewerComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  // 🔥 CAMUNDA - BPMN Viewer
+  {
+    path: 'bpmn-viewer/:processDefinitionId',
+    component: BpmnViewerComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_PROCESSUS }
+  },
 
+  // 🆕 IMPORT / EXPORT (accessible aux 2 gestionnaires + admin)
+  {
+    path: 'import',
+    component: ImportComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_IMPORT_EXPORT }
+  },
+  {
+    path: 'export',
+    component: ExportComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_IMPORT_EXPORT }
+  },
+  {
+    path: 'import-export',
+    component: ImportExportComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_IMPORT_EXPORT }
+  },
 
-  // 🆕 IMPORT / EXPORT
-  { path: 'import', component: ImportComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'export', component: ExportComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'import-export', component: ImportExportComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
+  // 👤 USERS — SuperAdmin uniquement
+  {
+    path: 'users',
+    component: UsersComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_ADMIN_ONLY }
+  },
+  {
+    path: 'users/:username',
+    component: UserDetailComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_ADMIN_ONLY }
+  },
+  {
+    path: 'create-user',
+    component: CreateUserComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_ADMIN_ONLY }
+  },
+  {
+    path: 'users/edit/:username',
+    component: EditUserComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_ADMIN_ONLY }
+  },
 
-  // 👤 USERS
-  { path: 'users', component: UsersComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
-  { path: 'users/:username', component: UserDetailComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
-  { path: 'create-user', component: CreateUserComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
-  { path: 'users/edit/:username', component: EditUserComponent, canActivate: [AuthGuardService], data: { roles: ['SuperAdmin'] } },
+  // ⚙️ PROCESSUS — SuperAdmin + Gestionnaire processus
+  {
+    path: 'processus',
+    component: ProcessusListComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_PROCESSUS }
+  },
+  {
+    path: 'processus/new',
+    component: ProcessusFormComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_PROCESSUS }
+  },
+  {
+    path: 'processus/:id/edit',
+    component: ProcessusModifierComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_PROCESSUS }
+  },
 
-  // ⚙️ PROCESSUS
-  { path: 'processus', component: ProcessusListComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'processus/new', component: ProcessusFormComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'processus/:id/edit', component: ProcessusModifierComponent, canActivate: [AuthGuardService],
-    data: { roles: ['SuperAdmin', 'Gestionnaire des processus metier'] } },
-  { path: 'taches-list', component: TachesListComponent },
+  // 📋 TÂCHES (accessible à tous les connectés)
+  {
+    path: 'taches-list',
+    component: TachesListComponent,
+    canActivate: [AuthGuardService]
+  },
 
   { path: '**', redirectTo: 'dashboard' }
 ];
@@ -107,7 +196,6 @@ bootstrapApplication(AppComponent, {
     }
   ]
 })
-
 .then(appRef => {
   const keycloakService = appRef.injector.get(KeycloakService);
 
@@ -119,5 +207,4 @@ bootstrapApplication(AppComponent, {
       console.error('❌ Erreur init Keycloak:', err);
     });
 })
-
 .catch(err => console.error('❌ Erreur bootstrap:', err));

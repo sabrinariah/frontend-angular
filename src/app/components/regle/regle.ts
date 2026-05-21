@@ -9,6 +9,7 @@ import { RegleMetier } from '../../models/regle.model';
 import { Categorie } from '../../models/categorie.model';
 import { Condition } from '../../models/condition.model';
 import { Processus, Tache } from '../../models/processus.model';
+import { Version } from '../../models/version.model'; // ✅ AJOUT
 
 export interface Toast {
   id: number;
@@ -29,35 +30,37 @@ export class RegleMetierComponent implements OnInit {
   regles: RegleMetier[] = [];
   categories: Categorie[] = [];
   selectedConditions: Condition[] = [];
-
   selected: RegleMetier = this.initRegle();
 
   isEditing = false;
   loading = false;
   currentCategorieType: string | null = null;
 
-  // 🆕 Filtres
   filtreCategorieAffichage: string = 'TOUS';
   searchTerm: string = '';
   filtreStatut: 'TOUS' | 'ACTIVE' | 'INACTIVE' = 'TOUS';
   viewMode: 'cards' | 'table' = 'cards';
 
-  // 🆕 Popup form
   showFormPopup = false;
 
-  // 🆕 Toasts
+  selectedDetail: RegleMetier | null = null;
+  // ✅ MODIFICATION : ajout de 'historique' comme onglet possible
+  detailTab: 'info' | 'conditions' | 'utilisations' | 'historique' = 'info';
+
   toasts: Toast[] = [];
   private toastCounter = 0;
 
-  // 🆕 Confirm delete
   regleToDelete: RegleMetier | null = null;
   deleting = false;
 
-  // 🆕 COUPLAGE PROCESSUS
   processus: Processus[] = [];
   utilisations: Record<number, { processusNom: string; tacheNom: string }[]> = {};
 
-  // 🆕 Suggestions par catégorie
+  // ✅ AJOUT : propriétés pour le versioning
+  historique: Version[] = [];
+  loadingHistorique = false;
+  motifModification = ''; // saisi par l'utilisateur avant chaque modification
+
   champsSuggeresParCategorie: Record<string, string[]> = {
     'TAXE': ['valeur_marchandise', 'poids_net', 'pays_origine', 'code_sh', 'taux_droit', 'taux_tva'],
     'QUOTA': ['quantite_importee', 'quota_annuel', 'categorie_produit', 'pays_origine', 'periode'],
@@ -88,7 +91,6 @@ export class RegleMetierComponent implements OnInit {
     this.loadProcessusEtUtilisations();
   }
 
-  // ================= INIT =================
   initRegle(): RegleMetier {
     return {
       id: undefined,
@@ -102,7 +104,6 @@ export class RegleMetierComponent implements OnInit {
     };
   }
 
-  // ================= LOAD =================
   loadRegles(): void {
     this.regleService.getAll().subscribe({
       next: (data) => {
@@ -133,13 +134,11 @@ export class RegleMetierComponent implements OnInit {
     });
   }
 
-  // 🔧 BUG CORRIGÉ : regleMetierIds (pluriel) + support de regleMetierId (singulier ancien)
   calculerUtilisations(): void {
     this.utilisations = {};
     this.regles.forEach(r => {
       if (r.id) this.utilisations[r.id] = [];
     });
-
     this.processus.forEach(p => {
       if (!p.id) return;
       this.tacheService.getByProcessus(p.id).subscribe({
@@ -149,7 +148,6 @@ export class RegleMetierComponent implements OnInit {
               const data = t.formData ? JSON.parse(t.formData) : {};
               const reglesGateway = data.regles || [];
               reglesGateway.forEach((rg: any) => {
-                // ✅ Support pluriel (nouveau) + singulier (ancien) pour rétrocompat
                 const ids: number[] = rg.regleMetierIds || (rg.regleMetierId ? [rg.regleMetierId] : []);
                 ids.forEach(id => {
                   if (id && this.utilisations[id]) {
@@ -172,46 +170,23 @@ export class RegleMetierComponent implements OnInit {
     return this.utilisations[regleId] || [];
   }
 
-  // ================= STATS =================
   countByCategorie(type: string): number {
-    return this.regles.filter(r =>
-      r.categorie?.type?.toUpperCase() === type.toUpperCase()
-    ).length;
+    return this.regles.filter(r => r.categorie?.type?.toUpperCase() === type.toUpperCase()).length;
   }
+  countActives(): number { return this.regles.filter(r => r.active).length; }
+  countInactives(): number { return this.regles.filter(r => !r.active).length; }
+  countUtilisees(): number { return Object.values(this.utilisations).filter(u => u.length > 0).length; }
+  countTotalUtilisations(): number { return Object.values(this.utilisations).reduce((s, u) => s + u.length, 0); }
 
-  countActives(): number {
-    return this.regles.filter(r => r.active).length;
+  onCategorieChange(cat: Categorie | null): void {
+    if (!cat) { this.selected.categorie = undefined; this.currentCategorieType = null; return; }
+    this.selected.categorie = cat;
+    this.currentCategorieType = cat.type?.toUpperCase() ?? null;
   }
-
-  countInactives(): number {
-    return this.regles.filter(r => !r.active).length;
-  }
-
-  countUtilisees(): number {
-    return Object.values(this.utilisations).filter(u => u.length > 0).length;
-  }
-
-  countTotalUtilisations(): number {
-    return Object.values(this.utilisations).reduce((s, u) => s + u.length, 0);
-  }
-
-  // ================= CATEGORIE =================
-// APRÈS
-onCategorieChange(cat: Categorie | null): void {
-  if (!cat) {
-    this.selected.categorie = undefined;
-    this.currentCategorieType = null;
-    return;
-  }
-  this.selected.categorie = cat;
-  this.currentCategorieType = cat.type?.toUpperCase() ?? null;
-}
 
   getCategoriesUtilisees(): string[] {
     const cats = new Set<string>();
-    this.regles.forEach(r => {
-      if (r.categorie?.type) cats.add(r.categorie.type.toUpperCase());
-    });
+    this.regles.forEach(r => { if (r.categorie?.type) cats.add(r.categorie.type.toUpperCase()); });
     return Array.from(cats).sort();
   }
 
@@ -225,43 +200,21 @@ onCategorieChange(cat: Categorie | null): void {
     return this.actionsSuggeresParCategorie[this.currentCategorieType] || [];
   }
 
-  appliquerSuggestionChamp(condition: Condition, champ: string): void {
-    condition.champ = champ;
-  }
+  appliquerSuggestionChamp(condition: Condition, champ: string): void { condition.champ = champ; }
+  appliquerSuggestionAction(action: string): void { this.selected.action = action; }
 
-  appliquerSuggestionAction(action: string): void {
-    this.selected.action = action;
-  }
-
-  // ================= CONDITIONS =================
   addCondition(): void {
-    this.selectedConditions.push({
-      champ: '',
-      operateur: '==',
-      valeur: ''
-    });
+    this.selectedConditions.push({ champ: '', operateur: '==', valeur: '' });
   }
+  removeCondition(index: number): void { this.selectedConditions.splice(index, 1); }
 
-  removeCondition(index: number): void {
-    this.selectedConditions.splice(index, 1);
-  }
-
-  // ================= FILTRAGE & RECHERCHE =================
   reglesFiltrees(): RegleMetier[] {
     let result = this.regles;
-
     if (this.filtreCategorieAffichage !== 'TOUS') {
-      result = result.filter(r =>
-        r.categorie?.type?.toUpperCase() === this.filtreCategorieAffichage
-      );
+      result = result.filter(r => r.categorie?.type?.toUpperCase() === this.filtreCategorieAffichage);
     }
-
-    if (this.filtreStatut === 'ACTIVE') {
-      result = result.filter(r => r.active);
-    } else if (this.filtreStatut === 'INACTIVE') {
-      result = result.filter(r => !r.active);
-    }
-
+    if (this.filtreStatut === 'ACTIVE') result = result.filter(r => r.active);
+    else if (this.filtreStatut === 'INACTIVE') result = result.filter(r => !r.active);
     if (this.searchTerm?.trim()) {
       const term = this.searchTerm.toLowerCase();
       result = result.filter(r =>
@@ -271,7 +224,6 @@ onCategorieChange(cat: Categorie | null): void {
         r.categorie?.nom?.toLowerCase().includes(term)
       );
     }
-
     return result;
   }
 
@@ -281,32 +233,32 @@ onCategorieChange(cat: Categorie | null): void {
     this.searchTerm = '';
   }
 
-  // ================= ICÔNES & COULEURS =================
   iconCategorie(type?: string): string {
     const map: Record<string, string> = {
-      'TAXE': '💰',
-      'QUOTA': '📊',
-      'CERTIFICATION': '📜',
-      'VERIFICATION': '🔍',
-      'CONTROLE': '🛃',
-      'DOUANE': '🏛️'
+      'TAXE': '💰', 'QUOTA': '📊', 'CERTIFICATION': '📜',
+      'VERIFICATION': '🔍', 'CONTROLE': '🛃', 'DOUANE': '🏛️'
     };
     return map[(type || '').toUpperCase()] || '📋';
   }
 
   couleurCategorie(type?: string): string {
     const map: Record<string, string> = {
-      'TAXE': '#f59e0b',
-      'QUOTA': '#3b82f6',
-      'CERTIFICATION': '#10b981',
-      'VERIFICATION': '#8b5cf6',
-      'CONTROLE': '#ef4444',
-      'DOUANE': '#ec4899'
+      'TAXE': '#f59e0b', 'QUOTA': '#3b82f6', 'CERTIFICATION': '#10b981',
+      'VERIFICATION': '#8b5cf6', 'CONTROLE': '#ef4444', 'DOUANE': '#ec4899'
     };
     return map[(type || '').toUpperCase()] || '#6b7280';
   }
 
-  // ================= VALIDATION =================
+  operateurLabel(op?: string): string {
+    const map: Record<string, string> = {
+      '==': 'est égal à', '!=': 'est différent de', '>': 'est supérieur à',
+      '<': 'est inférieur à', '>=': 'est ≥ à', '<=': 'est ≤ à',
+      'IN': 'est dans', 'NOT_IN': "n'est pas dans",
+      'contains': 'contient', 'isEmpty': 'est vide', 'isNotEmpty': "n'est pas vide"
+    };
+    return map[op || ''] || op || '?';
+  }
+
   isFormValid(): boolean {
     return !!(
       this.selected.code?.trim() &&
@@ -316,29 +268,75 @@ onCategorieChange(cat: Categorie | null): void {
     );
   }
 
-  // ================= POPUP FORM =================
-  openCreateForm(): void {
-    this.resetForm();
-    this.showFormPopup = true;
+  openDetail(r: RegleMetier): void {
+    this.selectedDetail = r;
+    this.detailTab = 'info';
+    // ✅ On réinitialise l'historique à chaque ouverture
+    this.historique = [];
   }
 
-  openEditForm(r: RegleMetier): void {
-    this.edit(r);
-    this.showFormPopup = true;
+  closeDetail(): void {
+    this.selectedDetail = null;
+    this.detailTab = 'info';
+    this.historique = [];
   }
+
+  editFromDetail(): void {
+    if (this.selectedDetail) {
+      const r = this.selectedDetail;
+      this.closeDetail();
+      this.openEditForm(r);
+    }
+  }
+
+  // ✅ AJOUT : charge l'historique des versions depuis le backend
+  chargerHistorique(regleId?: number): void {
+    if (!regleId) return;
+    this.loadingHistorique = true;
+    this.historique = [];
+    this.regleService.getVersionsByRegle(regleId).subscribe({
+      next: (data) => {
+        this.historique = data ?? [];
+        this.loadingHistorique = false;
+      },
+      error: () => {
+        this.addToast('error', 'Erreur', "Impossible de charger l'historique");
+        this.loadingHistorique = false;
+      }
+    });
+  }
+
+  // ✅ AJOUT : restaure une ancienne version
+  restaurerVersion(versionId: number): void {
+    if (!confirm('Restaurer cette version ? La version actuelle sera archivée dans l\'historique.')) return;
+    this.regleService.restaurerVersion(versionId).subscribe({
+      next: () => {
+        this.addToast('success', '✅ Version restaurée', 'La règle a été remise à cette version');
+        this.loadRegles();
+        this.closeDetail();
+      },
+      error: (err) => {
+        this.addToast('error', 'Erreur de restauration', err?.error?.message);
+      }
+    });
+  }
+
+  openCreateForm(): void { this.resetForm(); this.showFormPopup = true; }
+
+  openEditForm(r: RegleMetier): void { this.edit(r); this.showFormPopup = true; }
 
   closeFormPopup(): void {
     this.showFormPopup = false;
     this.resetForm();
+    // ✅ On réinitialise aussi le motif quand on ferme le formulaire
+    this.motifModification = '';
   }
 
-  // ================= SAVE =================
   save(): void {
     if (!this.isFormValid()) {
       this.addToast('warning', 'Champs manquants', 'Veuillez remplir tous les champs obligatoires.');
       return;
     }
-
     this.loading = true;
 
     const payload: any = {
@@ -352,7 +350,9 @@ onCategorieChange(cat: Categorie | null): void {
         champ: c.champ,
         operateur: c.operateur,
         valeur: c.valeur
-      }))
+      })),
+      // ✅ AJOUT : le motif est envoyé au backend pour être archivé dans le snapshot
+      motifModification: this.motifModification || 'Modification manuelle'
     };
 
     if (this.isEditing && this.selected.id) {
@@ -385,6 +385,7 @@ onCategorieChange(cat: Categorie | null): void {
   afterSave(): void {
     this.loadRegles();
     this.closeFormPopup();
+    this.motifModification = ''; // ✅ réinitialisation après sauvegarde
   }
 
   resetForm(): void {
@@ -395,47 +396,30 @@ onCategorieChange(cat: Categorie | null): void {
     this.currentCategorieType = null;
   }
 
-  // ================= ACTIONS =================
   edit(r: RegleMetier): void {
-    this.selected = {
-      ...r,
-      categorie: r.categorie ? { ...r.categorie } : undefined,
-      version: r.version ?? 1
-    };
+    this.selected = { ...r, categorie: r.categorie ? { ...r.categorie } : undefined, version: r.version ?? 1 };
     this.selectedConditions = r.conditions ? r.conditions.map(c => ({ ...c })) : [];
     this.isEditing = true;
     this.currentCategorieType = r.categorie?.type?.toUpperCase() ?? null;
+    this.motifModification = ''; // ✅ réinitialiser le motif à chaque ouverture d'édition
   }
 
   toggleActive(id?: number): void {
     if (!id) return;
     this.regleService.toggle(id).subscribe({
-      next: () => {
-        this.loadRegles();
-        this.addToast('info', 'Statut modifié');
-      },
-      error: (err) => {
-        console.error(err);
-        this.addToast('error', 'Erreur', err.message);
-      }
+      next: () => { this.loadRegles(); this.addToast('info', 'Statut modifié'); },
+      error: (err) => { console.error(err); this.addToast('error', 'Erreur', err.message); }
     });
   }
 
-  confirmDelete(r: RegleMetier): void {
-    this.regleToDelete = r;
-  }
-
-  cancelDelete(): void {
-    this.regleToDelete = null;
-    this.deleting = false;
-  }
+  confirmDelete(r: RegleMetier): void { this.regleToDelete = r; }
+  cancelDelete(): void { this.regleToDelete = null; this.deleting = false; }
 
   executeDelete(): void {
     if (!this.regleToDelete?.id) return;
     this.deleting = true;
     const id = this.regleToDelete.id;
     const code = this.regleToDelete.code;
-
     this.regleService.delete(id).subscribe({
       next: () => {
         this.deleting = false;
@@ -451,18 +435,13 @@ onCategorieChange(cat: Categorie | null): void {
     });
   }
 
-  // ================= TOASTS =================
   addToast(type: Toast['type'], message: string, detail?: string, duration = 4000): void {
     const id = ++this.toastCounter;
     this.toasts.push({ id, type, message, detail });
     setTimeout(() => this.removeToast(id), duration);
   }
 
-  removeToast(id: number): void {
-    this.toasts = this.toasts.filter(t => t.id !== id);
-  }
+  removeToast(id: number): void { this.toasts = this.toasts.filter(t => t.id !== id); }
 
-  trackById(index: number, item: any): number {
-    return item?.id ?? index;
-  }
+  trackById(index: number, item: any): number { return item?.id ?? index; }
 }

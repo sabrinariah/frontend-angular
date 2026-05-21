@@ -1,3 +1,5 @@
+
+
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -227,6 +229,24 @@ interface MenuItem {
 
         <!-- ── Footer ── -->
         <div class="sidebar-footer">
+          <!-- Bouton Déconnexion visible pour TOUS les rôles connectés -->
+          <button class="sidebar-logout-btn"
+                  *ngIf="keycloakService.isLoggedIn()"
+                  (click)="logout()"
+                  [attr.data-tooltip]="isSidebarCollapsed ? 'Déconnexion' : null"
+                  [attr.aria-label]="'Déconnexion'">
+            <span class="icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M15 3H17C18.5 3 20 4.5 20 6V18C20 19.5 18.5 21 17 21H15"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M9 16L4 12M4 12L9 8M4 12H16"
+                      stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            <span class="link-text" *ngIf="!isSidebarCollapsed">Déconnexion</span>
+          </button>
+
           <div class="version-tag" *ngIf="!isSidebarCollapsed">
             <span class="version-dot"></span>
             v2.4.1 · Stable
@@ -255,39 +275,22 @@ interface MenuItem {
         <!-- E-FORCE / ProcessFlow logo badge -->
         <span class="topbar-logo">E-FORCE</span>
 
-        <!-- Right actions -->
+        <!-- Right actions : uniquement le bouton Connexion si non connecté -->
         <div class="topbar-actions">
-          <ng-container *ngIf="keycloakService.ready">
-            <ng-container *ngIf="keycloakService.isLoggedIn(); else loginTpl">
-              <button class="topbar-btn topbar-logout"
-                      (click)="logout()"
-                      title="Déconnexion"
-                      aria-label="Déconnexion">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M15 3H17C18.5 3 20 4.5 20 6V18C20 19.5 18.5 21 17 21H15"
-                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M9 16L4 12M4 12L9 8M4 12H16"
-                        stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="btn-text">Déconnexion</span>
-              </button>
-            </ng-container>
-            <ng-template #loginTpl>
-              <button class="topbar-btn topbar-login"
-                      (click)="goToLogin()"
-                      title="Connexion"
-                      aria-label="Connexion">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path d="M9 21H7C5.5 21 4 19.5 4 18V6C4 4.5 5.5 3 7 3H9"
-                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                  <path d="M15 8L20 12M20 12L15 16M20 12H8"
-                        stroke="currentColor" stroke-width="1.8"
-                        stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="btn-text">Connexion</span>
-              </button>
-            </ng-template>
+          <ng-container *ngIf="keycloakService.ready && !keycloakService.isLoggedIn()">
+            <button class="topbar-btn topbar-login"
+                    (click)="goToLogin()"
+                    title="Connexion"
+                    aria-label="Connexion">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 21H7C5.5 21 4 19.5 4 18V6C4 4.5 5.5 3 7 3H9"
+                      stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M15 8L20 12M20 12L15 16M20 12H8"
+                      stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="btn-text">Connexion</span>
+            </button>
           </ng-container>
         </div>
       </header>
@@ -776,6 +779,41 @@ interface MenuItem {
       border-top: 1px solid var(--sb-divider);
     }
 
+    /* ═══ Sidebar logout button ═══ */
+    .sidebar-logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      padding: 9px 12px;
+      margin-bottom: 10px;
+      border-radius: var(--radius-s);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      background: rgba(239, 68, 68, 0.08);
+      color: #fca5a5;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--speed-fast);
+      letter-spacing: -0.1px;
+      white-space: nowrap;
+      overflow: hidden;
+      position: relative;
+    }
+    .sidebar-logout-btn:hover {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fecaca;
+    }
+    .sidebar-logout-btn .icon-box {
+      color: inherit;
+    }
+    .sidebar.collapsed .sidebar-logout-btn {
+      justify-content: center;
+      padding: 9px 0;
+    }
+
     /* Version tag */
     .version-tag {
       display: flex;
@@ -873,11 +911,6 @@ interface MenuItem {
       color: white;
       border-color: rgba(255, 255, 255, 0.2);
     }
-    .topbar-logout:hover {
-      background: rgba(239, 68, 68, 0.15);
-      color: #f87171;
-      border-color: rgba(239, 68, 68, 0.3);
-    }
     .topbar-login {
       background: var(--orange);
       color: white;
@@ -955,43 +988,22 @@ export class AppComponent implements OnInit, OnDestroy {
       path: '/processus',
       label: 'Gestion Processus',
       icon: 'processes',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier'],
+      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier', 'Gestionnaire des régles metier'],
       description: 'Gérer les processus BPMN'
-    },
-    {
-      path: '/import',
-      label: 'Import Processus',
-      icon: 'import',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier'],
-      description: 'Importer un dossier'
-    },
-    {
-      path: '/import-export',
-      label: 'Import / Export',
-      icon: 'transfer',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier'],
-      badge: 'Nouveau',
-      badgeType: 'new'
-    },
-    {
-      path: '/export',
-      label: 'Export Processus',
-      icon: 'export',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier']
     },
     {
       path: '/regles',
       label: 'Règles Métier',
       icon: 'rules',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des réglesmetier']
+      requiresRoles: ['SuperAdmin', 'Gestionnaire des régles metier', 'Gestionnaire des processus metier']
     },
     {
-      path: '/taches-list',
-      label: 'Liste des Tâches',
-      icon: 'tasks',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier'],
-      badge: '5',
-      badgeType: 'count'
+      path: '/import-export',
+      label: 'Import / Export',
+      icon: 'transfer',
+      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier', 'Gestionnaire des régles metier'],
+      badge: 'Nouveau',
+      badgeType: 'new'
     }
   ];
 
@@ -1089,7 +1101,7 @@ export class AppComponent implements OnInit, OnDestroy {
     const r = this.userRoles;
     if (r.includes('SuperAdmin')) return 'Super Admin';
     if (r.includes('Gestionnaire des processus metier')) return 'Process Manager';
-    if (r.includes('Gestionnaire des réglesmetier')) return 'Rules Manager';
+    if (r.includes('Gestionnaire des régles metier')) return 'Rules Manager';
     return 'Utilisateur';
   }
 

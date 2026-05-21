@@ -55,4 +55,9 @@ export class RegleMetierService {
   getAllCategories(): Observable<Categorie[]> {
     return this.http.get<Categorie[]>('http://localhost:8081/api/categories');
   }
+  // Ajouter dans la section ================= VERSIONS =================
+restaurerVersion(versionId: number): Observable<RegleMetier> {
+  // Appelle POST /api/regles/restaurer/{id} côté Spring Boot
+  return this.http.post<RegleMetier>(`${this.base}/restaurer/${versionId}`, {});
+}
 }

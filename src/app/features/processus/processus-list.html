@@ -18,14 +18,14 @@
   <!-- ====================== HEADER ====================== -->
   <div class="page-header">
     <div class="header-left">
-      <div class="header-icon">📊</div>
+      <div class="header-icon">🚚</div>
       <div>
         <h1>Gestion des Processus Métier</h1>
         <p class="header-subtitle">Suivez, gérez et orchestrez vos processus d'importation</p>
       </div>
     </div>
     <a routerLink="/processus/new" class="btn btn-primary btn-add">
-      <span class="btn-icon">+</span> Nouveau Processus
+      <span class="btn-icon-text">+</span> Nouveau Processus
     </a>
   </div>
 
@@ -154,54 +154,54 @@
         <button (click)="viewMode = 'bpmn'" [class.active]="viewMode === 'bpmn'" class="view-tab-btn">📁 Diagramme BPMN (fichier)</button>
       </div>
 
-      <div *ngIf="taches.length > 0" class="stats-bar">
-        <div class="stat-item"><span class="stat-num">{{ taches.length }}</span><span class="stat-label">Total</span></div>
-        <div class="stat-item stat-attente"><span class="stat-num">{{ countByStatut('EN_ATTENTE') }}</span><span class="stat-label">En attente</span></div>
-        <div class="stat-item stat-cours"><span class="stat-num">{{ countByStatut('EN_COURS') }}</span><span class="stat-label">En cours</span></div>
-        <div class="stat-item stat-termine"><span class="stat-num">{{ countByStatut('TERMINE') }}</span><span class="stat-label">Terminées</span></div>
-        <div class="stat-item stat-gateway"><span class="stat-num">{{ countGateways() }}</span><span class="stat-label">Gateways</span></div>
-      </div>
-
       <div *ngIf="taches.length > 0" class="progress-section">
-        <div class="progress-label">Progression globale : <strong>{{ progressPercent() }}%</strong></div>
+        <div class="progress-label">
+          <span>Progression globale</span>
+          <strong>{{ progressPercent() }}%</strong>
+        </div>
         <div class="progress-bar-bg"><div class="progress-bar-fill" [style.width.%]="progressPercent()"></div></div>
       </div>
 
-      <!-- ====== VUE 1 : SVG DYNAMIQUE ====== -->
+      <!-- ════════════════════════════════════════════════════════
+           ✨ VUE 1 : SVG DYNAMIQUE — DESIGN SIMPLE ET LISIBLE
+           ════════════════════════════════════════════════════════ -->
       <div *ngIf="viewMode === 'svg' && taches.length > 0" class="bpmn-panel">
+
+        <!-- ───── LÉGENDE ÉPURÉE ───── -->
         <div class="bpmn-legend-bar">
           <div class="lg-item">
-            <svg width="22" height="22"><circle cx="11" cy="11" r="10" fill="#10b981" stroke="#059669" stroke-width="1.5"/><text x="11" y="15" text-anchor="middle" fill="white" font-size="10">▶</text></svg>
+            <svg width="22" height="22"><circle cx="11" cy="11" r="9" fill="#16a34a"/><polygon points="9,7 9,15 16,11" fill="white"/></svg>
             <span>Début</span>
           </div>
           <div class="lg-item">
-            <svg width="22" height="22"><rect x="1" y="1" width="20" height="20" rx="4" fill="#4f46e5" stroke="#4338ca" stroke-width="1"/></svg>
+            <svg width="22" height="22"><rect x="2" y="3" width="18" height="16" rx="3" fill="white" stroke="#1e3a5f" stroke-width="2"/></svg>
             <span>Tâche</span>
           </div>
           <div class="lg-item">
-            <svg width="22" height="22"><rect x="1" y="1" width="20" height="20" rx="4" fill="#0ea5e9" stroke="#0284c7" stroke-width="1.5" stroke-dasharray="3,2"/><text x="11" y="15" text-anchor="middle" fill="white" font-size="9" font-weight="800">SP</text></svg>
+            <svg width="22" height="22"><rect x="2" y="3" width="18" height="16" rx="3" fill="white" stroke="#1e3a5f" stroke-width="2" stroke-dasharray="3,2"/><text x="11" y="14" text-anchor="middle" font-size="8" fill="#1e3a5f" font-weight="800">SP</text></svg>
             <span>SubProcess</span>
           </div>
           <div class="lg-item">
-            <svg width="22" height="22"><polygon points="11,1 21,11 11,21 1,11" fill="white" stroke="#374151" stroke-width="1.5"/><text x="11" y="15" text-anchor="middle" fill="#374151" font-size="12">✕</text></svg>
-            <span>Gateway</span>
+            <svg width="22" height="22"><polygon points="11,2 20,11 11,20 2,11" fill="white" stroke="#0a1929" stroke-width="2"/><text x="11" y="14" text-anchor="middle" font-size="11" fill="#0a1929" font-weight="700">?</text></svg>
+            <span>Décision</span>
           </div>
           <div class="lg-item">
-            <svg width="22" height="22"><circle cx="11" cy="11" r="9" fill="none" stroke="#374151" stroke-width="3.5"/><circle cx="11" cy="11" r="5" fill="#374151"/></svg>
+            <svg width="22" height="22"><circle cx="11" cy="11" r="9" fill="none" stroke="#0a1929" stroke-width="3"/><circle cx="11" cy="11" r="4" fill="#0a1929"/></svg>
             <span>Fin</span>
           </div>
           <div class="lg-sep"></div>
           <div class="lg-item">
-            <svg width="32" height="14"><line x1="2" y1="7" x2="30" y2="7" stroke="#10b981" stroke-width="2.5"/><polygon points="26,4 32,7 26,10" fill="#10b981"/></svg>
-            <span style="color:#10b981;font-weight:700">OUI</span>
+            <svg width="34" height="14"><line x1="2" y1="7" x2="28" y2="7" stroke="#16a34a" stroke-width="2.5"/><polygon points="24,4 32,7 24,10" fill="#16a34a"/></svg>
+            <span style="color:#16a34a;font-weight:700">OUI</span>
           </div>
           <div class="lg-item">
-            <svg width="32" height="14"><line x1="2" y1="7" x2="30" y2="7" stroke="#ef4444" stroke-width="2.5" stroke-dasharray="5,3"/><polygon points="26,4 32,7 26,10" fill="#ef4444"/></svg>
-            <span style="color:#ef4444;font-weight:700">NON</span>
+            <svg width="34" height="14"><line x1="2" y1="7" x2="28" y2="7" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="4,3"/><polygon points="24,4 32,7 24,10" fill="#dc2626"/></svg>
+            <span style="color:#dc2626;font-weight:700">NON</span>
           </div>
           <span class="lg-hint">💡 Cliquez sur une tâche pour l'éditer</span>
         </div>
 
+        <!-- ───── DIAGRAMME SVG ÉPURÉ ───── -->
         <div class="bpmn-scroll-container">
           <svg
             [attr.width]="bpmnDiagram.viewWidth"
@@ -211,221 +211,265 @@
             class="bpmn-svg">
 
             <defs>
-              <marker id="bpmn-arrow" viewBox="0 0 12 12" refX="10" refY="6"
-                      markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-                <path d="M1 1L11 6L1 11" fill="none" stroke="#64748b" stroke-width="1.8"
-                      stroke-linecap="round" stroke-linejoin="round"/>
+              <!-- Flèches simples et nettes -->
+              <marker id="bpmn-arrow" viewBox="0 0 10 10" refX="9" refY="5"
+                      markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
               </marker>
-              <marker id="bpmn-arrow-oui" viewBox="0 0 12 12" refX="10" refY="6"
-                      markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-                <path d="M1 1L11 6L1 11" fill="none" stroke="#10b981" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round"/>
+              <marker id="bpmn-arrow-oui" viewBox="0 0 10 10" refX="9" refY="5"
+                      markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#16a34a"/>
               </marker>
-              <marker id="bpmn-arrow-non" viewBox="0 0 12 12" refX="10" refY="6"
-                      markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-                <path d="M1 1L11 6L1 11" fill="none" stroke="#ef4444" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round"/>
+              <marker id="bpmn-arrow-non" viewBox="0 0 10 10" refX="9" refY="5"
+                      markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M0 0 L10 5 L0 10 z" fill="#dc2626"/>
               </marker>
-              <filter id="task-shadow" x="-10%" y="-10%" width="130%" height="150%">
-                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="rgba(0,0,0,0.12)"/>
-              </filter>
-              <filter id="sp-shadow" x="-10%" y="-10%" width="130%" height="150%">
-                <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(99,102,241,0.25)"/>
-              </filter>
-              <linearGradient id="svgBg" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#f8faff"/>
-                <stop offset="100%" stop-color="#eef2ff"/>
-              </linearGradient>
+
+              <!-- Grille de fond légère -->
+              <pattern id="dotGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="1" cy="1" r="1" fill="#e2e8f0"/>
+              </pattern>
             </defs>
 
+            <!-- Fond blanc avec petits points discrets -->
             <rect x="0" y="0" [attr.width]="bpmnDiagram.viewWidth" [attr.height]="bpmnDiagram.viewHeight"
-                  fill="url(#svgBg)" rx="12"/>
+                  fill="white"/>
             <rect x="0" y="0" [attr.width]="bpmnDiagram.viewWidth" [attr.height]="bpmnDiagram.viewHeight"
-                  fill="none" stroke="#e2e8f0" stroke-width="1" rx="12"/>
-            <line x1="0" y1="40" [attr.x2]="bpmnDiagram.viewWidth" y2="40" stroke="#e2e8f0" stroke-width="1"/>
-            <text x="14" y="26" font-size="11" fill="#94a3b8"
-                  font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                  fill="url(#dotGrid)" opacity="0.5"/>
+
+            <!-- Titre discret en haut -->
+            <text x="20" y="26" font-size="11" fill="#94a3b8"
+                  font-family="'Inter', sans-serif"
                   font-weight="700" letter-spacing="1">
               PROCESSUS : {{ selectedProcessus?.nom | uppercase }}
             </text>
 
-            <!-- ARÊTES -->
+            <!-- ═══ ARÊTES (CONNEXIONS) ═══ -->
             <g *ngFor="let edge of bpmnDiagram.edges">
               <ng-container *ngIf="getEdgePath(edge) as ep">
-                <path *ngIf="edge.branchType !== 'normal'"
-                      [attr.d]="ep.d" fill="none"
-                      [attr.stroke]="edge.branchType === 'oui' ? '#bbf7d0' : '#fecaca'"
-                      stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                <!-- Ligne principale fine et nette -->
                 <path [attr.d]="ep.d" fill="none"
                       [attr.stroke]="getEdgeColor(edge)"
                       [attr.stroke-width]="getEdgeStrokeWidth(edge)"
                       [attr.stroke-dasharray]="getEdgeDashArray(edge)"
                       stroke-linecap="round" stroke-linejoin="round"
                       [attr.marker-end]="getEdgeMarker(edge)"/>
+
+                <!-- Étiquette OUI / NON simple -->
                 <g *ngIf="edge.label">
-                  <rect [attr.x]="ep.labelX - (edge.label!.length * 3.8 + 6)"
+                  <rect [attr.x]="ep.labelX - (edge.label!.length * 3.5 + 8)"
                         [attr.y]="ep.labelY - 10"
-                        [attr.width]="edge.label!.length * 7.6 + 12"
-                        height="20" rx="5"
-                        [attr.fill]="getEdgeLabelBg(edge)"
+                        [attr.width]="edge.label!.length * 7 + 16"
+                        height="20" rx="10"
+                        fill="white"
                         [attr.stroke]="getEdgeColor(edge)"
-                        stroke-width="1" opacity="0.95"/>
+                        stroke-width="1.5"/>
                   <text [attr.x]="ep.labelX" [attr.y]="ep.labelY"
                         text-anchor="middle" dominant-baseline="central"
-                        font-size="11" [attr.fill]="getEdgeColor(edge)"
-                        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
-                        font-weight="700" letter-spacing="0.3">
-                    {{ truncate(edge.label!, 28) }}
+                        font-size="11"
+                        [attr.fill]="getEdgeColor(edge)"
+                        font-family="'Inter', sans-serif"
+                        font-weight="700">
+                    {{ truncate(edge.label!, 24) }}
                   </text>
                 </g>
               </ng-container>
             </g>
 
-            <!-- ÉLÉMENTS -->
+            <!-- ═══ ÉLÉMENTS DU DIAGRAMME ═══ -->
             <g *ngFor="let el of bpmnDiagram.elements">
 
-              <!-- START EVENT -->
+              <!-- ──── DÉBUT (cercle vert simple) ──── -->
               <g *ngIf="el.type === 'startEvent'">
-                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2 + 2"
-                        fill="#d1fae5" stroke="none"/>
-                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2"
-                        fill="#10b981" stroke="#059669" stroke-width="2"/>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 1"
-                      text-anchor="middle" dominant-baseline="central" font-size="18" fill="white">▶</text>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 18"
-                      text-anchor="middle" font-size="11" fill="#374151"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2"
+                        r="26" fill="#16a34a" opacity="0.12" class="bpmn-start-pulse"/>
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2"
+                        [attr.r]="el.width/2"
+                        fill="#16a34a"/>
+                <polygon
+                  [attr.points]="(el.x + el.width/2 - 6) + ',' + (el.y + el.height/2 - 8) + ' ' +
+                                 (el.x + el.width/2 - 6) + ',' + (el.y + el.height/2 + 8) + ' ' +
+                                 (el.x + el.width/2 + 8) + ',' + (el.y + el.height/2)"
+                  fill="white"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 20"
+                      text-anchor="middle" font-size="11" fill="#0a1929"
+                      font-family="'Inter', sans-serif"
                       font-weight="700" letter-spacing="0.5">DÉBUT</text>
               </g>
 
-              <!-- END EVENT -->
+              <!-- ──── FIN (cercle noir double anneau) ──── -->
               <g *ngIf="el.type === 'endEvent'">
-                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2 + 2"
-                        fill="#f1f5f9" stroke="none"/>
-                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2"
-                        fill="none" stroke="#374151" stroke-width="4"/>
-                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2" [attr.r]="el.width/2 - 5"
-                        fill="#374151"/>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 18"
-                      text-anchor="middle" font-size="11" fill="#374151"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2"
+                        [attr.r]="el.width/2"
+                        fill="white" stroke="#0a1929" stroke-width="3"/>
+                <circle [attr.cx]="el.x + el.width/2" [attr.cy]="el.y + el.height/2"
+                        [attr.r]="el.width/2 - 6"
+                        fill="#0a1929"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 20"
+                      text-anchor="middle" font-size="11" fill="#0a1929"
+                      font-family="'Inter', sans-serif"
                       font-weight="700" letter-spacing="0.5">FIN</text>
               </g>
 
-              <!-- TASK -->
+              <!-- ──── TÂCHE (rectangle blanc + accent gauche) ──── -->
               <g *ngIf="el.type === 'task'" class="bpmn-task-group"
                  (click)="el.tache && openTaskForm(el.tache)" style="cursor:pointer">
-                <rect [attr.x]="el.x + 3" [attr.y]="el.y + 4" [attr.width]="el.width" [attr.height]="el.height"
-                      rx="10" fill="rgba(0,0,0,0.08)"/>
-                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" [attr.height]="el.height"
-                      rx="10" [attr.fill]="getTaskFill(el.tache)" [attr.stroke]="getTaskStroke(el.tache)" stroke-width="2.5"
-                      filter="url(#task-shadow)"/>
-                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" height="6"
-                      [attr.fill]="getTaskStroke(el.tache)" rx="10"/>
-                <rect [attr.x]="el.x" [attr.y]="el.y + 3" [attr.width]="el.width" height="3"
+
+                <!-- Carte blanche -->
+                <rect [attr.x]="el.x" [attr.y]="el.y"
+                      [attr.width]="el.width" [attr.height]="el.height"
+                      rx="8"
+                      fill="white"
+                      [attr.stroke]="getTaskStroke(el.tache)"
+                      stroke-width="2"/>
+
+                <!-- Barre d'accent gauche (couleur statut) -->
+                <rect [attr.x]="el.x" [attr.y]="el.y"
+                      width="5" [attr.height]="el.height"
+                      [attr.fill]="getTaskStroke(el.tache)"
+                      rx="8"/>
+                <rect [attr.x]="el.x + 3" [attr.y]="el.y"
+                      width="2" [attr.height]="el.height"
                       [attr.fill]="getTaskStroke(el.tache)"/>
-                <rect [attr.x]="el.x + 8" [attr.y]="el.y + 12" width="26" height="18" rx="9"
-                      [attr.fill]="getTaskStroke(el.tache)"/>
-                <text [attr.x]="el.x + 21" [attr.y]="el.y + 21"
-                      text-anchor="middle" dominant-baseline="central"
-                      font-size="10" fill="white" font-weight="800"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+
+                <!-- Numéro d'ordre (badge rond en haut à gauche) -->
+                <circle [attr.cx]="el.x + 22" [attr.cy]="el.y + 20" r="11"
+                        [attr.fill]="getTaskStroke(el.tache)"/>
+                <text [attr.x]="el.x + 22" [attr.y]="el.y + 24"
+                      text-anchor="middle"
+                      font-size="11" fill="white" font-weight="800"
+                      font-family="'Inter', sans-serif">
                   {{ el.tache?.ordre }}
                 </text>
-                <text [attr.x]="el.x + el.width - 8" [attr.y]="el.y + 21"
-                      text-anchor="end" dominant-baseline="central"
-                      font-size="8.5" fill="#6b7280" font-weight="700"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" letter-spacing="0.3">
-                  {{ el.tache?.type }}</text>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + 44"
-                      text-anchor="middle" dominant-baseline="central"
-                      font-size="12" font-weight="700"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
-                      [attr.fill]="getTaskTextColor(el.tache)">
-                  {{ truncate(el.label, 22) }}
+
+                <!-- Type (HUMAINE / SYSTEME) en haut à droite -->
+                <text [attr.x]="el.x + el.width - 10" [attr.y]="el.y + 22"
+                      text-anchor="end"
+                      font-size="9" fill="#64748b" font-weight="700"
+                      font-family="'Inter', sans-serif" letter-spacing="0.5">
+                  {{ el.tache?.type }}
                 </text>
+
+                <!-- Nom de la tâche (centré) -->
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 4"
+                      text-anchor="middle"
+                      font-size="13" font-weight="600"
+                      font-family="'Inter', sans-serif"
+                      fill="#0a1929">
+                  {{ truncate(el.label, 20) }}
+                </text>
+
+                <!-- Assignee si présent -->
                 <text *ngIf="el.tache?.assignee"
-                      [attr.x]="el.x + el.width/2" [attr.y]="el.y + 58"
-                      text-anchor="middle" dominant-baseline="central"
-                      font-size="9.5" fill="#6b7280"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-                  👤 {{ truncate(el.tache!.assignee!, 18) }}</text>
+                      [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 20"
+                      text-anchor="middle"
+                      font-size="10" fill="#64748b"
+                      font-family="'Inter', sans-serif">
+                  👤 {{ truncate(el.tache!.assignee!, 18) }}
+                </text>
+
+                <!-- Indicateur en bas : champs + statut -->
                 <g *ngIf="el.tache && getChamps(el.tache).length > 0">
-                  <rect [attr.x]="el.x + 8" [attr.y]="el.y + el.height - 22" width="40" height="14" rx="7" fill="#eef2ff"/>
-                  <text [attr.x]="el.x + 28" [attr.y]="el.y + el.height - 15"
-                        text-anchor="middle" dominant-baseline="central"
-                        font-size="9" fill="#4f46e5" font-weight="700"
-                        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
-                    📝 {{ el.tache && getChamps(el.tache).length }}</text>
+                  <rect [attr.x]="el.x + 10" [attr.y]="el.y + el.height - 22"
+                        width="36" height="16" rx="8"
+                        fill="#fff7ed" stroke="#fed7aa" stroke-width="1"/>
+                  <text [attr.x]="el.x + 28" [attr.y]="el.y + el.height - 11"
+                        text-anchor="middle"
+                        font-size="9" fill="#c2410c" font-weight="700"
+                        font-family="'Inter', sans-serif">
+                    📝 {{ el.tache && getChamps(el.tache).length }}
+                  </text>
                 </g>
+
                 <g *ngIf="el.tache && hasFormData(el.tache)">
-                  <rect [attr.x]="el.x + 54" [attr.y]="el.y + el.height - 22" width="32" height="14" rx="7" fill="#d1fae5"/>
-                  <text [attr.x]="el.x + 70" [attr.y]="el.y + el.height - 15"
-                        text-anchor="middle" dominant-baseline="central"
-                        font-size="9" fill="#059669" font-weight="700"
-                        font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">✓ OK</text>
+                  <rect [attr.x]="el.x + 52" [attr.y]="el.y + el.height - 22"
+                        width="32" height="16" rx="8"
+                        fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1"/>
+                  <text [attr.x]="el.x + 68" [attr.y]="el.y + el.height - 11"
+                        text-anchor="middle"
+                        font-size="9" fill="#15803d" font-weight="700"
+                        font-family="'Inter', sans-serif">
+                    ✓ OK
+                  </text>
                 </g>
-                <text [attr.x]="el.x + el.width - 12" [attr.y]="el.y + el.height - 12"
-                      text-anchor="end" dominant-baseline="central" font-size="15">
-                  {{ el.tache?.statut === 'TERMINE' ? '✅' : el.tache?.statut === 'EN_COURS' ? '⚡' : '⏳' }}
+
+                <!-- Icône statut en bas à droite -->
+                <text [attr.x]="el.x + el.width - 12" [attr.y]="el.y + el.height - 10"
+                      text-anchor="end"
+                      font-size="14">
+                  {{ el.tache?.statut === 'TERMINE' ? '✅' : el.tache?.statut === 'EN_COURS' ? '⏳' : '⚪' }}
                 </text>
               </g>
 
-              <!-- ✅ SUBPROCESS (CLIQUABLE) -->
+              <!-- ──── SUBPROCESS (rectangle pointillé) ──── -->
               <g *ngIf="el.type === 'subprocess'" class="bpmn-subprocess-group"
-                 (click)="onSubprocessClick(el)"
-                 style="cursor:pointer">
-                <rect [attr.x]="el.x + 2" [attr.y]="el.y + 3" [attr.width]="el.width" [attr.height]="el.height"
-                      rx="8" [attr.fill]="getSubprocessColor(el)" opacity="0.15"/>
-                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" [attr.height]="el.height"
+                 (click)="onSubprocessClick(el)" style="cursor:pointer">
+
+                <rect [attr.x]="el.x" [attr.y]="el.y"
+                      [attr.width]="el.width" [attr.height]="el.height"
                       rx="8"
-                      [attr.fill]="getSubprocessColor(el) + '18'"
+                      fill="white"
                       [attr.stroke]="getSubprocessColor(el)"
-                      stroke-width="2" stroke-dasharray="6,3"
-                      filter="url(#sp-shadow)"/>
-                <rect [attr.x]="el.x" [attr.y]="el.y" [attr.width]="el.width" height="5"
-                      rx="8" [attr.fill]="getSubprocessColor(el)"/>
-                <rect [attr.x]="el.x" [attr.y]="el.y + 3" [attr.width]="el.width" height="2"
+                      stroke-width="2"
+                      stroke-dasharray="6,3"/>
+
+                <!-- Badge SP en haut -->
+                <rect [attr.x]="el.x + 8" [attr.y]="el.y + 8"
+                      width="26" height="16" rx="8"
                       [attr.fill]="getSubprocessColor(el)"/>
-                <rect [attr.x]="el.x + 6" [attr.y]="el.y + 9" width="22" height="12" rx="6"
-                      [attr.fill]="getSubprocessColor(el)"/>
-                <text [attr.x]="el.x + 17" [attr.y]="el.y + 15"
-                      text-anchor="middle" dominant-baseline="central"
-                      font-size="7" fill="white" font-weight="900"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">SP</text>
-                <text [attr.x]="el.x + el.width - 6" [attr.y]="el.y + 15"
-                      text-anchor="end" dominant-baseline="central"
-                      font-size="7.5" [attr.fill]="getSubprocessColor(el)" font-weight="700"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">{{ el.sublabel }}</text>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + 35"
-                      text-anchor="middle" dominant-baseline="central"
-                      font-size="10.5" font-weight="700"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif"
+                <text [attr.x]="el.x + 21" [attr.y]="el.y + 20"
+                      text-anchor="middle"
+                      font-size="9" fill="white" font-weight="800"
+                      font-family="'Inter', sans-serif">SP</text>
+
+                <!-- Label type à droite -->
+                <text [attr.x]="el.x + el.width - 10" [attr.y]="el.y + 20"
+                      text-anchor="end"
+                      font-size="9"
+                      [attr.fill]="getSubprocessColor(el)"
+                      font-weight="700"
+                      font-family="'Inter', sans-serif">
+                  {{ el.sublabel }}
+                </text>
+
+                <!-- Nom du subprocess -->
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 6"
+                      text-anchor="middle"
+                      font-size="12" font-weight="600"
+                      font-family="'Inter', sans-serif"
                       [attr.fill]="getSubprocessColor(el)">
                   {{ truncate(el.label, 18) }}
                 </text>
-                <rect [attr.x]="el.x + el.width/2 - 8" [attr.y]="el.y + el.height - 14"
-                      width="16" height="10" rx="3"
-                      [attr.stroke]="getSubprocessColor(el)" stroke-width="1.5" fill="white"/>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height - 9"
-                      text-anchor="middle" dominant-baseline="central"
-                      font-size="8" [attr.fill]="getSubprocessColor(el)" font-weight="800">+</text>
+
+                <!-- Petit signe "+" en bas pour montrer qu'on peut développer -->
+                <rect [attr.x]="el.x + el.width/2 - 9" [attr.y]="el.y + el.height - 16"
+                      width="18" height="11" rx="3"
+                      fill="white"
+                      [attr.stroke]="getSubprocessColor(el)" stroke-width="1.5"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height - 8"
+                      text-anchor="middle"
+                      font-size="10"
+                      [attr.fill]="getSubprocessColor(el)"
+                      font-weight="800">+</text>
               </g>
 
-              <!-- GATEWAY -->
+              <!-- ──── GATEWAY (losange simple avec ?) ──── -->
               <g *ngIf="el.type === 'gateway'"
                  (click)="el.sourceTache && openTaskForm(el.sourceTache)" style="cursor:pointer">
-                <polygon [attr.points]="getDiamondPoints(el.x - 4, el.y - 4, el.width + 8, el.height + 8)"
-                         fill="#f1f5f9" stroke="none"/>
+
                 <polygon [attr.points]="getDiamondPoints(el.x, el.y, el.width, el.height)"
-                         fill="white" stroke="#374151" stroke-width="2"/>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 2"
-                      text-anchor="middle" dominant-baseline="central"
-                      font-size="22" fill="#374151" font-weight="700"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">✕</text>
+                         fill="white"
+                         stroke="#0a1929" stroke-width="2"/>
+
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 5"
+                      text-anchor="middle"
+                      font-size="20" fill="#0a1929" font-weight="700"
+                      font-family="'Inter', sans-serif">?</text>
+
                 <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 20"
-                      text-anchor="middle" font-size="11" fill="#374151"
-                      font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" font-weight="600">
+                      text-anchor="middle"
+                      font-size="11" fill="#0a1929"
+                      font-family="'Inter', sans-serif" font-weight="600">
                   {{ truncate(el.question || 'Condition ?', 26) }}
                 </text>
               </g>
@@ -529,7 +573,7 @@
 
       <!-- ONGLET CHAMPS -->
       <div *ngIf="editorTab === 'champs'" class="dynamic-form">
-        <div class="info-box">💡 Définissez les champs que l'utilisateur devra remplir pour les règles gateway.</div>
+        <div class="info-box">📝 Définissez les champs à remplir pour cette tâche.</div>
         <button (click)="addChamp()" class="btn btn-secondary btn-sm">+ Ajouter un champ</button>
         <div *ngFor="let c of currentChamps; let i = index" class="param-card">
           <div class="param-head">
@@ -565,7 +609,7 @@
       <!-- ONGLET RÈGLES -->
       <div *ngIf="editorTab === 'regles'" class="dynamic-form">
         <div class="info-box">
-          ⚙️ <strong>Logique SI / SINON</strong> : Le gateway peut aller vers une ou plusieurs tâches existantes <strong>ou</strong> lancer un <strong>SubProcess</strong> (tâches virtuelles non listées dans le flux principal).
+          ⚙️ <strong>Logique SI / SINON</strong> ou lancer un <strong>SubProcess</strong>
         </div>
 
         <div class="actions-bar">
@@ -681,7 +725,7 @@
               </div>
             </div>
 
-            <!-- BLOC SI/SINON : TÂCHES DU FLUX -->
+            <!-- SI/SINON TÂCHES DU FLUX -->
             <div *ngIf="r.cibleType !== 'subprocess'" class="si-sinon-bloc">
               <div class="branch-line branch-oui branch-oui-multi">
                 <div class="branch-line-header">
@@ -723,38 +767,27 @@
               </div>
             </div>
 
-            <!-- ✅ BLOC SI/SINON : SUBPROCESS (corrigé visuellement) -->
+            <!-- SI/SINON SUBPROCESS -->
             <div *ngIf="r.cibleType === 'subprocess'" class="subprocess-bloc">
 
-              <!-- SubProcess OUI -->
               <div class="subprocess-section subprocess-oui-section">
                 <div class="subprocess-section-header">
                   <span class="tag tag-then-oui">✓ SI VRAI → SubProcess</span>
                   <div class="subprocess-nom-row">
                     <label class="sp-label">Nom du SubProcess OUI :</label>
-                    <input [(ngModel)]="r.subprocessOuiNom" class="form-control sp-nom-input"
-                           placeholder="Ex: Contrôle renforcé"/>
+                    <input [(ngModel)]="r.subprocessOuiNom" class="form-control sp-nom-input" placeholder="Ex: Contrôle renforcé"/>
                   </div>
                 </div>
                 <div class="subprocess-tasks-list">
                   <div *ngFor="let vt of r.subprocessOuiTaches || []; let vi = index" class="sp-task-row">
                     <span class="sp-task-idx">{{ vi + 1 }}</span>
-                    <div class="sp-task-field">
-                      <label class="sp-mini-label">Nom de la tâche</label>
-                      <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
-                    </div>
-                    <div class="sp-task-field sp-task-field-narrow">
-                      <label class="sp-mini-label">Type</label>
-                      <select [(ngModel)]="vt.type" class="form-control sp-task-type">
-                        <option value="HUMAINE">HUMAINE</option>
-                        <option value="SYSTEME">SYSTEME</option>
-                      </select>
-                    </div>
-                    <div class="sp-task-field">
-                      <label class="sp-mini-label">Assigné à (optionnel)</label>
-                      <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Personne / service"/>
-                    </div>
-                    <button type="button" class="mini-btn mini-danger sp-task-delete" (click)="removeSubprocessOuiTache(r, vi)" title="Supprimer">🗑️</button>
+                    <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
+                    <select [(ngModel)]="vt.type" class="form-control sp-task-type">
+                      <option value="HUMAINE">HUMAINE</option>
+                      <option value="SYSTEME">SYSTEME</option>
+                    </select>
+                    <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Assigné à"/>
+                    <button type="button" class="mini-btn mini-danger" (click)="removeSubprocessOuiTache(r, vi)" title="Supprimer">🗑️</button>
                   </div>
                   <div *ngIf="!r.subprocessOuiTaches || r.subprocessOuiTaches.length === 0" class="empty-mini-cible">
                     Aucune tâche dans ce SubProcess.
@@ -765,35 +798,24 @@
                 </button>
               </div>
 
-              <!-- SubProcess SINON -->
               <div class="subprocess-section subprocess-non-section">
                 <div class="subprocess-section-header">
                   <span class="tag tag-then-non">✗ SINON → SubProcess (optionnel)</span>
                   <div class="subprocess-nom-row">
                     <label class="sp-label">Nom du SubProcess SINON :</label>
-                    <input [(ngModel)]="r.subprocessSinonNom" class="form-control sp-nom-input"
-                           placeholder="Ex: Procédure de rejet (optionnel)"/>
+                    <input [(ngModel)]="r.subprocessSinonNom" class="form-control sp-nom-input" placeholder="Ex: Procédure de rejet"/>
                   </div>
                 </div>
                 <div class="subprocess-tasks-list">
                   <div *ngFor="let vt of r.subprocessSinonTaches || []; let vi = index" class="sp-task-row">
                     <span class="sp-task-idx sp-non-idx">{{ vi + 1 }}</span>
-                    <div class="sp-task-field">
-                      <label class="sp-mini-label">Nom de la tâche</label>
-                      <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
-                    </div>
-                    <div class="sp-task-field sp-task-field-narrow">
-                      <label class="sp-mini-label">Type</label>
-                      <select [(ngModel)]="vt.type" class="form-control sp-task-type">
-                        <option value="HUMAINE">HUMAINE</option>
-                        <option value="SYSTEME">SYSTEME</option>
-                      </select>
-                    </div>
-                    <div class="sp-task-field">
-                      <label class="sp-mini-label">Assigné à (optionnel)</label>
-                      <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Personne / service"/>
-                    </div>
-                    <button type="button" class="mini-btn mini-danger sp-task-delete" (click)="removeSubprocessSinonTache(r, vi)" title="Supprimer">🗑️</button>
+                    <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
+                    <select [(ngModel)]="vt.type" class="form-control sp-task-type">
+                      <option value="HUMAINE">HUMAINE</option>
+                      <option value="SYSTEME">SYSTEME</option>
+                    </select>
+                    <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Assigné à"/>
+                    <button type="button" class="mini-btn mini-danger" (click)="removeSubprocessSinonTache(r, vi)" title="Supprimer">🗑️</button>
                   </div>
                   <div *ngIf="!r.subprocessSinonTaches || r.subprocessSinonTaches.length === 0" class="empty-mini-cible">
                     Aucune tâche (le processus continuera après le gateway).
@@ -804,9 +826,6 @@
                 </button>
               </div>
 
-              <div class="subprocess-info-box">
-                💡 Les tâches des SubProcesses sont <strong>virtuelles</strong> : elles apparaissent dans le diagramme BPMN mais ne font pas partie de la liste principale des tâches.
-              </div>
             </div>
 
           </div>
