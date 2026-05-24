@@ -1,1327 +1,251 @@
 <div class="export-container">
 
-  <!-- ══════════════ ONGLETS PRINCIPAUX ══════════════ -->
+  <!-- ══ ONGLETS ══ -->
   <div class="main-tabs">
-    <button [class.active]="activeTab === 'nouveau'"
-            (click)="changerOnglet('nouveau')">
-      🚀 Nouveau dossier
+    <button [class.active]="activeTab === 'nouveau'" (click)="changerOnglet('nouveau')">
+      + Nouveau dossier
     </button>
-    <button [class.active]="activeTab === 'instances'"
-            (click)="changerOnglet('instances')">
-      📊 Instances ({{ instances.length }})
+    <button [class.active]="activeTab === 'mes-dossiers'" (click)="changerOnglet('mes-dossiers')">
+      Mes dossiers ({{ dossiers.length }})
     </button>
   </div>
 
-  <!-- ════════════════════════════════════════════════════
-       ONGLET 1 : NOUVEAU DOSSIER (formulaire actuel)
-       ════════════════════════════════════════════════════ -->
-  <div *ngIf="activeTab === 'nouveau'">
-
-    <!-- Bouton PDF -->
-    <div class="pdf-container">
-      <button
-        type="button"
-        class="pdf-btn"
-        (click)="telechargerPDF()"
-        [disabled]="loading"
-      >
-        📄 Télécharger PDF
-      </button>
-    </div>
-
-    <!-- ══════════════ STEPPER PHASES ══════════════ -->
-    <div class="phase-stepper" role="navigation" aria-label="Phases du processus">
-      <div class="phase" [class.active]="phaseActive >= 1" [class.done]="phaseActive > 1">
-        <div class="phase-num">{{ phaseActive > 1 ? '✓' : '1' }}</div>
-        <div class="phase-label">Pré-dédouanement</div>
-      </div>
-      <div class="phase-line" [class.done]="phaseActive > 1"></div>
-      <div class="phase" [class.active]="phaseActive >= 2" [class.done]="phaseActive > 2">
-        <div class="phase-num">{{ phaseActive > 2 ? '✓' : '2' }}</div>
-        <div class="phase-label">Expédition</div>
-      </div>
-      <div class="phase-line" [class.done]="phaseActive > 2"></div>
-      <div class="phase" [class.active]="phaseActive >= 3" [class.done]="phaseActive > 3">
-        <div class="phase-num">{{ phaseActive > 3 ? '✓' : '3' }}</div>
-        <div class="phase-label">Dédouanement</div>
-      </div>
-      <div class="phase-line" [class.done]="phaseActive > 3"></div>
-      <div class="phase" [class.active]="phaseActive >= 4">
-        <div class="phase-num">4</div>
-        <div class="phase-label">Embarquement</div>
-      </div>
-    </div>
-
-    <!-- Étape courante info -->
-    <div class="etape-info" *ngIf="!processTermine && !processRejete">
-      <span class="etape-badge phase-{{ phaseActive }}">Phase {{ phaseActive }}</span>
-      <span class="etape-nom">{{ etapeLabel }}</span>
-      <span class="etape-groupes" *ngIf="groupesCourants.length">
-        Groupes : <strong>{{ groupesCourants.join(', ') }}</strong>
-      </span>
-      <span class="etape-boucle" *ngIf="isEtapeBoucle()">↻ Correction requise</span>
-    </div>
-
-    <!-- ══════════════ MESSAGES ══════════════ -->
-    <div class="message {{ messageType }}" *ngIf="message" role="alert" aria-live="assertive">
+  <!-- ══ MESSAGE ══ -->
+  @if (message) {
+    <div class="message-bar" [ngClass]="'msg-' + messageType">
       {{ message }}
     </div>
+  }
 
-    <!-- ══════════════ PROCESS REJETÉ ══════════════ -->
-    <div class="form-card rejected-card" *ngIf="processRejete">
-      <div class="card-icon">✗</div>
-      <h2>Dossier export rejeté</h2>
-      <p>L'exportation n'est pas éligible. Le dossier a été refusé.</p>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="reinitialiser()">Nouveau dossier</button>
-      </div>
-    </div>
+  <!-- ══════════════════════════════════════════
+       ONGLET 1 : NOUVEAU DOSSIER
+       ══════════════════════════════════════════ -->
+  @if (activeTab === 'nouveau') {
+    <div class="form-card">
 
-    <!-- ══════════════ PROCESS TERMINÉ ══════════════ -->
-    <div class="form-card success-card" *ngIf="processTermine">
-      <div class="card-icon">🎉</div>
-      <h2>Marchandise exportée</h2>
-      <p>Le processus d'export est clôturé avec succès.</p>
-      <div class="summary-grid">
-        <div class="summary-item">
-          <span>Exportateur</span>
-          <strong>{{ saisieDossier.exportateur }}</strong>
-        </div>
-        <div class="summary-item">
-          <span>Pays destination</span>
-          <strong>{{ saisieDossier.paysDestination }}</strong>
-        </div>
-        <div class="summary-item">
-          <span>Type produit</span>
-          <strong>{{ saisieDossier.typeProduit }}</strong>
-        </div>
-        <div class="summary-item">
-          <span>Total frais</span>
-          <strong>{{ processVariables.totalFrais | number:'1.2-2' }} XAF</strong>
-        </div>
-        <div class="summary-item">
-          <span>Circuit douanier</span>
-          <strong class="circuit-{{ circuitDouane | lowercase }}">{{ circuitDouane }}</strong>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="reinitialiser()">Nouveau dossier</button>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         PHASE 1 — PRÉ-DÉDOUANEMENT EXPORT
-         ═══════════════════════════════════════════════ -->
-
-    <!-- Étape 1 : Saisie dossier export -->
-    <div class="form-card" *ngIf="etapeActive === 'saisie_dossier' && !processTermine && !processRejete">
       <div class="card-header">
-        <h2>Saisie dossier export</h2>
-        <p class="subtitle">Démarrage du processus export — <em>Groupes : EXPORTATEUR, TRANSITAIRE</em></p>
+        <h2>Nouveau dossier d'exportation</h2>
+        <p>Remplissez les informations de votre dossier pour le soumettre au traitement.</p>
       </div>
+
       <div class="form-grid">
+
         <div class="form-group">
-          <label for="exportateur">Exportateur *</label>
-          <input id="exportateur" [(ngModel)]="saisieDossier.exportateur" placeholder="Nom exportateur" />
+          <label>Exportateur <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="dossier.exportateur"
+                 placeholder="Nom de la societe ou de la personne" />
         </div>
+
         <div class="form-group">
-          <label for="nomDossier">Référence dossier</label>
-          <input id="nomDossier" [(ngModel)]="saisieDossier.nomDossier" placeholder="REF-2025-XXX" />
+          <label>Pays de destination <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="dossier.paysDestination"
+                 placeholder="Ex : France, USA, Espagne..." />
         </div>
+
         <div class="form-group">
-          <label for="paysDestination">Pays de destination *</label>
-          <input id="paysDestination" [(ngModel)]="saisieDossier.paysDestination" placeholder="ex. France" />
+          <label>Type de produit <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="dossier.typeProduit"
+                 placeholder="Ex : Cafe, Coton, Minerai..." />
         </div>
+
         <div class="form-group">
-          <label for="dateDepot">Date de dépôt</label>
-          <input type="date" id="dateDepot" [(ngModel)]="saisieDossier.dateDepot" />
+          <label>Quantite</label>
+          <input type="number" [(ngModel)]="dossier.quantite" min="0" />
         </div>
-        <div class="form-group full">
-          <label for="typeProduit">Type de produit *</label>
-          <select id="typeProduit" [(ngModel)]="saisieDossier.typeProduit">
-            <option value="" disabled>-- Sélectionner --</option>
-            <option>Textile</option>
-            <option>Alimentaire</option>
-            <option>Électronique</option>
-            <option>Matières premières</option>
-            <option>Produits chimiques</option>
-            <option>Bois et dérivés</option>
-            <option>Produits agricoles</option>
-            <option>Hydrocarbures</option>
+
+        <div class="form-group">
+          <label>Valeur FOB</label>
+          <input type="number" [(ngModel)]="dossier.valeurFOB" min="0" />
+        </div>
+
+        <div class="form-group">
+          <label>Devise</label>
+          <select [(ngModel)]="dossier.deviseFacture">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="GBP">GBP</option>
+            <option value="XOF">XOF</option>
           </select>
         </div>
+
+        <div class="form-group">
+          <label>Code SH</label>
+          <input type="text" [(ngModel)]="dossier.codeSH"
+                 placeholder="Code douanier harmonise" />
+        </div>
+
+        <div class="form-group">
+          <label>Destination finale</label>
+          <input type="text" [(ngModel)]="dossier.destinationFinale"
+                 placeholder="Ville / port de destination" />
+        </div>
+
+        <div class="form-group">
+          <label>Date de depot</label>
+          <input type="date" [(ngModel)]="dossier.dateDepot" />
+        </div>
+
       </div>
-      <div class="card-footer">
-        <button class="btn-primary"
-          (click)="soumettreEtape1()"
-          [disabled]="loading || !saisieDossier.exportateur || !saisieDossier.paysDestination || !saisieDossier.typeProduit">
-          <span>Démarrer le processus</span>
-          <span *ngIf="loading" class="loader"></span>
+
+      <div class="form-actions">
+        <button class="btn-primary" (click)="soumettreDossier()" [disabled]="loading">
+          {{ loading ? 'Envoi en cours...' : 'Soumettre le dossier' }}
         </button>
       </div>
+
     </div>
+  }
 
-    <!-- Étape 2 : Procédures préalables -->
-    <div class="form-card" *ngIf="etapeActive === 'procedures_prealables'">
-      <div class="card-header">
-        <h2>Procédures préalables export</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, ADMIN_TECHNIQUE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="licenceExport">Numéro de licence export</label>
-          <input id="licenceExport" [(ngModel)]="proceduresPrealables.licenceExport" placeholder="LIC-EXP-XXX" />
-        </div>
-        <div class="form-group">
-          <label for="autoriteCompetente">Autorité compétente</label>
-          <input id="autoriteCompetente" [(ngModel)]="proceduresPrealables.autoriteCompetente" placeholder="MINCOMMERCE" />
-        </div>
-        <div class="form-group">
-          <label for="refAutorisation">Référence autorisation</label>
-          <input id="refAutorisation" [(ngModel)]="proceduresPrealables.referenceAutorisation" placeholder="AUTH-2025-XXX" />
-        </div>
-        <div class="form-group full">
-          <label for="obsPrealable">Observations</label>
-          <textarea id="obsPrealable" [(ngModel)]="proceduresPrealables.observations" placeholder="Remarques éventuelles..."></textarea>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreEtape2()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
+  <!-- ══════════════════════════════════════════
+       ONGLET 2 : MES DOSSIERS
+       ══════════════════════════════════════════ -->
+  @if (activeTab === 'mes-dossiers') {
+    <div>
 
-    <!-- Étape 3 : Déclaration export DE/F1 -->
-    <div class="form-card" *ngIf="etapeActive === 'declaration_export'">
-      <div class="card-header">
-        <h2>Déclaration d'exportation DE / F1</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, TRANSITAIRE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numeroDEF1">Numéro DE/F1 *</label>
-          <input id="numeroDEF1" [(ngModel)]="declarationExport.numeroDEF1" placeholder="DE-2025-XXXXX" />
-        </div>
-        <div class="form-group">
-          <label for="codeSH">Code SH *</label>
-          <input id="codeSH" [(ngModel)]="declarationExport.codeSH" placeholder="6 chiffres" />
-        </div>
-        <div class="form-group">
-          <label for="quantite">Quantité</label>
-          <input type="number" id="quantite" [(ngModel)]="declarationExport.quantite" placeholder="0" />
-        </div>
-        <div class="form-group">
-          <label for="valeurFOB">Valeur FOB</label>
-          <input type="number" id="valeurFOB" [(ngModel)]="declarationExport.valeurFOB" placeholder="0.00" />
-        </div>
-        <div class="form-group">
-          <label for="deviseFacture">Devise</label>
-          <select id="deviseFacture" [(ngModel)]="declarationExport.deviseFacture">
-            <option>USD</option><option>EUR</option><option>XAF</option><option>GBP</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="destinationFinale">Destination finale</label>
-          <input id="destinationFinale" [(ngModel)]="declarationExport.destinationFinale" placeholder="Ville, Pays" />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreEtape3()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 4 : Domiciliation bancaire -->
-    <div class="form-card" *ngIf="etapeActive === 'domiciliation_bancaire'">
-      <div class="card-header">
-        <h2>Domiciliation bancaire / service change</h2>
-        <p class="subtitle">Groupes : BANQUE, SERVICE_CHANGE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="banque">Banque domiciliataire *</label>
-          <input id="banque" [(ngModel)]="domiciliationBancaire.banqueDomiciliataire" placeholder="Nom de la banque" />
-        </div>
-        <div class="form-group">
-          <label for="numCompte">Numéro de compte</label>
-          <input id="numCompte" [(ngModel)]="domiciliationBancaire.numeroCompte" placeholder="XXXXXXXXXX" />
-        </div>
-        <div class="form-group">
-          <label for="refContrat">Référence contrat</label>
-          <input id="refContrat" [(ngModel)]="domiciliationBancaire.referenceContrat" placeholder="CTR-2025-XXX" />
-        </div>
-        <div class="form-group">
-          <label for="montantDevise">Montant en devise</label>
-          <input type="number" id="montantDevise" [(ngModel)]="domiciliationBancaire.montantDevise" />
-        </div>
-        <div class="form-group">
-          <label for="deviseBank">Devise</label>
-          <select id="deviseBank" [(ngModel)]="domiciliationBancaire.devise">
-            <option>USD</option><option>EUR</option><option>XAF</option>
-          </select>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreEtape4()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 5 : Préparation documents expédition -->
-    <div class="form-card" *ngIf="etapeActive === 'preparation_documents'">
-      <div class="card-header">
-        <h2>Préparation documents expédition</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, TRANSITAIRE</p>
-      </div>
-      <div class="checklist">
-        <label class="check-item">
-          <input type="checkbox" [(ngModel)]="preparationDocuments.facturePro" />
-          <span>Facture proforma / commerciale</span>
-        </label>
-        <label class="check-item">
-          <input type="checkbox" [(ngModel)]="preparationDocuments.listColisage" />
-          <span>Liste de colisage</span>
-        </label>
-        <label class="check-item">
-          <input type="checkbox" [(ngModel)]="preparationDocuments.connaissement" />
-          <span>Connaissement / lettre de transport</span>
-        </label>
-      </div>
-      <div class="form-group full">
-        <label for="autresDocsExp">Autres documents</label>
-        <textarea id="autresDocsExp" [(ngModel)]="preparationDocuments.autresDocuments" placeholder="Préciser d'autres documents préparés..."></textarea>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreEtape5()" [disabled]="loading">
-          <span>Soumettre au contrôle pré-dédouanement</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 6 (boucle) : Compléter / corriger dossier -->
-    <div class="form-card boucle-card" *ngIf="etapeActive === 'complement_information'">
-      <div class="boucle-banner">↻ Dossier non conforme — correction requise</div>
-      <div class="card-header">
-        <h2>Compléter / corriger le dossier export</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, TRANSITAIRE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group full">
-
-        </div>
-        <div class="form-group full">
-          <label for="commentaireCorrection">Commentaire</label>
-          <textarea id="commentaireCorrection" [(ngModel)]="complementInformation.commentaire" placeholder="Expliquer les corrections apportées..."></textarea>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreComplementInformation()" [disabled]="loading">
-          <span>Resoumettre le dossier</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         PHASE 2 — PRÉPARATION / EXPÉDITION
-         ═══════════════════════════════════════════════ -->
-
-    <!-- Étape 7 : Demande inspection -->
-    <div class="form-card" *ngIf="etapeActive === 'demande_inspection'">
-      <div class="card-header">
-        <h2>Demande inspection / traitement</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, ADMIN_TECHNIQUE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="organisme">Organisme d'inspection</label>
-          <select id="organisme" [(ngModel)]="demandeInspection.organisme">
-            <option value="" disabled>-- Sélectionner --</option>
-            <option>MINADER</option><option>MINFOF</option><option>MINEPIA</option>
-            <option>MINSANTE</option><option>ADMIN_TECHNIQUE</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="dateInsp">Date d'inspection</label>
-          <input type="date" id="dateInsp" [(ngModel)]="demandeInspection.dateInspection" />
-        </div>
-        <div class="form-group">
-          <label for="lieuInsp">Lieu d'inspection</label>
-          <input id="lieuInsp" [(ngModel)]="demandeInspection.lieuInspection" placeholder="Entrepôt, port..." />
-        </div>
-        <div class="form-group">
-          <label for="typeTraitement">Type de traitement</label>
-          <input id="typeTraitement" [(ngModel)]="demandeInspection.typeTraitement" placeholder="Fumigation, ionisation..." />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreDemandeInspection()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 8 : Inspection et PV -->
-    <div class="form-card" *ngIf="etapeActive === 'inspection_pv'">
-      <div class="card-header">
-        <h2>Inspection export et PV</h2>
-        <p class="subtitle">Groupes : MINADER, MINFOF, ADMIN_TECHNIQUE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numeroPV">Numéro PV</label>
-          <input id="numeroPV" [(ngModel)]="inspectionPV.numeroPV" placeholder="PV-2025-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="dateInspPV">Date d'inspection</label>
-          <input type="date" id="dateInspPV" [(ngModel)]="inspectionPV.dateInspection" />
-        </div>
-        <div class="form-group">
-          <label for="inspecteur">Inspecteur</label>
-          <input id="inspecteur" [(ngModel)]="inspectionPV.inspecteur" placeholder="Nom prénom" />
-        </div>
-        <div class="form-group">
-          <label for="resultatInsp">Résultat</label>
-          <select id="resultatInsp" [(ngModel)]="inspectionPV.resultat">
-            <option value="" disabled>-- Sélectionner --</option>
-            <option>Conforme</option><option>Non conforme</option><option>Conforme avec réserves</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label for="obsInspPV">Observations</label>
-          <textarea id="obsInspPV" [(ngModel)]="inspectionPV.observations" placeholder="Détail de l'inspection..."></textarea>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreInspectionPV()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 9 : Certificat phytosanitaire -->
-    <div class="form-card" *ngIf="etapeActive === 'certificat_phytosanitaire'">
-      <div class="card-header">
-        <h2>Certificat phytosanitaire / sanitaire</h2>
-        <p class="subtitle">Groupes : MINADER, MINEPIA, MINSANTE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numCertPhyto">Numéro certificat</label>
-          <input id="numCertPhyto" [(ngModel)]="certificatPhytosanitaire.numeroCertificat" placeholder="CERT-PHYTO-XXX" />
-        </div>
-        <div class="form-group">
-          <label for="organismePhyto">Organisme délivreur</label>
-          <select id="organismePhyto" [(ngModel)]="certificatPhytosanitaire.organisme">
-            <option>MINADER</option><option>MINEPIA</option><option>MINSANTE</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="dateDelivrancePhyto">Date de délivrance</label>
-          <input type="date" id="dateDelivrancePhyto" [(ngModel)]="certificatPhytosanitaire.dateDelivrance" />
-        </div>
-        <div class="form-group full">
-          <label for="obsPhyto">Observations</label>
-          <textarea id="obsPhyto" [(ngModel)]="certificatPhytosanitaire.observations" placeholder="Résultats des tests..."></textarea>
-        </div>
-      </div>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="certificatPhytosanitaire.conformite" [value]="true" /> Conforme
-        </label>
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="certificatPhytosanitaire.conformite" [value]="false" /> Non conforme
-        </label>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreCertificatPhytosanitaire()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 10 : Empotage et rapport -->
-    <div class="form-card" *ngIf="etapeActive === 'empotage_rapport'">
-      <div class="card-header">
-        <h2>Empotage et rapport d'empotage</h2>
-        <p class="subtitle">Groupes : TRANSITAIRE, ADMIN_TECHNIQUE, PORT</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numConteneur">Numéro conteneur</label>
-          <input id="numConteneur" [(ngModel)]="empotageRapport.numeroConteneur" placeholder="TCKU1234567" />
-        </div>
-        <div class="form-group">
-          <label for="dateEmpotage">Date d'empotage</label>
-          <input type="date" id="dateEmpotage" [(ngModel)]="empotageRapport.dateEmpotage" />
-        </div>
-        <div class="form-group">
-          <label for="poidsNet">Poids net (kg)</label>
-          <input type="number" id="poidsNet" [(ngModel)]="empotageRapport.poidsNet" />
-        </div>
-        <div class="form-group">
-          <label for="poidsBrut">Poids brut (kg)</label>
-          <input type="number" id="poidsBrut" [(ngModel)]="empotageRapport.poidsBrut" />
-        </div>
-        <div class="form-group">
-          <label for="scelle">Numéro de scellé</label>
-          <input id="scelle" [(ngModel)]="empotageRapport.scelle" placeholder="SCELL-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="lieuEmpotage">Lieu d'empotage</label>
-          <input id="lieuEmpotage" [(ngModel)]="empotageRapport.lieuEmpotage" placeholder="Entrepôt / terminal" />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreEmpotageRapport()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 11 : Certificat d'origine -->
-    <div class="form-card" *ngIf="etapeActive === 'certificat_origine'">
-      <div class="card-header">
-        <h2>Certificat d'origine</h2>
-        <p class="subtitle">Groupes : CCIMA, ONCC, MINFOF, DOUANE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numCertOri">Numéro certificat</label>
-          <input id="numCertOri" [(ngModel)]="certificatOrigine.numeroCertificat" placeholder="CO-2025-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="orgCertOri">Organisme délivreur</label>
-          <select id="orgCertOri" [(ngModel)]="certificatOrigine.organisme">
-            <option>CCIMA</option><option>ONCC</option><option>MINFOF</option><option>DOUANE</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="paysOri">Pays d'origine</label>
-          <input id="paysOri" [(ngModel)]="certificatOrigine.paysOrigine" placeholder="Cameroun" />
-        </div>
-        <div class="form-group">
-          <label for="dateDelivranceOri">Date de délivrance</label>
-          <input type="date" id="dateDelivranceOri" [(ngModel)]="certificatOrigine.dateDelivrance" />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreCertificatOrigine()" [disabled]="loading">
-          <span>Valider</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 12 : BESC / booking transport -->
-    <div class="form-card" *ngIf="etapeActive === 'besc_booking'">
-      <div class="card-header">
-        <h2>BESC / Booking transport</h2>
-        <p class="subtitle">Groupes : CNCC, TRANSITAIRE, TRANSPORTEUR</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numeroBESC">Numéro BESC</label>
-          <input id="numeroBESC" [(ngModel)]="bescBooking.numeroBESC" placeholder="BESC-2025-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="compagnieMaritime">Compagnie maritime</label>
-          <input id="compagnieMaritime" [(ngModel)]="bescBooking.compagnieMaritime" placeholder="MSC, CMA CGM..." />
-        </div>
-        <div class="form-group">
-          <label for="dateBooking">Date de booking</label>
-          <input type="date" id="dateBooking" [(ngModel)]="bescBooking.dateBooking" />
-        </div>
-        <div class="form-group">
-          <label for="portEmbarquement">Port d'embarquement</label>
-          <input id="portEmbarquement" [(ngModel)]="bescBooking.portEmbarquement" placeholder="Douala" />
-        </div>
-        <div class="form-group">
-          <label for="portDestination">Port de destination</label>
-          <input id="portDestination" [(ngModel)]="bescBooking.portDestination" placeholder="Marseille" />
-        </div>
-        <div class="form-group">
-          <label for="dateETD">ETD (Date départ estimé)</label>
-          <input type="date" id="dateETD" [(ngModel)]="bescBooking.dateETD" />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreBescBooking()" [disabled]="loading">
-          <span>Soumettre à la vérification expédition</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 13 (boucle) : Correction documents expédition -->
-    <div class="form-card boucle-card" *ngIf="etapeActive === 'correction_expedition'">
-      <div class="boucle-banner">↻ Expédition non conforme — correction requise</div>
-      <div class="card-header">
-        <h2>Corriger documents expédition</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, TRANSITAIRE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group full">
-          <label for="docsCorrigés">Documents corrigés</label>
-
-        </div>
-        <div class="form-group full">
-          <label for="commentaireExpedition">Commentaire de correction</label>
-          <textarea id="commentaireExpedition" [(ngModel)]="correctionExpedition.commentaire" placeholder="Détail des corrections apportées..."></textarea>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreCorrectionExpedition()" [disabled]="loading">
-          <span>Resoumettre</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         PHASE 3 — DÉDOUANEMENT EXPORT
-         ═══════════════════════════════════════════════ -->
-
-    <!-- Étape 14 : Soumission déclaration douane -->
-    <div class="form-card" *ngIf="etapeActive === 'soumission_douane'">
-      <div class="card-header">
-        <h2>Soumission déclaration douane export</h2>
-        <p class="subtitle">Groupes : TRANSITAIRE, DOUANE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numDeclaration">Numéro de déclaration</label>
-          <input id="numDeclaration" [(ngModel)]="soumissionDouane.numeroDeclaration" placeholder="DEC-2025-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="bureauDouane">Bureau de douane</label>
-          <input id="bureauDouane" [(ngModel)]="soumissionDouane.bureauDouane" placeholder="Douala Port, Nsimalen..." />
-        </div>
-        <div class="form-group">
-          <label for="dateDepotDouane">Date de dépôt</label>
-          <input type="date" id="dateDepotDouane" [(ngModel)]="soumissionDouane.dateDepot" />
-        </div>
-        <div class="form-group">
-          <label for="declarant">Déclarant</label>
-          <input id="declarant" [(ngModel)]="soumissionDouane.declarant" placeholder="Nom du transitaire" />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreSoumissionDouane()" [disabled]="loading">
-          <span>Soumettre — Analyse risque Drools</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 15 : Contrôle documentaire (circuit ORANGE) -->
-    <div class="form-card circuit-orange" *ngIf="etapeActive === 'controle_documentaire'">
-      <div class="circuit-banner orange">Circuit ORANGE — Contrôle documentaire</div>
-      <div class="card-header">
-        <h2>Contrôle documentaire export</h2>
-        <p class="subtitle">Groupes : DOUANE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group full">
-          <label>Documents vérifiés</label>
-          <div class="checklist">
-            <label class="check-item" *ngFor="let doc of ['Facture commerciale','Liste de colisage','Connaissement','Certificat d\'origine','Certificat phytosanitaire','DE/F1','BESC']">
-              <input type="checkbox" (change)="toggleDocumentVerifie(doc, $any($event.target).checked)" />
-              <span>{{ doc }}</span>
-            </label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="agentDouaneDoc">Agent douane</label>
-          <input id="agentDouaneDoc" [(ngModel)]="controleDocumentaire.agentDouane" placeholder="Matricule / Nom" />
-        </div>
-        <div class="form-group full">
-          <label for="obsControleDoc">Observations</label>
-          <textarea id="obsControleDoc" [(ngModel)]="controleDocumentaire.observations" placeholder="Remarques du contrôle..."></textarea>
-        </div>
-      </div>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="controleDocumentaire.conformite" [value]="true" /> <span class="radio-ok">Conforme</span>
-        </label>
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="controleDocumentaire.conformite" [value]="false" /> <span class="radio-ko">Non conforme</span>
-        </label>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreControleDocumentaire()" [disabled]="loading">
-          <span>Valider contrôle</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 16 : Inspection physique (circuit ROUGE) -->
-    <div class="form-card circuit-rouge" *ngIf="etapeActive === 'inspection_physique'">
-      <div class="circuit-banner rouge">Circuit ROUGE — Inspection physique / scanner</div>
-      <div class="card-header">
-        <h2>Inspection physique / scanner export</h2>
-        <p class="subtitle">Groupes : DOUANE, PORT, ADMIN_TECHNIQUE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="agentDouanePhys">Agent douane</label>
-          <input id="agentDouanePhys" [(ngModel)]="inspectionPhysique.agentDouane" placeholder="Matricule / Nom" />
-        </div>
-        <div class="form-group">
-          <label for="dateInspPhys">Date d'inspection</label>
-          <input type="date" id="dateInspPhys" [(ngModel)]="inspectionPhysique.dateInspection" />
-        </div>
-        <div class="form-group">
-          <label for="resultScanner">Résultat scanner</label>
-          <select id="resultScanner" [(ngModel)]="inspectionPhysique.resultScanner">
-            <option value="" disabled>-- Résultat --</option>
-            <option>RAS</option><option>Anomalie détectée</option><option>Contrôle physique nécessaire</option>
-          </select>
-        </div>
-        <div class="form-group full">
-          <label for="rapportPhys">Rapport d'inspection</label>
-          <textarea id="rapportPhys" [(ngModel)]="inspectionPhysique.rapport" placeholder="Détail de l'inspection physique..."></textarea>
-        </div>
-      </div>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="inspectionPhysique.anomaliesDetectees" [value]="false" /> <span class="radio-ok">Aucune anomalie</span>
-        </label>
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="inspectionPhysique.anomaliesDetectees" [value]="true" /> <span class="radio-ko">Anomalies détectées</span>
-        </label>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreInspectionPhysique()" [disabled]="loading">
-          <span>Valider inspection</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 17 (boucle) : Complément après contrôle -->
-    <div class="form-card boucle-card" *ngIf="etapeActive === 'complement_controle'">
-      <div class="boucle-banner">↻ Contrôle non conforme — complément requis</div>
-      <div class="card-header">
-        <h2>Complément après contrôle</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, TRANSITAIRE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group full">
-          <label for="correctionApportee">Correction apportée</label>
-          <input id="correctionApportee" [(ngModel)]="complementControle.correctionApportee" placeholder="Description de la correction" />
-        </div>
-        <div class="form-group full">
-          <label for="commentaireControle">Commentaire</label>
-          <textarea id="commentaireControle" [(ngModel)]="complementControle.commentaire" placeholder="Justification..."></textarea>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreComplementControle()" [disabled]="loading">
-          <span>Resoumettre à la douane</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 18 : Paiement électronique -->
-    <div class="form-card" *ngIf="etapeActive === 'paiement_export'">
-      <div class="card-header">
-        <h2>Paiement électronique export</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, BANQUE</p>
-      </div>
-      <div *ngIf="processVariables.totalFrais" class="frais-box">
-        <span class="frais-label">Montant à payer</span>
-        <span class="frais-value">{{ processVariables.totalFrais | number:'1.2-2' }} XAF</span>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="refPaiement">Référence paiement</label>
-          <input id="refPaiement" [(ngModel)]="paiementExport.referencePaiement" placeholder="PAY-2025-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="montantPaiement">Montant (XAF)</label>
-          <input type="number" id="montantPaiement" [(ngModel)]="paiementExport.montant" />
-        </div>
-        <div class="form-group">
-          <label for="methodePaiement">Méthode de paiement</label>
-          <select id="methodePaiement" [(ngModel)]="paiementExport.methodePaiement">
-            <option value="" disabled>-- Méthode --</option>
-            <option>Virement bancaire</option><option>Mobile Money</option><option>Chèque certifié</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="banquePaiement">Banque</label>
-          <input id="banquePaiement" [(ngModel)]="paiementExport.banque" placeholder="Nom de la banque" />
-        </div>
-        <div class="form-group">
-          <label for="datePaiement">Date de paiement</label>
-          <input type="date" id="datePaiement" [(ngModel)]="paiementExport.datePaiement" />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettrePaiementExport()" [disabled]="loading">
-          <span>Confirmer le paiement</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 19 (boucle) : Régulariser paiement -->
-    <div class="form-card boucle-card" *ngIf="etapeActive === 'regulariser_paiement'">
-      <div class="boucle-banner">↻ Paiement non confirmé — régularisation requise</div>
-      <div class="card-header">
-        <h2>Régulariser paiement export</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, BANQUE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group full">
-          <label for="motifIrregularite">Motif d'irrégularité</label>
-          <input id="motifIrregularite" [(ngModel)]="regulariserPaiement.motifIrregularite" placeholder="Solde insuffisant, référence erronée..." />
-        </div>
-        <div class="form-group full">
-          <label for="actionCorrectrice">Action correctrice</label>
-          <textarea id="actionCorrectrice" [(ngModel)]="regulariserPaiement.actionCorrectrice" placeholder="Mesures prises..."></textarea>
-        </div>
-        <div class="form-group">
-          <label for="nouvelleDatePaiement">Nouvelle date de paiement</label>
-          <input type="date" id="nouvelleDatePaiement" [(ngModel)]="regulariserPaiement.nouvelleDatePaiement" />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreRegulariserPaiement()" [disabled]="loading">
-          <span>Réessayer le paiement</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════
-         PHASE 4 — EMBARQUEMENT / CLÔTURE
-         ═══════════════════════════════════════════════ -->
-
-    <!-- Étape 20 (boucle) : Compléter conditions embarquement -->
-    <div class="form-card boucle-card" *ngIf="etapeActive === 'complement_embarquement'">
-      <div class="boucle-banner">↻ Conditions d'embarquement non remplies</div>
-      <div class="card-header">
-        <h2>Compléter conditions d'embarquement</h2>
-        <p class="subtitle">Groupes : EXPORTATEUR, TRANSITAIRE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group full">
-          <label for="conditionManquante">Condition manquante</label>
-          <input id="conditionManquante" [(ngModel)]="complementEmbarquement.conditionManquante" placeholder="Décrire la condition manquante" />
-        </div>
-        <div class="form-group full">
-          <label for="mesureCorrectrice">Mesure correctrice</label>
-          <textarea id="mesureCorrectrice" [(ngModel)]="complementEmbarquement.mesureCorrectrice" placeholder="Actions entreprises..."></textarea>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreComplementEmbarquement()" [disabled]="loading">
-          <span>Resoumettre</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 21 : Bon à embarquer -->
-    <div class="form-card" *ngIf="etapeActive === 'bon_a_embarquer'">
-      <div class="card-header">
-        <h2>Bon à embarquer</h2>
-        <p class="subtitle">Groupes : DOUANE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numeroBon">Numéro du bon</label>
-          <input id="numeroBon" [(ngModel)]="bonAEmbarquer.numeroBon" placeholder="BAE-2025-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="agentDouaneBAE">Agent douane</label>
-          <input id="agentDouaneBAE" [(ngModel)]="bonAEmbarquer.agentDouane" placeholder="Matricule / Nom" />
-        </div>
-        <div class="form-group">
-          <label for="dateDelivranceBAE">Date de délivrance</label>
-          <input type="date" id="dateDelivranceBAE" [(ngModel)]="bonAEmbarquer.dateDelivrance" />
-        </div>
-        <div class="form-group full">
-          <label for="obsBAE">Observations</label>
-          <textarea id="obsBAE" [(ngModel)]="bonAEmbarquer.observations" placeholder="Remarques..."></textarea>
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreBonAEmbarquer()" [disabled]="loading">
-          <span>Valider le bon</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 22 : Autorisation embarquement PAD/PAK -->
-    <div class="form-card" *ngIf="etapeActive === 'autorisation_embarquement'">
-      <div class="card-header">
-        <h2>Autorisation d'embarquement PAD / PAK</h2>
-        <p class="subtitle">Groupes : PORT</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numAutorisation">Numéro d'autorisation</label>
-          <input id="numAutorisation" [(ngModel)]="autorisationEmbarquement.numeroAutorisation" placeholder="AUTH-EMB-2025-XXX" />
-        </div>
-        <div class="form-group">
-          <label for="autoritePortuaire">Autorité portuaire</label>
-          <select id="autoritePortuaire" [(ngModel)]="autorisationEmbarquement.autoritePortuaire">
-            <option>PAD (Port Autonome de Douala)</option>
-            <option>PAK (Port Autonome de Kribi)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="dateAutorisation">Date d'autorisation</label>
-          <input type="date" id="dateAutorisation" [(ngModel)]="autorisationEmbarquement.dateAutorisation" />
-        </div>
-        <div class="form-group">
-          <label for="quaiEmb">Quai d'embarquement</label>
-          <input id="quaiEmb" [(ngModel)]="autorisationEmbarquement.quai" placeholder="Quai N°..." />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreAutorisationEmbarquement()" [disabled]="loading">
-          <span>Valider l'autorisation</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 23 : Mise à bord -->
-    <div class="form-card" *ngIf="etapeActive === 'mise_a_bord'">
-      <div class="card-header">
-        <h2>Mise à bord / embarquement</h2>
-        <p class="subtitle">Groupes : PORT, TRANSPORTEUR, TRANSITAIRE</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="navire">Nom du navire</label>
-          <input id="navire" [(ngModel)]="miseABord.navire" placeholder="MSC DIANA" />
-        </div>
-        <div class="form-group">
-          <label for="numeroVoyage">Numéro de voyage</label>
-          <input id="numeroVoyage" [(ngModel)]="miseABord.numeroVoyage" placeholder="V.025E" />
-        </div>
-        <div class="form-group">
-          <label for="dateEmbarquement">Date d'embarquement</label>
-          <input type="date" id="dateEmbarquement" [(ngModel)]="miseABord.dateEmbarquement" />
-        </div>
-        <div class="form-group">
-          <label for="heureEmbarquement">Heure</label>
-          <input type="time" id="heureEmbarquement" [(ngModel)]="miseABord.heure" />
-        </div>
-        <div class="form-group">
-          <label for="quaiMAB">Quai</label>
-          <input id="quaiMAB" [(ngModel)]="miseABord.quai" placeholder="Quai N°..." />
-        </div>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreMiseABord()" [disabled]="loading">
-          <span>Confirmer l'embarquement</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Étape 24 : Constat d'embarquement -->
-    <div class="form-card" *ngIf="etapeActive === 'constat_embarquement'">
-      <div class="card-header">
-        <h2>Constat d'embarquement</h2>
-        <p class="subtitle">Groupes : DOUANE, PORT</p>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label for="numConstat">Numéro de constat</label>
-          <input id="numConstat" [(ngModel)]="constatEmbarquement.numeroConstat" placeholder="CONST-2025-XXXX" />
-        </div>
-        <div class="form-group">
-          <label for="agentDouaneConstat">Agent douane</label>
-          <input id="agentDouaneConstat" [(ngModel)]="constatEmbarquement.agentDouane" placeholder="Matricule / Nom" />
-        </div>
-        <div class="form-group">
-          <label for="dateConstat">Date du constat</label>
-          <input type="date" id="dateConstat" [(ngModel)]="constatEmbarquement.dateConstat" />
-        </div>
-        <div class="form-group full">
-          <label for="obsConstat">Observations finales</label>
-          <textarea id="obsConstat" [(ngModel)]="constatEmbarquement.observations" placeholder="Remarques finales avant clôture..."></textarea>
-        </div>
-      </div>
-      <div class="radio-group">
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="constatEmbarquement.conformite" [value]="true" /> <span class="radio-ok">Embarquement conforme</span>
-        </label>
-        <label class="radio-label">
-          <input type="radio" [(ngModel)]="constatEmbarquement.conformite" [value]="false" /> <span class="radio-ko">Non conforme</span>
-        </label>
-      </div>
-      <div class="card-footer">
-        <button class="btn-primary" (click)="soumettreConstatEmbarquement()" [disabled]="loading">
-          <span>Clôturer le dossier</span><span *ngIf="loading" class="loader"></span>
-        </button>
-      </div>
-    </div>
-
-  </div>
-  <!-- FIN ONGLET 1 : NOUVEAU DOSSIER -->
-
-
-  <!-- ════════════════════════════════════════════════════
-       ONGLET 2 : INSTANCES
-       ════════════════════════════════════════════════════ -->
-  <div *ngIf="activeTab === 'instances'" class="instances-section">
-
-    <!-- Stats Cards -->
-    <div class="stats-grid">
-      <div class="stat-card stat-total"
-           (click)="filtreInstance = 'tous'"
-           [class.active]="filtreInstance === 'tous'">
-        <div class="stat-icon">📊</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ instances.length }}</div>
-          <div class="stat-label">Total</div>
-        </div>
-      </div>
-
-      <div class="stat-card stat-active"
-           (click)="filtreInstance = 'enCours'"
-           [class.active]="filtreInstance === 'enCours'">
-        <div class="stat-icon">⏳</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ instancesEnCours }}</div>
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card attente">
+          <div class="stat-num">{{ nbEnAttente }}</div>
+          <div class="stat-label">En attente</div>
+        </div>
+        <div class="stat-card encours">
+          <div class="stat-num">{{ nbEnCours }}</div>
           <div class="stat-label">En cours</div>
         </div>
-      </div>
-
-      <div class="stat-card stat-ended"
-           (click)="filtreInstance = 'terminees'"
-           [class.active]="filtreInstance === 'terminees'">
-        <div class="stat-icon">✅</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ instancesTerminees }}</div>
-          <div class="stat-label">Terminées</div>
+        <div class="stat-card valide">
+          <div class="stat-num">{{ nbValide }}</div>
+          <div class="stat-label">Approuves</div>
+        </div>
+        <div class="stat-card refuse">
+          <div class="stat-num">{{ nbRefuse }}</div>
+          <div class="stat-label">Refuses</div>
         </div>
       </div>
 
-      <div class="stat-card stat-rejected"
-           (click)="filtreInstance = 'rejetees'"
-           [class.active]="filtreInstance === 'rejetees'">
-        <div class="stat-icon">❌</div>
-        <div class="stat-content">
-          <div class="stat-value">{{ instancesRejetees }}</div>
-          <div class="stat-label">Rejetées</div>
-        </div>
+      <!-- Filtres -->
+      <div class="filtres">
+        <button [class.active]="filtre === 'TOUS'"       (click)="filtre = 'TOUS'">Tous</button>
+        <button [class.active]="filtre === 'EN_ATTENTE'" (click)="filtre = 'EN_ATTENTE'">En attente</button>
+        <button [class.active]="filtre === 'EN_COURS'"   (click)="filtre = 'EN_COURS'">En cours</button>
+        <button [class.active]="filtre === 'VALIDE'"     (click)="filtre = 'VALIDE'">Approuves</button>
+        <button [class.active]="filtre === 'REFUSE'"     (click)="filtre = 'REFUSE'">Refuses</button>
+        <button class="btn-refresh" (click)="chargerDossiers()" title="Rafraichir">&#8635;</button>
+        <button class="btn-export-excel" (click)="exportExcel()" [disabled]="dossiersFiltres.length === 0" title="Exporter en Excel">Excel</button>
+        <button class="btn-export-pdf"   (click)="exportPDF()"   [disabled]="dossiersFiltres.length === 0" title="Exporter en PDF">PDF</button>
       </div>
+
+      @if (loadingDossiers) {
+        <div class="loading-state">Chargement des dossiers...</div>
+      }
+
+      @if (!loadingDossiers && dossiersFiltres.length === 0) {
+        <div class="empty-state">Aucun dossier trouve.</div>
+      }
+
+      @if (!loadingDossiers && dossiersFiltres.length > 0) {
+        <table class="dossiers-table">
+          <thead>
+            <tr>
+              <th>N Dossier</th>
+              <th>Exportateur</th>
+              <th>Produit</th>
+              <th>Destination</th>
+              <th>Date depot</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of dossiersFiltres; track d.id) {
+              <tr>
+                <td class="num-col">{{ d.numeroDossier || d.id }}</td>
+                <td>{{ d.exportateur }}</td>
+                <td>{{ d.typeProduit }}</td>
+                <td>{{ d.paysDestination }}</td>
+                <td>{{ formatDate(d.dateDepot) }}</td>
+                <td>
+                  <span class="statut-badge" [ngClass]="getStatutInfo(d.statut).cls">
+                    {{ getStatutInfo(d.statut).label }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-detail" (click)="voirDossier(d)">Voir</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
     </div>
+  }
 
-    <!-- Bouton actualiser -->
-    <div class="actions-bar">
-      <button class="btn-refresh" (click)="chargerInstances()" [disabled]="loadingInstances">
-        🔄 {{ loadingInstances ? 'Chargement...' : 'Actualiser' }}
-      </button>
-    </div>
-
-    <!-- Loading -->
-    <div *ngIf="loadingInstances" class="loading-state">
-      <div class="spinner-instances"></div>
-      <p>Chargement des instances...</p>
-    </div>
-
-    <!-- Empty -->
-    <div *ngIf="!loadingInstances && instancesFiltrees.length === 0" class="empty-state">
-      <div class="empty-icon">📭</div>
-      <h3>Aucune instance à afficher</h3>
-      <p>Démarrez un nouveau dossier d'export pour commencer.</p>
-    </div>
-
-    <!-- Tableau -->
-    <div *ngIf="!loadingInstances && instancesFiltrees.length > 0" class="table-wrapper">
-      <table class="instances-table">
-        <thead>
-          <tr>
-            <th>ID Instance</th>
-            <th>Exportateur</th>
-            <th>Destination</th>
-            <th>Produit</th>
-            <th>Démarrée</th>
-            <th>Terminée</th>
-            <th>Durée</th>
-            <th>Statut</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let inst of instancesFiltrees; trackBy: trackById"
-              [class.row-ended]="inst.ended"
-              [class.row-rejected]="inst.rejete">
-            <td><code>{{ inst.id?.substring(0, 12) }}...</code></td>
-            <td><strong>{{ inst.exportateur }}</strong></td>
-            <td>{{ inst.paysDestination }}</td>
-            <td>{{ inst.typeProduit }}</td>
-            <td>{{ formatDateInstance(inst.startTime) }}</td>
-            <td>{{ formatDateInstance(inst.endTime) }}</td>
-            <td>
-              <span class="duree-badge" *ngIf="inst.durationInMillis">
-                {{ formatDuree(inst.durationInMillis) }}
-              </span>
-              <span *ngIf="!inst.durationInMillis" class="duree-encours">
-                ⏱️ En cours
-              </span>
-            </td>
-            <td>
-              <span class="status-badge-inst" [ngClass]="getStatutInstance(inst).class">
-                {{ getStatutInstance(inst).icon }} {{ getStatutInstance(inst).label }}
-              </span>
-            </td>
-
-            <!-- ✅ NOUVELLE COLONNE ACTIONS : Détails + Suspendre/Reprendre + Supprimer -->
-            <td class="actions-cell">
-              <!-- Bouton Détails -->
-              <button class="btn-details"
-                      (click)="voirDetails(inst)"
-                      title="Voir détails">
-                🔍 Détails
-              </button>
-
-              <!-- Bouton Suspendre / Reprendre : uniquement pour instances en cours -->
-              <button
-                *ngIf="!inst.ended && !inst.rejete"
-                class="btn-suspend"
-                [class.btn-resume]="inst.suspended"
-                [disabled]="instanceATraiter?.id === inst.id"
-                (click)="toggleSuspensionInstance(inst, $event)"
-                [title]="inst.suspended ? 'Reprendre l\'instance' : 'Suspendre l\'instance'">
-                {{ inst.suspended ? '▶' : '⏸' }}
-              </button>
-
-              <!-- Bouton Supprimer définitivement de Camunda -->
-              <button
-                class="btn-delete"
-                [disabled]="loadingAdmin"
-                (click)="ouvrirConfirmationSuppression(inst, $event)"
-                title="Supprimer définitivement de Camunda">
-                🗑️
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ════════════════════════════════════════════════
-         MODAL DÉTAILS DE L'INSTANCE
-         ════════════════════════════════════════════════ -->
-    <div *ngIf="instanceSelectionnee" class="modal-overlay" (click)="fermerDetails()">
-      <div class="modal" (click)="$event.stopPropagation()">
+  <!-- ══════════════════════════════════════════
+       MODAL DETAIL
+       ══════════════════════════════════════════ -->
+  @if (dossierSelectionne) {
+    <div class="modal-overlay" (click)="fermerDetail()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
 
         <div class="modal-header">
-          <div>
-            <h2>Détails de l'instance</h2>
-            <p class="modal-subtitle">
-              <code>{{ instanceSelectionnee.id }}</code>
-              <span class="status-badge-inst" [ngClass]="getStatutInstance(instanceSelectionnee).class">
-                {{ getStatutInstance(instanceSelectionnee).icon }}
-                {{ getStatutInstance(instanceSelectionnee).label }}
-              </span>
-            </p>
-          </div>
-          <button class="btn-close" (click)="fermerDetails()">✕</button>
-        </div>
-
-        <div class="modal-tabs">
-          <button [class.active]="ongletDetail === 'variables'"
-                  (click)="ongletDetail = 'variables'">
-            📋 Variables ({{ getVariableEntries().length }})
-          </button>
-          <button [class.active]="ongletDetail === 'historique'"
-                  (click)="ongletDetail = 'historique'">
-            📜 Historique ({{ historiqueInstance.length }})
-          </button>
+          <h3>Dossier {{ dossierSelectionne.numeroDossier || dossierSelectionne.id }}</h3>
+          <button class="btn-close" (click)="fermerDetail()">&#10005;</button>
         </div>
 
         <div class="modal-body">
 
-          <!-- Variables -->
-          <div *ngIf="ongletDetail === 'variables'">
-            <div *ngIf="getVariableEntries().length === 0" class="empty-mini">
-              Aucune variable enregistrée.
-            </div>
-            <table *ngIf="getVariableEntries().length > 0" class="variables-table">
-              <thead>
-                <tr><th>Variable</th><th>Valeur</th></tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let entry of getVariableEntries()">
-                  <td><strong>{{ entry.key }}</strong></td>
-                  <td>
-                    <span *ngIf="entry.value === true" class="badge-true">✅ true</span>
-                    <span *ngIf="entry.value === false" class="badge-false">❌ false</span>
-                    <span *ngIf="entry.value !== true && entry.value !== false">
-                      {{ entry.value || '—' }}
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="detail-statut">
+            <span class="statut-badge lg" [ngClass]="getStatutInfo(dossierSelectionne.statut).cls">
+              {{ getStatutInfo(dossierSelectionne.statut).label }}
+            </span>
           </div>
 
-          <!-- Historique -->
-          <div *ngIf="ongletDetail === 'historique'">
-            <div *ngIf="historiqueInstance.length === 0" class="empty-mini">
-              Aucun historique disponible.
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-key">Exportateur</span>
+              <span class="detail-val">{{ dossierSelectionne.exportateur }}</span>
             </div>
-
-            <div class="timeline" *ngIf="historiqueInstance.length > 0">
-              <div *ngFor="let task of historiqueInstance; let i = index" class="timeline-item"
-                   [class.completed]="task.endTime"
-                   [class.active-task]="!task.endTime">
-                <div class="timeline-marker">
-                  <span *ngIf="task.endTime">✓</span>
-                  <span *ngIf="!task.endTime">{{ i + 1 }}</span>
-                </div>
-                <div class="timeline-content">
-                  <h4>{{ task.name }}</h4>
-                  <p class="task-meta">
-                    <span>👤 {{ task.assignee || 'Non assigné' }}</span>
-                    <span>🕐 {{ formatDateInstance(task.startTime) }}</span>
-                    <span *ngIf="task.endTime">→ {{ formatDateInstance(task.endTime) }}</span>
-                    <span *ngIf="task.durationInMillis" class="duree-badge">
-                      {{ formatDuree(task.durationInMillis) }}
-                    </span>
-                  </p>
-                </div>
-              </div>
+            <div class="detail-item">
+              <span class="detail-key">Pays destination</span>
+              <span class="detail-val">{{ dossierSelectionne.paysDestination }}</span>
             </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- ════════════════════════════════════════════════════
-         ✅ MODAL CONFIRMATION SUPPRESSION DÉFINITIVE
-         ════════════════════════════════════════════════════ -->
-    <div *ngIf="instanceASupprimer" class="modal-overlay" (click)="annulerSuppression()">
-      <div class="modal-content modal-danger" (click)="$event.stopPropagation()">
-
-        <div class="modal-header-danger">
-          <span class="modal-icon-danger">🗑️</span>
-          <h3>Supprimer définitivement l'instance ?</h3>
-        </div>
-
-        <div class="modal-body-danger">
-          <p class="warning-text">
-            ⚠️ Cette action supprimera <strong>complètement</strong> l'instance de Camunda
-            (runtime + historique). Elle sera <strong>irrécupérable</strong>.
-          </p>
-
-          <div class="instance-info-box">
-            <div class="info-row">
-              <span class="info-label">ID Instance :</span>
-              <code>{{ instanceASupprimer.id?.substring(0, 16) }}…</code>
+            <div class="detail-item">
+              <span class="detail-key">Type produit</span>
+              <span class="detail-val">{{ dossierSelectionne.typeProduit }}</span>
             </div>
-            <div class="info-row">
-              <span class="info-label">Exportateur :</span>
-              <strong>{{ instanceASupprimer.exportateur }}</strong>
+            <div class="detail-item">
+              <span class="detail-key">Quantite</span>
+              <span class="detail-val">{{ dossierSelectionne.quantite || '—' }}</span>
             </div>
-            <div class="info-row">
-              <span class="info-label">Destination :</span>
-              <strong>{{ instanceASupprimer.paysDestination }}</strong>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Produit :</span>
-              <strong>{{ instanceASupprimer.typeProduit }}</strong>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Statut :</span>
-              <span class="status-badge-inst" [ngClass]="getStatutInstance(instanceASupprimer).class">
-                {{ getStatutInstance(instanceASupprimer).icon }}
-                {{ getStatutInstance(instanceASupprimer).label }}
+            <div class="detail-item">
+              <span class="detail-key">Valeur FOB</span>
+              <span class="detail-val">
+                {{ dossierSelectionne.valeurFOB ? (dossierSelectionne.valeurFOB + ' ' + dossierSelectionne.deviseFacture) : '—' }}
               </span>
             </div>
+            <div class="detail-item">
+              <span class="detail-key">Code SH</span>
+              <span class="detail-val">{{ dossierSelectionne.codeSH || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Destination finale</span>
+              <span class="detail-val">{{ dossierSelectionne.destinationFinale || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Date depot</span>
+              <span class="detail-val">{{ formatDate(dossierSelectionne.dateDepot) }}</span>
+            </div>
           </div>
 
-          <label for="raisonSuppression">Raison de la suppression *</label>
-          <input
-            id="raisonSuppression"
-            type="text"
-            [(ngModel)]="raisonSuppression"
-            placeholder="Ex: Doublon, erreur de saisie, demande client…"
-            class="form-input"
-            autofocus />
+          @if (dossierSelectionne.commentaire) {
+            <div class="detail-commentaire">
+              <b>Commentaire :</b> {{ dossierSelectionne.commentaire }}
+            </div>
+          }
+
         </div>
-
-        <div class="modal-actions">
-          <button class="btn-admin" (click)="annulerSuppression()" [disabled]="loadingAdmin">
-            Annuler
-          </button>
-          <button
-            class="btn-admin btn-danger"
-            [disabled]="!raisonSuppression.trim() || loadingAdmin"
-            (click)="confirmerSuppression()">
-            <span *ngIf="!loadingAdmin">🗑️ Supprimer définitivement</span>
-            <span *ngIf="loadingAdmin">Suppression en cours…</span>
-          </button>
-        </div>
-
       </div>
     </div>
-
-  </div>
-  <!-- FIN ONGLET 2 : INSTANCES -->
-
-  <!-- ═══════════════════════════════════════════════════════════
-       PANNEAU D'ADMINISTRATION
-       ═══════════════════════════════════════════════════════════ -->
-  <div class="admin-panel">
-   
-
-    <div class="admin-row">
-      <!-- Toggle définition globale -->
-      <div class="admin-card">
-        
-        <span class="admin-status" [class.suspended]="definitionSuspendue">
-          
-        </span>
-      
-      </div>
-
-      <!-- Actions sur l'instance courante -->
-      <div class="admin-card" *ngIf="processInstanceId && !processTermine && !processRejete">
-        <span class="admin-label">Instance : {{ processInstanceId.substring(0, 8) }}…</span>
-        <button class="btn-admin btn-warning"
-                [disabled]="loadingAdmin"
-                (click)="suspendreInstanceCourante()">
-          ⏸ Suspendre
-        </button>
-        <button class="btn-admin btn-success"
-                [disabled]="loadingAdmin"
-                (click)="reprendreInstanceCourante()">
-          ▶ Reprendre
-        </button>
-        <button class="btn-admin btn-danger"
-                [disabled]="loadingAdmin"
-                (click)="ouvrirConfirmationAnnulation()">
-          ❌ Annuler
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal confirmation annulation (instance courante) -->
-  <div class="modal-overlay" *ngIf="showConfirmAnnulation">
-    <div class="modal-content">
-      <h3>Annuler l'instance ?</h3>
-      <p>Cette action est <strong>irréversible</strong>.</p>
-      <label>Raison de l'annulation :</label>
-      <input type="text"
-             [(ngModel)]="raisonAnnulation"
-             placeholder="Ex: Demande client, erreur de saisie…"
-             class="form-input" />
-      <div class="modal-actions">
-        <button class="btn-admin" (click)="annulerConfirmation()">Annuler</button>
-        <button class="btn-admin btn-danger"
-                [disabled]="!raisonAnnulation.trim() || loadingAdmin"
-                (click)="confirmerAnnulation()">
-          Confirmer l'annulation
-        </button>
-      </div>
-    </div>
-  </div>
+  }
 
 </div>

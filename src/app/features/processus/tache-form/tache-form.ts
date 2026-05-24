@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { Tache } from '../../../models/tache.model';
 
 @Component({
   selector: 'app-tache-form',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './tache-form.html',
   styleUrls: ['./tache-form.css']
 })

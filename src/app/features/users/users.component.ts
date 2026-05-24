@@ -6,16 +6,13 @@ import { Router } from '@angular/router';
 
 import { KeycloakService } from '../../core/services/keycloak.service';
 import { UserService, User } from '../../core/services/user.service';
-import { UserDetailComponent } from './user-detail/user-detail';
-
 @Component({
   selector: 'app-users',
   standalone: true,
   imports: [
     CommonModule,
     FormsModule,
-    HttpClientModule,
-    UserDetailComponent
+    HttpClientModule
   ],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss']

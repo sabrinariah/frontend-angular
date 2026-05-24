@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rapport IA — Module Règles Métier Drools</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 13.5px;
+    color: #1e293b;
+    background: #fff;
+    line-height: 1.65;
+  }
+
+  @media print {
+    .page-break { page-break-before: always; }
+    .no-break   { page-break-inside: avoid; }
+    body        { font-size: 12px; }
+  }
+
+  /* ===== COUVERTURE ===== */
+  .cover {
+    background: linear-gradient(150deg, #0a1929 0%, #1e3a5f 60%, #243b53 100%);
+    color: #fff;
+    min-height: 96vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 80px 72px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 380px; height: 380px;
+    background: radial-gradient(circle, rgba(249,115,22,.18) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(30%, -30%);
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #f97316;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 4px;
+    margin-bottom: 28px;
+  }
+  .cover h1 {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    max-width: 700px;
+  }
+  .cover h1 span { color: #f97316; }
+  .cover-sub {
+    font-size: 17px;
+    color: rgba(255,255,255,.72);
+    max-width: 580px;
+    margin-bottom: 48px;
+    line-height: 1.6;
+  }
+  .cover-accent-line {
+    width: 80px;
+    height: 4px;
+    background: #f97316;
+    border-radius: 2px;
+    margin-bottom: 32px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .cover-meta-item strong {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 4px;
+  }
+  .cover-meta-item span {
+    font-size: 14px;
+    color: rgba(255,255,255,.9);
+    font-weight: 600;
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 36px;
+    left: 72px;
+    right: 72px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(255,255,255,.35);
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding-top: 18px;
+  }
+
+  /* ===== LAYOUT ===== */
+  .page { padding: 56px 72px; max-width: 900px; margin: 0 auto; }
+
+  /* ===== TITRES DE SECTION ===== */
+  .section-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0a1929;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .num {
+    display: inline-flex;
+    width: 32px; height: 32px;
+    background: #f97316;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .section-divider {
+    height: 3px;
+    background: linear-gradient(90deg, #f97316 0%, transparent 60%);
+    border-radius: 2px;
+    margin-bottom: 28px;
+  }
+  .section-intro {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 28px;
+    line-height: 1.7;
+  }
+
+  /* ===== SOUS-SECTIONS ===== */
+  .subsection { margin-bottom: 36px; }
+  .subsection-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e3a5f;
+    margin-bottom: 12px;
+    padding-left: 14px;
+    border-left: 3px solid #f97316;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-navy { background: linear-gradient(135deg, #0a1929 0%, #1e3a5f 100%); color: #fff; border: none; }
+  .card-orange { background: #fff7ed; border: 1px solid #fed7aa; }
+  .card-green { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0a1929;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-navy .card-title { color: #fff; }
+  .card p, .card li { font-size: 13px; color: #475569; line-height: 1.65; }
+  .card-navy p, .card-navy li { color: rgba(255,255,255,.8); }
+
+  /* ===== GRILLES ===== */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+
+  /* ===== BADGES ===== */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+  .badge-orange { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .badge-navy   { background: #e3edf7; color: #1e3a5f; border: 1px solid #c5d6e8; }
+  .badge-green  { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+  .badge-purple { background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; }
+  .badge-red    { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+  /* ===== BLOCS DE CODE ===== */
+  .code-block {
+    background: #0f172a;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 12px 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #e2e8f0;
+  }
+  .code-block .kw  { color: #a78bfa; font-weight: 700; }
+  .code-block .str { color: #86efac; }
+  .code-block .cmt { color: #64748b; font-style: italic; }
+  .code-block .cls { color: #f97316; font-weight: 700; }
+  .code-block .num { color: #fbbf24; }
+  .code-block .var { color: #34d399; }
+  .code-block .fn  { color: #60a5fa; }
+  .code-label {
+    font-size: 10px; font-weight: 800; letter-spacing: 1px;
+    text-transform: uppercase; color: #64748b;
+    margin-bottom: 6px; display: block;
+  }
+
+  /* ===== DIAGRAMME DE FLUX ===== */
+  .flow { display: flex; align-items: stretch; gap: 0; margin: 24px 0; flex-wrap: nowrap; }
+  .flow-step {
+    flex: 1; text-align: center; padding: 14px 8px;
+    background: #fff; border: 1.5px solid #e2e8f0; border-radius: 10px;
+  }
+  .flow-step.active {
+    background: linear-gradient(135deg, #0a1929 0%, #1e3a5f 100%);
+    border-color: #1e3a5f; color: #fff;
+  }
+  .flow-step.orange {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    border-color: #f97316; color: #fff;
+  }
+  .flow-step-icon { font-size: 20px; margin-bottom: 5px; display: block; }
+  .flow-step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+  .flow-step-desc  { font-size: 10px; margin-top: 3px; opacity: 0.75; }
+  .flow-arrow { font-size: 18px; color: #f97316; padding: 0 6px; font-weight: 700; flex-shrink: 0; display: flex; align-items: center; }
+
+  /* ===== TABLEAUX ===== */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+  thead tr { background: #0a1929; }
+  thead th { color: #fff; padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+  tbody tr { border-bottom: 1px solid #e2e8f0; }
+  tbody tr:nth-child(even) { background: #f8fafc; }
+  tbody td { padding: 10px 16px; color: #334155; vertical-align: top; }
+  tbody td:first-child { font-weight: 600; color: #0a1929; }
+
+  /* ===== SCHEMA UI ===== */
+  .ui-schema {
+    background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px;
+    padding: 18px 20px; font-family: 'Courier New', monospace;
+    font-size: 12px; color: #334155; line-height: 1.9;
+  }
+  .ui-header {
+    background: linear-gradient(90deg, #0a1929, #1e3a5f);
+    color: #fff; padding: 7px 14px; border-radius: 6px;
+    margin-bottom: 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== BOITES HIGHLIGHT ===== */
+  .highlight-box { border-left: 4px solid #f97316; background: #fff7ed; padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .highlight-box.info    { border-left-color: #2563eb; background: #eff6ff; }
+  .highlight-box.success { border-left-color: #16a34a; background: #f0fdf4; }
+  .highlight-box p { font-size: 13px; color: #475569; line-height: 1.6; }
+  .highlight-box strong { color: #0a1929; }
+
+  /* ===== LISTES ===== */
+  ul.styled { padding-left: 20px; margin: 10px 0; }
+  ul.styled li { margin-bottom: 7px; font-size: 13px; color: #334155; line-height: 1.6; }
+  ul.styled li::marker { color: #f97316; }
+
+  /* ===== STAT CARDS ===== */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 20px 0; }
+  .stat-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; text-align: center; border-top: 3px solid #f97316; }
+  .stat-card:nth-child(2) { border-top-color: #7c3aed; }
+  .stat-card:nth-child(3) { border-top-color: #16a34a; }
+  .stat-card:nth-child(4) { border-top-color: #0891b2; }
+  .stat-num { font-size: 26px; font-weight: 800; color: #0a1929; line-height: 1; margin-bottom: 6px; }
+  .stat-lbl { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+
+  /* ===== TABLE DES MATIÈRES ===== */
+  .toc-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px dotted #e2e8f0; font-size: 13.5px; color: #334155; }
+  .toc-item .toc-num   { font-weight: 800; color: #f97316; min-width: 28px; }
+  .toc-item .toc-label { flex: 1; padding: 0 12px; font-weight: 600; }
+  .toc-item .toc-page  { color: #94a3b8; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ COUVERTURE ══════════════ -->
+<div class="cover">
+  <div class="cover-badge">Documentation Technique</div>
+  <div class="cover-accent-line"></div>
+  <h1>Module <span>Intelligence Artificielle</span><br>&amp; Règles Métier Drools</h1>
+  <p class="cover-sub">
+    Analyse complète de l'implémentation NLP, de la conversion langage naturel → DRL,
+    du générateur de règles Drools et de tous les composants Angular associés —
+    dans le cadre du système de gestion douanière et commerciale.
+  </p>
+  <div class="cover-meta">
+    <div class="cover-meta-item"><strong>Projet</strong><span>Gestion des Règles Métier</span></div>
+    <div class="cover-meta-item"><strong>Framework</strong><span>Angular 17+ / Spring Boot</span></div>
+    <div class="cover-meta-item"><strong>Moteur de règles</strong><span>Drools (DRL)</span></div>
+    <div class="cover-meta-item"><strong>Date</strong><span>Mai 2026</span></div>
+  </div>
+  <div class="cover-footer">
+    <span>Système de Commerce International — Module Douane &amp; Règles</span>
+    <span>Confidentiel — Usage interne</span>
+  </div>
+</div>
+
+<!-- ══════════════ TABLE DES MATIÈRES ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">📋</span> Table des matières</div>
+  <div class="section-divider"></div>
+  <div class="toc-item"><span class="toc-num">1</span><span class="toc-label">Vue d'ensemble — Architecture IA</span><span class="toc-page">3</span></div>
+  <div class="toc-item"><span class="toc-num">2</span><span class="toc-label">Flux de traitement NLP — Étape par étape</span><span class="toc-page">4</span></div>
+  <div class="toc-item"><span class="toc-num">3</span><span class="toc-label">NlpInputComponent — Interface utilisateur IA</span><span class="toc-page">5</span></div>
+  <div class="toc-item"><span class="toc-num">4</span><span class="toc-label">NlpRegleService — Communication backend</span><span class="toc-page">6</span></div>
+  <div class="toc-item"><span class="toc-num">5</span><span class="toc-label">Modèles de données NLP (TypeScript)</span><span class="toc-page">7</span></div>
+  <div class="toc-item"><span class="toc-num">6</span><span class="toc-label">DrlPreviewComponent — Visualisation Drools</span><span class="toc-page">8</span></div>
+  <div class="toc-item"><span class="toc-num">7</span><span class="toc-label">Générateur DRL local — RegleMetierComponent</span><span class="toc-page">9</span></div>
+  <div class="toc-item"><span class="toc-num">8</span><span class="toc-label">Interface utilisateur — Maquettes des 3 modes</span><span class="toc-page">10</span></div>
+  <div class="toc-item"><span class="toc-num">9</span><span class="toc-label">Exemples complets de code DRL généré</span><span class="toc-page">11</span></div>
+  <div class="toc-item"><span class="toc-num">10</span><span class="toc-label">Récapitulatif &amp; Points d'amélioration</span><span class="toc-page">12</span></div>
+</div>
+
+<!-- ══════════════ SECTION 1 — ARCHITECTURE ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">1</span> Vue d'ensemble — Architecture IA</div>
+  <div class="section-divider"></div>
+  <p class="section-intro">
+    Le module IA du projet est composé de <strong>4 éléments Angular</strong> interconnectés qui permettent à un
+    utilisateur métier de décrire une règle douanière en français ordinaire, de la voir convertie automatiquement
+    en code Drools exécutable, puis de la sauvegarder en base de données.
+  </p>
+
+  <div class="stat-row">
+    <div class="stat-card"><div class="stat-num">4</div><div class="stat-lbl">Fichiers IA</div></div>
+    <div class="stat-card"><div class="stat-num">3</div><div class="stat-lbl">Modes interface</div></div>
+    <div class="stat-card"><div class="stat-num">1</div><div class="stat-lbl">API NLP backend</div></div>
+    <div class="stat-card"><div class="stat-num">6</div><div class="stat-lbl">Catégories douanières</div></div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Cartographie complète des fichiers IA</div>
+    <table>
+      <thead><tr><th>Fichier Angular</th><th>Type</th><th>Rôle dans le module IA</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>nlp-input.component.ts / .html / .css</td>
+          <td><span class="badge badge-purple">Composant</span></td>
+          <td>Interface principale de saisie NLP — gère les 3 modes : Saisie → Aperçu → Édition</td>
+        </tr>
+        <tr>
+          <td>nlp-regle.service.ts</td>
+          <td><span class="badge badge-navy">Service</span></td>
+          <td>Appel HTTP POST vers l'API NLP du backend (port 8081)</td>
+        </tr>
+        <tr>
+          <td>nlp.model.ts</td>
+          <td><span class="badge badge-navy">Modèle</span></td>
+          <td>Interfaces TypeScript : NlpConversionRequest, NlpConversionResult, NlpRegleDto</td>
+        </tr>
+        <tr>
+          <td>drl-preview.component.ts / .html / .css</td>
+          <td><span class="badge badge-purple">Composant</span></td>
+          <td>Affichage du code DRL Drools avec coloration syntaxique, numéros de ligne et légende</td>
+        </tr>
+        <tr>
+          <td>regle.ts → genererDrl()</td>
+          <td><span class="badge badge-orange">Méthode</span></td>
+          <td>Génération DRL en temps réel depuis le formulaire manuel (100% frontend, sans backend)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Deux chemins de création de règle</div>
+    <div class="grid-2">
+      <div class="card card-navy no-break">
+        <div class="card-title">🤖 Chemin IA — NLP</div>
+        <p>L'utilisateur écrit une phrase libre en français → l'IA extrait automatiquement les conditions,
+        l'action et la catégorie douanière → génère le code DRL Drools → l'utilisateur valide ou corrige
+        avant la sauvegarde.</p>
+      </div>
+      <div class="card card-orange no-break">
+        <div class="card-title">✎ Chemin manuel + aperçu DRL</div>
+        <p>L'utilisateur remplit le formulaire classique (code, nom, action, conditions) → un bouton
+        "▼ Aperçu DRL" génère le code Drools correspondant en temps réel côté frontend, sans
+        aucun appel au backend.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 2 — FLUX NLP ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">2</span> Flux de traitement NLP — Étape par étape</div>
+  <div class="section-divider"></div>
+  <p class="section-intro">
+    Le parcours complet d'une phrase en langage naturel vers une règle métier sauvegardée en base
+    comprend 6 étapes, réparties entre le frontend Angular et le backend Spring Boot.
+  </p>
+
+  <div class="flow">
+    <div class="flow-step active">
+      <span class="flow-step-icon">✏️</span>
+      <div class="flow-step-label">Saisie</div>
+      <div class="flow-step-desc">Phrase française</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step active">
+      <span class="flow-step-icon">📡</span>
+      <div class="flow-step-label">Envoi API</div>
+      <div class="flow-step-desc">POST /nlp/convertir</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step active">
+      <span class="flow-step-icon">🧠</span>
+      <div class="flow-step-label">Traitement IA</div>
+      <div class="flow-step-desc">Extraction NLP</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step orange">
+      <span class="flow-step-icon">👁</span>
+      <div class="flow-step-label">Aperçu DRL</div>
+      <div class="flow-step-desc">Confiance + règle</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step active">
+      <span class="flow-step-icon">✎</span>
+      <div class="flow-step-label">Édition</div>
+      <div class="flow-step-desc">Correction</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step orange">
+      <span class="flow-step-icon">💾</span>
+      <div class="flow-step-label">Sauvegarde</div>
+      <div class="flow-step-desc">POST /api/regles</div>
+    </div>
+  </div>
+
+  <div class="subsection" style="margin-top:28px;">
+    <div class="subsection-title">Détail de chaque étape</div>
+
+    <div class="card no-break" style="margin-bottom:12px;">
+      <div class="card-title">① Saisie — NlpInputComponent (mode "input")</div>
+      <p>L'utilisateur ouvre la modale via le bouton <strong>"🤖 Créer avec l'IA"</strong>.
+      Il saisit librement une phrase en français, ou clique sur l'un des <strong>5 exemples pré-définis</strong>
+      (inspection physique, taux UEMOA, circuit rouge, bon à enlever, valeur FOB). Un compteur de caractères
+      s'affiche en temps réel.</p>
+    </div>
+
+    <div class="card no-break" style="margin-bottom:12px;">
+      <div class="card-title">② Envoi — NlpRegleService.convertir()</div>
+      <p>La méthode envoie un <strong>POST HTTP</strong> vers <code>http://localhost:8081/api/nlp/convertir</code>
+      avec le corps <code>{"phrase": "..."}</code>. Un overlay de chargement IA s'affiche pendant l'appel
+      avec le texte "Extraction des entités · Normalisation · Génération DRL".</p>
+    </div>
+
+    <div class="card no-break" style="margin-bottom:12px;">
+      <div class="card-title">③ Traitement backend — Extraction NLP (Spring Boot)</div>
+      <p>Le backend analyse la phrase et extrait : le <strong>champ</strong>, l'<strong>opérateur</strong>,
+      la <strong>valeur</strong>, l'<strong>action douanière</strong> et la <strong>catégorie</strong>
+      (TAXE, QUOTA, CERTIFICATION, VERIFICATION, CONTROLE, DOUANE). Il génère le code DRL Drools et
+      calcule un <strong>score de confiance</strong> (0.0 à 1.0). Les ambiguïtés sont listées séparément.</p>
+    </div>
+
+    <div class="card no-break" style="margin-bottom:12px;">
+      <div class="card-title">④ Aperçu — Mode "preview" avec barre de confiance</div>
+      <p>Affiche : la phrase source, la barre de confiance colorée (vert ≥ 85%, orange 50–84%, rouge &lt; 50%),
+      les champs extraits, les conditions SI/ALORS, les ambiguïtés, et le code DRL Drools
+      en section repliable.</p>
+    </div>
+
+    <div class="card no-break" style="margin-bottom:12px;">
+      <div class="card-title">⑤ Édition — Mode "edit" (optionnel)</div>
+      <p>Si l'utilisateur clique "✎ Modifier", tous les champs pré-remplis par l'IA deviennent éditables :
+      code, nom, action, catégorie (liste déroulante chargée depuis l'API), conditions (ajout/suppression
+      dynamique), statut actif/inactif.</p>
+    </div>
+
+    <div class="card card-green no-break">
+      <div class="card-title">⑥ Sauvegarde — POST /api/regles</div>
+      <p>Le payload est envoyé via <code>RegleMetierService.create()</code> avec le motif
+      <em>"Générée par IA — phrase : [phrase originale]"</em> automatiquement archivé dans
+      l'historique des versions de la règle.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 3 — NLPINPUTCOMPONENT ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">3</span> NlpInputComponent — Interface utilisateur IA</div>
+  <div class="section-divider"></div>
+  <p class="section-intro">
+    Composant Angular standalone principal du module IA. Il gère à lui seul les 3 modes d'interface,
+    la communication avec le service NLP, la validation, la correction manuelle et la sauvegarde.
+  </p>
+
+  <div class="subsection">
+    <div class="subsection-title">Propriétés principales</div>
+    <table>
+      <thead><tr><th>Propriété</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>showModal</td><td>boolean</td><td>Contrôle l'affichage de la modale</td></tr>
+        <tr><td>mode</td><td>'input' | 'preview' | 'edit'</td><td>Mode courant de la navigation en 3 étapes</td></tr>
+        <tr><td>phrase</td><td>string</td><td>Texte saisi par l'utilisateur en langage naturel</td></tr>
+        <tr><td>result</td><td>NlpConversionResult | null</td><td>Résultat complet retourné par le backend IA</td></tr>
+        <tr><td>loading</td><td>boolean</td><td>Indicateur de chargement pendant l'appel backend NLP</td></tr>
+        <tr><td>saving</td><td>boolean</td><td>Indicateur pendant la sauvegarde en base de données</td></tr>
+        <tr><td>showDrl</td><td>boolean</td><td>Affiche / masque le bloc DRL en mode aperçu</td></tr>
+        <tr><td>editCode / editNom / editAction</td><td>string</td><td>Champs du mode édition pré-remplis par l'IA</td></tr>
+        <tr><td>editCategorieId</td><td>number | null</td><td>Catégorie sélectionnée manuellement en mode édition</td></tr>
+        <tr><td>editConditions</td><td>Condition[]</td><td>Conditions modifiables (copie de celles extraites par l'IA)</td></tr>
+        <tr><td>regleCreee</td><td>@Output EventEmitter</td><td>Événement émis vers le composant parent (RegleMetierComponent) à la création</td></tr>
+        <tr><td>categories</td><td>Categorie[]</td><td>Liste des catégories chargée depuis l'API au démarrage</td></tr>
+        <tr><td>exemplesPhrases</td><td>string[]</td><td>5 phrases exemple pré-définies cliquables</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Méthodes clés</div>
+    <div class="grid-2">
+      <div class="card no-break">
+        <div class="card-title">convertir()</div>
+        <p>Appelle <code>nlpService.convertir(phrase)</code>, active le spinner, reçoit le résultat,
+        passe en mode "preview" et pré-remplit les champs d'édition via <code>preparerEdition()</code>.</p>
+      </div>
+      <div class="card no-break">
+        <div class="card-title">preparerEdition(res)</div>
+        <p>Mappe le résultat IA vers les champs éditables. Recherche la catégorie correspondante
+        dans la liste par comparaison du champ <code>categorieType</code>.</p>
+      </div>
+      <div class="card no-break">
+        <div class="card-title">valider()</div>
+        <p>Validation directe depuis le mode "preview". Si la catégorie n'a pas été trouvée
+        automatiquement, redirige en mode édition avec un toast d'avertissement.</p>
+      </div>
+      <div class="card no-break">
+        <div class="card-title">sauvegarderEdition()</div>
+        <p>Sauvegarde depuis le mode édition avec validation complète. Ajoute le motif
+        "Générée par IA (modifiée) — phrase : ..." dans l'historique des versions.</p>
+      </div>
+      <div class="card no-break">
+        <div class="card-title">pourcentageConfiance()</div>
+        <p>Convertit le score float 0.0–1.0 en pourcentage entier 0–100.
+        Utilisé pour la barre de progression et l'étiquette textuelle de confiance.</p>
+      </div>
+      <div class="card no-break">
+        <div class="card-title">ajouterCondition() / supprimerCondition(i)</div>
+        <p>Gestion dynamique des conditions en mode édition.
+        Ajoute une condition vide ou supprime celle à l'index i de editConditions[].</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Exemples de phrases douanières pré-définies</div>
+    <ul class="styled">
+      <li>"Si le score de risque est supérieur à 60, déclencher une inspection physique obligatoire"</li>
+      <li>"Si le pays d'origine est le Sénégal, appliquer un taux préférentiel UEMOA de 5%"</li>
+      <li>"Si la marchandise est dangereuse, forcer automatiquement le circuit rouge"</li>
+      <li>"Si le paiement est confirmé et la marchandise conforme, émettre le bon à enlever"</li>
+      <li>"Si la valeur FOB dépasse 50 000 000 XAF, exiger une validation hiérarchique"</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 4 — SERVICE NLP ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">4</span> NlpRegleService — Communication backend</div>
+  <div class="section-divider"></div>
+  <p class="section-intro">
+    Service Angular minimaliste et dédié à la communication avec l'endpoint NLP du backend Spring Boot.
+    Il encapsule l'appel HTTP et retourne un Observable typé.
+  </p>
+
+  <div class="subsection">
+    <div class="subsection-title">Code source complet</div>
+    <span class="code-label">src/app/core/services/nlp-regle.service.ts</span>
+    <div class="code-block">
+<span class="kw">@Injectable</span>({ providedIn: <span class="str">'root'</span> })<br>
+<span class="kw">export class</span> <span class="cls">NlpRegleService</span> {<br><br>
+&nbsp;&nbsp;<span class="kw">private</span> base = <span class="str">'http://localhost:8081/api/nlp'</span>;<br><br>
+&nbsp;&nbsp;<span class="kw">constructor</span>(<span class="kw">private</span> http: <span class="cls">HttpClient</span>) {}<br><br>
+&nbsp;&nbsp;<span class="fn">convertir</span>(phrase: <span class="cls">string</span>): <span class="cls">Observable</span>&lt;<span class="cls">NlpConversionResult</span>&gt; {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">const</span> request: <span class="cls">NlpConversionRequest</span> = { phrase };<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="kw">this</span>.http.<span class="fn">post</span>&lt;<span class="cls">NlpConversionResult</span>&gt;(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">`${this.base}/convertir`</span>, request<br>
+&nbsp;&nbsp;&nbsp;&nbsp;);<br>
+&nbsp;&nbsp;}<br>
+}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Contrat de l'API backend</div>
+    <table>
+      <thead><tr><th>Paramètre</th><th>Valeur</th></tr></thead>
+      <tbody>
+        <tr><td>Méthode HTTP</td><td>POST</td></tr>
+        <tr><td>URL</td><td>http://localhost:8081/api/nlp/convertir</td></tr>
+        <tr><td>Corps (JSON)</td><td>{ "phrase": "Si le score de risque est supérieur à 60..." }</td></tr>
+        <tr><td>Content-Type</td><td>application/json</td></tr>
+        <tr><td>Réponse</td><td>NlpConversionResult (voir Section 5)</td></tr>
+        <tr><td>Gestion d'erreur</td><td>Toast "Service IA indisponible" si le port 8081 est inaccessible</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Exemple de réponse backend (JSON)</div>
+    <div class="code-block">
+{<br>
+&nbsp;&nbsp;<span class="str">"regle"</span>: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"code"</span>:          <span class="str">"RISK_INSPECTION_001"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"nom"</span>:           <span class="str">"Inspection physique si score risque élevé"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"action"</span>:        <span class="str">"INSPECTION_PHYSIQUE_OBLIGATOIRE"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"categorieType"</span>: <span class="str">"CONTROLE"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"conditions"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="str">"champ"</span>: <span class="str">"score_risque"</span>, <span class="str">"operateur"</span>: <span class="str">"&gt;"</span>, <span class="str">"valeur"</span>: <span class="str">"60"</span> }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;]<br>
+&nbsp;&nbsp;},<br>
+&nbsp;&nbsp;<span class="str">"drl"</span>:             <span class="str">"package com.douane.rules;\n\nrule \"RISK_INSPECTION_001\"\n..."</span>,<br>
+&nbsp;&nbsp;<span class="str">"confidence"</span>:     <span class="num">0.92</span>,<br>
+&nbsp;&nbsp;<span class="str">"ambiguites"</span>:     [],<br>
+&nbsp;&nbsp;<span class="str">"phraseOriginale"</span>: <span class="str">"Si le score de risque est supérieur à 60..."</span><br>
+}
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 5 — MODÈLES ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">5</span> Modèles de données NLP (TypeScript)</div>
+  <div class="section-divider"></div>
+  <p class="section-intro">
+    Trois interfaces TypeScript définissent le contrat de données entre le frontend Angular et l'API NLP.
+    Elles garantissent un typage strict à la compilation et l'autocomplétion dans l'IDE.
+  </p>
+
+  <div class="subsection">
+    <div class="subsection-title">Fichier : src/app/models/nlp.model.ts</div>
+    <div class="code-block">
+<span class="cmt">// Requête envoyée au backend</span><br>
+<span class="kw">export interface</span> <span class="cls">NlpConversionRequest</span> {<br>
+&nbsp;&nbsp;phrase: <span class="cls">string</span>;<br>
+}<br><br>
+<span class="cmt">// Règle métier extraite par l'IA</span><br>
+<span class="kw">export interface</span> <span class="cls">NlpRegleDto</span> {<br>
+&nbsp;&nbsp;code:          <span class="cls">string</span>;<br>
+&nbsp;&nbsp;nom:           <span class="cls">string</span>;<br>
+&nbsp;&nbsp;action:        <span class="cls">string</span>;<br>
+&nbsp;&nbsp;categorieType: <span class="cls">string</span>;  <span class="cmt">// ex: 'TAXE', 'CONTROLE', 'QUOTA'</span><br>
+&nbsp;&nbsp;conditions:    <span class="cls">Condition</span>[];<br>
+}<br><br>
+<span class="cmt">// Résultat complet de la conversion NLP</span><br>
+<span class="kw">export interface</span> <span class="cls">NlpConversionResult</span> {<br>
+&nbsp;&nbsp;regle:           <span class="cls">NlpRegleDto</span>;<br>
+&nbsp;&nbsp;drl:             <span class="cls">string</span>;    <span class="cmt">// Code DRL Drools prêt à exécuter</span><br>
+&nbsp;&nbsp;confidence:      <span class="cls">number</span>;   <span class="cmt">// Score 0.0 → 1.0</span><br>
+&nbsp;&nbsp;ambiguites:      <span class="cls">string</span>[]; <span class="cmt">// Points à clarifier par l'utilisateur</span><br>
+&nbsp;&nbsp;phraseOriginale: <span class="cls">string</span>;<br>
+}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Score de confiance — Comportement UI</div>
+    <table>
+      <thead><tr><th>Valeur confidence</th><th>Niveau</th><th>Couleur barre</th><th>Message affiché</th></tr></thead>
+      <tbody>
+        <tr><td>≥ 0.85</td><td><span class="badge badge-green">Haute confiance</span></td><td style="color:#16a34a;">● Vert</td><td>"Haute confiance — création directe recommandée"</td></tr>
+        <tr><td>0.50 à 0.84</td><td><span class="badge badge-orange">Confiance moyenne</span></td><td style="color:#d97706;">● Orange</td><td>"Confiance moyenne — vérifiez les valeurs"</td></tr>
+        <tr><td>&lt; 0.50</td><td><span class="badge badge-red">Faible confiance</span></td><td style="color:#dc2626;">● Rouge</td><td>"Confiance faible — révision manuelle obligatoire"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Interface Condition (réutilisée depuis le module règles)</div>
+    <div class="code-block">
+<span class="cmt">// src/app/models/condition.model.ts</span><br>
+<span class="kw">export interface</span> <span class="cls">Condition</span> {<br>
+&nbsp;&nbsp;champ:     <span class="cls">string</span>;  <span class="cmt">// Nom du champ douanier (ex: score_risque, pays_origine)</span><br>
+&nbsp;&nbsp;operateur: <span class="cls">string</span>;  <span class="cmt">// ==, !=, &gt;, &lt;, &gt;=, &lt;=, IN, NOT_IN, contains</span><br>
+&nbsp;&nbsp;valeur:    <span class="cls">string</span>;  <span class="cmt">// Valeur de comparaison</span><br>
+}
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 6 — DRL PREVIEW ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">6</span> DrlPreviewComponent — Visualisation Drools</div>
+  <div class="section-divider"></div>
+  <p class="section-intro">
+    Composant standalone de présentation qui affiche le code DRL Drools avec coloration syntaxique,
+    numérotation des lignes, bouton de copie et une légende pédagogique expliquant chaque mot-clé Drools.
+    Il est 100% stateless : il reçoit uniquement des @Input().
+  </p>
+
+  <div class="subsection">
+    <div class="subsection-title">Inputs et comportement</div>
+    <table>
+      <thead><tr><th>@Input()</th><th>Type</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>drl</td><td>string</td><td>Code DRL brut (reçu du backend NLP ou généré localement)</td></tr>
+        <tr><td>phraseOriginale</td><td>string</td><td>Phrase source affichée comme contexte en haut du bloc</td></tr>
+      </tbody>
+    </table>
+    <div class="highlight-box" style="margin-top:12px;">
+      <p>Le composant découpe le DRL ligne par ligne via <code>split('\n')</code> et détecte le type
+      de chaque ligne avec la méthode <code>detecterType()</code> : import, rule, keyword (when/then/end),
+      variable ($var :), comment (//) ou code générique. Chaque type reçoit une couleur CSS distincte.</p>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Tableau de coloration syntaxique</div>
+    <table>
+      <thead><tr><th>Classe CSS</th><th>Couleur hex</th><th>S'applique à</th></tr></thead>
+      <tbody>
+        <tr><td>.drl-line-import</td><td>#93c5fd (bleu clair)</td><td>package com.douane.rules; / import com.douane.domain.*;</td></tr>
+        <tr><td>.drl-line-rule</td><td>#f97316 (orange, gras)</td><td>rule "NOM_REGLE"</td></tr>
+        <tr><td>.drl-line-keyword</td><td>#a78bfa (violet, gras)</td><td>when, then, end, salience</td></tr>
+        <tr><td>.drl-line-variable</td><td>#34d399 (vert)</td><td>$d : Declaration(champ op valeur)</td></tr>
+        <tr><td>.drl-line-comment</td><td>#64748b (gris, italique)</td><td>// Règle : ... / // Catégorie : ...</td></tr>
+        <tr><td>.drl-line-type</td><td>#fbbf24 (ambre)</td><td>double, int, String, boolean</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Points d'utilisation dans l'application</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Dans NlpInputComponent (mode aperçu)</div>
+        <p>Affiché en section repliable via un bouton "▼ Afficher l'aperçu DRL". Le DRL provient
+        directement du champ <code>result.drl</code> retourné par le backend NLP.
+        L'utilisateur peut copier le code via le bouton "📋 Copier".</p>
+      </div>
+      <div class="card card-orange">
+        <div class="card-title">Dans RegleMetierComponent (formulaire manuel)</div>
+        <p>Affiché via le bouton "▼ Aperçu le code Drools (DRL)" au bas du formulaire.
+        Le DRL est <strong>généré localement</strong> par la méthode <code>genererDrl()</code>
+        — recalculé à chaque modification de champ via un getter Angular.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 7 — GÉNÉRATEUR DRL LOCAL ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">7</span> Générateur DRL local — RegleMetierComponent</div>
+  <div class="section-divider"></div>
+  <p class="section-intro">
+    La méthode <code>genererDrl()</code> permet de visualiser le code Drools d'une règle saisie manuellement,
+    sans aucun appel backend. Le getter Angular <code>drlGenere</code> garantit un recalcul automatique
+    à chaque changement de formulaire grâce à la détection de changements d'Angular.
+  </p>
+
+  <div class="subsection">
+    <div class="subsection-title">Algorithme de génération (pseudo-code)</div>
+    <div class="code-block">
+<span class="fn">genererDrl</span>(): <span class="cls">string</span> {<br>
+&nbsp;&nbsp;<span class="cmt">// 1. Récupération des valeurs du formulaire</span><br>
+&nbsp;&nbsp;code     = selected.code     || <span class="str">'REGLE_CODE'</span><br>
+&nbsp;&nbsp;nom      = selected.nom      || <span class="str">''</span><br>
+&nbsp;&nbsp;action   = selected.action   || <span class="str">'ACTION'</span><br>
+&nbsp;&nbsp;categorie = selected.categorie.type || <span class="str">''</span><br><br>
+&nbsp;&nbsp;<span class="cmt">// 2. Mapping opérateur Angular → opérateur DRL</span><br>
+&nbsp;&nbsp;<span class="cmt">// IN → memberOf | NOT_IN → not memberOf | autres inchangés</span><br><br>
+&nbsp;&nbsp;<span class="cmt">// 3. Formatage intelligent des valeurs</span><br>
+&nbsp;&nbsp;<span class="cmt">// Numérique → sans guillemets  (60, 50000)</span><br>
+&nbsp;&nbsp;<span class="cmt">// Booléen   → true / false</span><br>
+&nbsp;&nbsp;<span class="cmt">// IN/NOT_IN → (val1, val2, ...)</span><br>
+&nbsp;&nbsp;<span class="cmt">// Texte     → "valeur entre guillemets"</span><br><br>
+&nbsp;&nbsp;<span class="cmt">// 4. Construction du bloc conditions</span><br>
+&nbsp;&nbsp;<span class="cmt">// Si aucune condition → $d : Declaration()</span><br>
+&nbsp;&nbsp;<span class="cmt">// Sinon → $d : Declaration(\n  champ op val,\n  ...\n)</span><br><br>
+&nbsp;&nbsp;<span class="cmt">// 5. Assemblage final</span><br>
+&nbsp;&nbsp;<span class="kw">return</span> <span class="str">`package com.douane.rules;\nimport ...\nrule "${code}"\n...`</span><br>
+}
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Mapping complet des opérateurs</div>
+    <table>
+      <thead><tr><th>Opérateur interface UI</th><th>Opérateur DRL Drools</th><th>Exemple de condition générée</th></tr></thead>
+      <tbody>
+        <tr><td>== (égal)</td><td>==</td><td>statut == "ACCEPTE"</td></tr>
+        <tr><td>!= (différent)</td><td>!=</td><td>regime_douanier != "IM4"</td></tr>
+        <tr><td>&gt; (supérieur)</td><td>&gt;</td><td>score_risque &gt; 60</td></tr>
+        <tr><td>&lt; (inférieur)</td><td>&lt;</td><td>poids_net &lt; 100</td></tr>
+        <tr><td>&gt;= (supérieur ou égal)</td><td>&gt;=</td><td>valeur_fob &gt;= 50000000</td></tr>
+        <tr><td>&lt;= (inférieur ou égal)</td><td>&lt;=</td><td>quota_annuel &lt;= 1000</td></tr>
+        <tr><td>IN (dans liste)</td><td>memberOf</td><td>pays_origine memberOf (SEN,CIV,MLI)</td></tr>
+        <tr><td>NOT_IN (hors liste)</td><td>not memberOf</td><td>code_sh not memberOf (8703,8704)</td></tr>
+        <tr><td>contains (contient)</td><td>contains</td><td>description contains "DANGEREUX"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="highlight-box success">
+    <p><strong>Avantage clé :</strong> ce générateur fonctionne <strong>100% côté frontend</strong>, sans aucune
+    dépendance au backend. L'utilisateur voit le code Drools en temps réel dès la saisie, même si
+    le serveur Spring Boot est arrêté.</p>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 8 — INTERFACE ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">8</span> Interface utilisateur — Maquettes des 3 modes</div>
+  <div class="section-divider"></div>
+
+  <div class="subsection">
+    <div class="subsection-title">Mode 1 : Saisie (input)</div>
+    <div class="ui-schema">
+      <div class="ui-header">NlpInputComponent — MODE SAISIE</div>
+┌──────────────────────────────────────────────────────────────────┐<br>
+│  🤖 Créer une règle en langage naturel            [✕ Fermer]     │<br>
+│  [✓ Saisie] ───── [2 Aperçu] ───── [3 Édition]                  │<br>
+├──────────────────────────────────────────────────────────────────┤<br>
+│  💡 Décrivez votre règle douanière en français ordinaire...      │<br>
+│  ┌────────────────────────────────────────────────────────────┐  │<br>
+│  │  Si le score de risque est supérieur à 60, déclencher une  │  │<br>
+│  │  inspection physique obligatoire                           │  │<br>
+│  └────────────────────────────────────────────────────────────┘  │<br>
+│  128 caractère(s)         Plus la phrase est précise, mieux c'est│<br>
+│  📋 Exemples :                                                    │<br>
+│  [Si le score de risque...]  [Si le pays d'origine est le Sénégal]│<br>
+│  [Si la marchandise est dangereuse...]  [Si la valeur FOB...]    │<br>
+├──────────────────────────────────────────────────────────────────┤<br>
+│                [Annuler]        [🤖 Convertir avec l'IA]         │<br>
+└──────────────────────────────────────────────────────────────────┘
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Mode 2 : Aperçu (preview)</div>
+    <div class="ui-schema">
+      <div class="ui-header">NlpInputComponent — MODE APERÇU</div>
+┌──────────────────────────────────────────────────────────────────┐<br>
+│  💬 « Si le score de risque est supérieur à 60... »              │<br>
+│  Confiance IA :  ██████████████░░░░  92%  Haute confiance ✅     │<br>
+├──────────────────────────────────────────────────────────────────┤<br>
+│  [Règle générée]  🛃 CONTROLE                                    │<br>
+│  Code    │ RISK_INSPECTION_001                                    │<br>
+│  Action  │ [INSPECTION_PHYSIQUE_OBLIGATOIRE]                      │<br>
+│  Nom     │ Inspection physique si score risque élevé             │<br>
+│  Catégorie en base │ ✅ Contrôle douanier                        │<br>
+│  ──────────────────────────────────────────────────────────────  │<br>
+│  Conditions d'application (1)                                    │<br>
+│  1  [SI] score_risque  est supérieur à  60                       │<br>
+│     [ALORS] → INSPECTION_PHYSIQUE_OBLIGATOIRE                    │<br>
+│  ──────────────────────────────────────────────────────────────  │<br>
+│  ▼ Afficher l'aperçu DRL (Drools Rule Language)                  │<br>
+├──────────────────────────────────────────────────────────────────┤<br>
+│  [↩ Recommencer]      [✎ Modifier]      [✓ Valider et créer]    │<br>
+└──────────────────────────────────────────────────────────────────┘
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Mode 3 : Édition (edit)</div>
+    <div class="ui-schema">
+      <div class="ui-header">NlpInputComponent — MODE ÉDITION</div>
+┌──────────────────────────────────────────────────────────────────┐<br>
+│  💬 Phrase source : « Si le score de risque est supérieur à 60 » │<br>
+│  ✎ Modifiez les champs pré-remplis par l'IA avant de créer       │<br>
+├──────────────────────────────────────────────────────────────────┤<br>
+│  Code *   [RISK_INSPECTION_001     ]  Action * [INSPECTION_PHY.] │<br>
+│  Nom  *   [Inspection physique si score risque élevé           ] │<br>
+│  Catégorie * [🛃 Contrôle douanier ▼]   ☑ Activer immédiatement │<br>
+│  ──────────────────────────────────────────────────────────────  │<br>
+│  Conditions :                                    [+ Ajouter]     │<br>
+│  1  [score_risque    ]  [&gt; ▼]  [60      ]  [✕ Supprimer]     │<br>
+├──────────────────────────────────────────────────────────────────┤<br>
+│  [← Aperçu]                          [+ Créer la règle]         │<br>
+└──────────────────────────────────────────────────────────────────┘
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 9 — EXEMPLES DRL ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">9</span> Exemples complets de code DRL généré</div>
+  <div class="section-divider"></div>
+
+  <div class="subsection">
+    <div class="subsection-title">Exemple 1 — Inspection physique (score de risque &gt; 60)</div>
+    <p style="font-size:12px;color:#64748b;margin-bottom:8px;font-style:italic;">Phrase source : "Si le score de risque est supérieur à 60, déclencher une inspection physique obligatoire"</p>
+    <div class="code-block">
+<span class="kw">package</span> com.douane.rules;<br><br>
+<span class="kw">import</span> com.douane.domain.Declaration;<br><br>
+<span class="cmt">// Règle : RISK_INSPECTION_001 — Inspection physique si score risque élevé</span><br>
+<span class="cmt">// Catégorie : CONTROLE</span><br><br>
+<span class="cls">rule</span> <span class="str">"RISK_INSPECTION_001"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;salience <span class="num">10</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;dialect <span class="str">"java"</span><br>
+<span class="kw">when</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span> : Declaration(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;score_risque &gt; <span class="num">60</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<span class="kw">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span>.setDernierResultat(<span class="str">"INSPECTION_PHYSIQUE_OBLIGATOIRE"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span>.setCodeRegle(<span class="str">"RISK_INSPECTION_001"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;update(<span class="var">$d</span>);<br>
+<span class="kw">end</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Exemple 2 — Taux UEMOA (deux conditions : pays + valeur)</div>
+    <p style="font-size:12px;color:#64748b;margin-bottom:8px;font-style:italic;">Phrase source : "Si le pays d'origine est le Sénégal et la valeur dépasse 1 000 000 XAF, appliquer taux UEMOA"</p>
+    <div class="code-block">
+<span class="kw">package</span> com.douane.rules;<br><br>
+<span class="kw">import</span> com.douane.domain.Declaration;<br><br>
+<span class="cmt">// Règle : TAX_UEMOA_SEN — Taux préférentiel UEMOA Sénégal</span><br>
+<span class="cmt">// Catégorie : TAXE</span><br><br>
+<span class="cls">rule</span> <span class="str">"TAX_UEMOA_SEN"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;salience <span class="num">10</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;dialect <span class="str">"java"</span><br>
+<span class="kw">when</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span> : Declaration(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pays_origine == <span class="str">"SEN"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;valeur_marchandise &gt; <span class="num">1000000</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<span class="kw">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span>.setDernierResultat(<span class="str">"TAXATION_REDUITE"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span>.setCodeRegle(<span class="str">"TAX_UEMOA_SEN"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;update(<span class="var">$d</span>);<br>
+<span class="kw">end</span>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Exemple 3 — Validation FOB (valeur seuil haute avec IN)</div>
+    <div class="code-block">
+<span class="kw">package</span> com.douane.rules;<br><br>
+<span class="kw">import</span> com.douane.domain.Declaration;<br><br>
+<span class="cmt">// Règle : DOC_VALIDATION_FOB — Exiger validation hiérarchique valeur élevée</span><br>
+<span class="cmt">// Catégorie : DOUANE</span><br><br>
+<span class="cls">rule</span> <span class="str">"DOC_VALIDATION_FOB"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;salience <span class="num">10</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;dialect <span class="str">"java"</span><br>
+<span class="kw">when</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span> : Declaration(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;valeur_fob &gt;= <span class="num">50000000</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;regime_douanier memberOf (<span class="str">"IM4"</span>, <span class="str">"IM7"</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;)<br>
+<span class="kw">then</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span>.setDernierResultat(<span class="str">"VALIDATION_HIERARCHIQUE"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">$d</span>.setCodeRegle(<span class="str">"DOC_VALIDATION_FOB"</span>);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;update(<span class="var">$d</span>);<br>
+<span class="kw">end</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SECTION 10 — RÉCAPITULATIF ══════════════ -->
+<div class="page page-break">
+  <div class="section-title"><span class="num">10</span> Récapitulatif &amp; Points d'amélioration</div>
+  <div class="section-divider"></div>
+
+  <div class="subsection">
+    <div class="subsection-title">Bilan des fonctionnalités IA implémentées</div>
+    <div class="grid-2">
+      <div class="card card-green no-break">
+        <div class="card-title">✅ Opérationnel (Frontend Angular)</div>
+        <ul class="styled">
+          <li>Saisie libre en langage naturel français</li>
+          <li>5 exemples de phrases douanières cliquables</li>
+          <li>Appel HTTP sécurisé vers POST /api/nlp/convertir</li>
+          <li>Overlay de chargement animé pendant l'analyse IA</li>
+          <li>Barre de confiance colorée (vert / orange / rouge)</li>
+          <li>Affichage complet de la règle extraite (code, nom, action, conditions)</li>
+          <li>Détection et affichage des ambiguïtés signalées par l'IA</li>
+          <li>Mode édition avec tous les champs pré-remplis et modifiables</li>
+          <li>Gestion dynamique des conditions (ajout / suppression)</li>
+          <li>Sauvegarde avec motif archivé dans l'historique des versions</li>
+          <li>DRL Preview avec coloration syntaxique complète (6 types)</li>
+          <li>Numérotation des lignes DRL + bouton copier</li>
+          <li>Légende pédagogique des mots-clés Drools</li>
+          <li>Générateur DRL local en temps réel (formulaire manuel)</li>
+          <li>Navigation en 3 étapes avec indicateur de progression</li>
+          <li>Toasts de feedback utilisateur (succès, erreur, warning)</li>
+          <li>Gestion gracieuse si backend IA indisponible</li>
+        </ul>
+      </div>
+      <div class="card no-break">
+        <div class="card-title">🔲 Améliorations possibles</div>
+        <ul class="styled">
+          <li>Historique local des phrases NLP utilisées (localStorage)</li>
+          <li>Validation syntaxique du DRL côté backend avant création</li>
+          <li>Test d'exécution de la règle avec des données fictives</li>
+          <li>Support multilingue (anglais / arabe)</li>
+          <li>Export du fichier .drl téléchargeable directement</li>
+          <li>Suggestions intelligentes basées sur les règles existantes</li>
+          <li>Comparaison visuelle ancienne / nouvelle version DRL</li>
+          <li>Déploiement automatique vers Kie Server / Drools Workbench</li>
+          <li>Mode "batch" pour créer plusieurs règles depuis un texte long</li>
+          <li>Éditeur DRL intégré avec autocomplétion</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection">
+    <div class="subsection-title">Dépendances et intégrations entre composants</div>
+    <table>
+      <thead><tr><th>Composant</th><th>Dépend de</th><th>Communique avec</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>NlpInputComponent</td>
+          <td>NlpRegleService, RegleMetierService, DrlPreviewComponent</td>
+          <td>@Output EventEmitter → RegleMetierComponent (rechargement liste)</td>
+        </tr>
+        <tr>
+          <td>NlpRegleService</td>
+          <td>HttpClient Angular</td>
+          <td>POST http://localhost:8081/api/nlp/convertir</td>
+        </tr>
+        <tr>
+          <td>DrlPreviewComponent</td>
+          <td>Aucune dépendance externe (standalone pur)</td>
+          <td>Reçoit uniquement @Input(drl) et @Input(phraseOriginale)</td>
+        </tr>
+        <tr>
+          <td>RegleMetierComponent</td>
+          <td>NlpInputComponent, DrlPreviewComponent (pour aperçu manuel)</td>
+          <td>POST / PUT http://localhost:8081/api/regles</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="highlight-box" style="margin-top:24px;">
+    <p><strong>Architecture globale :</strong> Le module IA est conçu comme une <strong>extension non-intrusive</strong>
+    du module de règles existant. Si le backend NLP est indisponible, toute la gestion manuelle des règles continue
+    de fonctionner normalement. Le composant DrlPreview est réutilisable partout dans l'application car il est
+    100% stateless et ne dépend d'aucun service injecté.</p>
+  </div>
+
+  <hr>
+  <div style="text-align:center;margin-top:32px;color:#94a3b8;font-size:12px;">
+    <p style="font-weight:700;color:#0a1929;">Rapport IA — Module Règles Métier Drools</p>
+    <p style="margin-top:4px;">Angular 17+ &nbsp;·&nbsp; Spring Boot &nbsp;·&nbsp; Drools DRL &nbsp;·&nbsp; NLP</p>
+    <p style="margin-top:8px;">Généré automatiquement — Mai 2026</p>
+  </div>
+</div>
+
+</body>
+</html>

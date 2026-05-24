@@ -24,7 +24,7 @@ import { CreateUserComponent } from './app/features/users/create-user/create-use
 import { UserDetailComponent } from './app/features/users/user-detail/user-detail';
 import { ProcessusListComponent } from './app/features/processus/processus-list.component';
 import { ProcessusFormComponent } from './app/features/processus/processus-form.component';
-import { TachesListComponent } from './app/features/taches/taches-list';
+
 import { ProcessusModifierComponent } from './app/features/processus/processus-modifier.component';
 import { RegleMetierComponent } from './app/components/regle/regle';
 
@@ -161,11 +161,7 @@ const routes: Routes = [
   },
 
   // 📋 TÂCHES (accessible à tous les connectés)
-  {
-    path: 'taches-list',
-    component: TachesListComponent,
-    canActivate: [AuthGuardService]
-  },
+
 
   { path: '**', redirectTo: 'dashboard' }
 ];

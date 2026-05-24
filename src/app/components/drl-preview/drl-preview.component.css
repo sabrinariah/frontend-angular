@@ -1,0 +1,185 @@
+/* ============================================================
+   DRL PREVIEW COMPONENT
+   Thème : bleu marine & orange (cohérent avec regle.css)
+   ============================================================ */
+
+.drl-container {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* ---------- EN-TÊTE ---------- */
+.drl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #0a1929 0%, #1e3a5f 100%);
+  border-bottom: 2px solid #f97316;
+}
+
+.drl-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drl-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 8px;
+  background: #f97316;
+  color: #fff;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+.drl-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.3px;
+}
+
+.drl-copy-btn {
+  padding: 5px 12px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease;
+  font-family: inherit;
+}
+.drl-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* ---------- PHRASE SOURCE ---------- */
+.drl-phrase-source {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fff7ed;
+  border-bottom: 1px solid #fed7aa;
+  font-size: 12px;
+  color: #c2410c;
+  line-height: 1.5;
+}
+
+.drl-phrase-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---------- CODE ---------- */
+.drl-code-wrapper {
+  display: flex;
+  overflow-x: auto;
+  background: #0f172a;
+}
+
+.drl-line-numbers {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 10px;
+  background: #0a1929;
+  border-right: 1px solid #1e3a5f;
+  user-select: none;
+  min-width: 40px;
+}
+
+.drl-line-num {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 11px;
+  color: #475569;
+  line-height: 1.6;
+  text-align: right;
+  display: block;
+}
+
+.drl-pre {
+  margin: 0;
+  padding: 14px 16px;
+  background: transparent;
+  flex: 1;
+  overflow-x: auto;
+}
+
+.drl-code {
+  display: block;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre;
+  color: #e2e8f0;
+}
+
+/* ---------- COLORATION SYNTAXIQUE ---------- */
+.drl-line {
+  display: block;
+  line-height: 1.6;
+}
+
+.drl-line-import  { color: #93c5fd; }
+.drl-line-rule    { color: #f97316; font-weight: 700; }
+.drl-line-keyword { color: #a78bfa; font-weight: 700; }
+.drl-line-variable { color: #34d399; }
+.drl-line-comment { color: #64748b; font-style: italic; }
+.drl-line-type    { color: #fbbf24; }
+.drl-line-empty   { display: block; height: 8px; }
+
+/* ---------- LÉGENDE ---------- */
+.drl-legende {
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.drl-legende-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #102a43;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+}
+
+.drl-legende-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8px;
+}
+
+.drl-legende-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #334155;
+}
+
+.drl-tag {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.drl-tag-package  { background: #dbeafe; color: #1d4ed8; }
+.drl-tag-rule     { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+.drl-tag-when     { background: #f3e8ff; color: #7e22ce; }
+.drl-tag-then     { background: #f0fdf4; color: #15803d; }
+.drl-tag-end      { background: #f1f5f9; color: #475569; }
+.drl-tag-var      { background: #ecfdf5; color: #065f46; }

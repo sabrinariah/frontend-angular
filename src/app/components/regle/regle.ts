@@ -10,6 +10,8 @@ import { Categorie } from '../../models/categorie.model';
 import { Condition } from '../../models/condition.model';
 import { Processus, Tache } from '../../models/processus.model';
 import { Version } from '../../models/version.model'; // ✅ AJOUT
+import { NlpInputComponent } from '../nlp-input/nlp-input.component';
+import { DrlPreviewComponent } from '../drl-preview/drl-preview.component';
 
 export interface Toast {
   id: number;
@@ -21,7 +23,7 @@ export interface Toast {
 @Component({
   selector: 'app-regle-metier',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NlpInputComponent, DrlPreviewComponent],
   templateUrl: './regle.html',
   styleUrls: ['./regle.css']
 })
@@ -42,6 +44,7 @@ export class RegleMetierComponent implements OnInit {
   viewMode: 'cards' | 'table' = 'cards';
 
   showFormPopup = false;
+  showDrlPreview = false;
 
   selectedDetail: RegleMetier | null = null;
   // ✅ MODIFICATION : ajout de 'historique' comme onglet possible
@@ -394,6 +397,62 @@ export class RegleMetierComponent implements OnInit {
     this.isEditing = false;
     this.loading = false;
     this.currentCategorieType = null;
+    this.showDrlPreview = false;
+  }
+
+  get drlGenere(): string {
+    return this.genererDrl();
+  }
+
+  genererDrl(): string {
+    const code = this.selected.code?.trim() || 'REGLE_CODE';
+    const nom  = this.selected.nom?.trim()  || '';
+    const action = this.selected.action?.trim() || 'ACTION';
+    const categorie = this.selected.categorie?.type || '';
+
+    const mapOp = (op: string): string => {
+      const m: Record<string, string> = {
+        '==': '==', '!=': '!=', '>': '>', '<': '<',
+        '>=': '>=', '<=': '<=',
+        'IN': 'memberOf', 'NOT_IN': 'not memberOf',
+        'contains': 'contains'
+      };
+      return m[op] || op;
+    };
+
+    const formatValeur = (op: string, val: string): string => {
+      if (['IN', 'NOT_IN'].includes(op)) return `(${val})`;
+      const isNum = val.trim() !== '' && !isNaN(Number(val));
+      const isBool = val === 'true' || val === 'false';
+      return (isNum || isBool) ? val : `"${val}"`;
+    };
+
+    const filledConds = this.selectedConditions.filter(c => c.champ?.trim());
+    let condBlock: string;
+    if (filledConds.length === 0) {
+      condBlock = '    $d : Declaration()';
+    } else {
+      const lines = filledConds.map((c, i, arr) => {
+        const champ = c.champ.trim();
+        const op  = mapOp(c.operateur || '==');
+        const val = formatValeur(c.operateur || '==', c.valeur || '');
+        return `        ${champ} ${op} ${val}${i < arr.length - 1 ? ',' : ''}`;
+      });
+      condBlock = `    $d : Declaration(\n${lines.join('\n')}\n    )`;
+    }
+
+    let drl = `package com.douane.rules;\n\n`;
+    drl += `import com.douane.domain.Declaration;\n`;
+    if (nom)       drl += `\n// Règle : ${code} — ${nom}`;
+    if (categorie) drl += `\n// Catégorie : ${categorie}`;
+    drl += `\n\nrule "${code}"\n`;
+    drl += `    salience 10\n`;
+    drl += `    dialect "java"\n`;
+    drl += `when\n${condBlock}\nthen\n`;
+    drl += `    $d.setDernierResultat("${action}");\n`;
+    drl += `    $d.setCodeRegle("${code}");\n`;
+    drl += `    update($d);\nend`;
+    return drl;
   }
 
   edit(r: RegleMetier): void {

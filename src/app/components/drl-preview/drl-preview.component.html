@@ -1,0 +1,69 @@
+<div class="drl-container">
+
+  <!-- En-tête -->
+  <div class="drl-header">
+    <div class="drl-header-left">
+      <span class="drl-badge">DRL</span>
+      <span class="drl-title">Drools Rule Language — Règle exécutable</span>
+    </div>
+    <button class="drl-copy-btn" (click)="copier()">
+      {{ copied ? '✓ Copié !' : '📋 Copier' }}
+    </button>
+  </div>
+
+  <!-- Phrase source -->
+  <div *ngIf="phraseOriginale" class="drl-phrase-source">
+    <span class="drl-phrase-icon">💬</span>
+    <em>Phrase source : « {{ phraseOriginale }} »</em>
+  </div>
+
+  <!-- Code DRL avec coloration -->
+  <div class="drl-code-wrapper">
+    <div class="drl-line-numbers">
+      <span *ngFor="let l of lignes; let i = index" class="drl-line-num">{{ i + 1 }}</span>
+    </div>
+    <pre class="drl-pre"><code class="drl-code"><span
+      *ngFor="let l of lignes"
+      class="drl-line"
+      [class.drl-line-import]="l.type === 'import'"
+      [class.drl-line-rule]="l.type === 'rule'"
+      [class.drl-line-keyword]="l.type === 'keyword'"
+      [class.drl-line-variable]="l.type === 'variable'"
+      [class.drl-line-comment]="l.type === 'comment'"
+      [class.drl-line-type]="l.type === 'type'"
+      [class.drl-line-empty]="l.type === 'empty'">{{ l.text }}
+</span></code></pre>
+  </div>
+
+  <!-- Légende explicative -->
+  <div class="drl-legende">
+    <div class="drl-legende-title">Comprendre la règle DRL</div>
+    <div class="drl-legende-grid">
+      <div class="drl-legende-item">
+        <span class="drl-tag drl-tag-package">package / import</span>
+        <span>Déclare les classes Java utilisées par la règle</span>
+      </div>
+      <div class="drl-legende-item">
+        <span class="drl-tag drl-tag-rule">rule</span>
+        <span>Nom unique identifiant la règle dans le moteur Drools</span>
+      </div>
+      <div class="drl-legende-item">
+        <span class="drl-tag drl-tag-when">when</span>
+        <span>Conditions d'application — si tout est vrai, la règle se déclenche</span>
+      </div>
+      <div class="drl-legende-item">
+        <span class="drl-tag drl-tag-then">then</span>
+        <span>Actions exécutées — modifications des objets métier</span>
+      </div>
+      <div class="drl-legende-item">
+        <span class="drl-tag drl-tag-end">end</span>
+        <span>Fin de la définition de la règle</span>
+      </div>
+      <div class="drl-legende-item">
+        <span class="drl-tag drl-tag-var">$variable</span>
+        <span>Référence à un objet du moteur de règles (ex: $d : Declaration)</span>
+      </div>
+    </div>
+  </div>
+
+</div>

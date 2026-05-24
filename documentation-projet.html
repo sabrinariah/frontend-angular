@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Documentation — Projet Frontend Angular</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1e293b;
+      line-height: 1.7;
+    }
+
+    /* ── Couverture ── */
+    .cover {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0ea5e9 100%);
+      color: white;
+      padding: 80px 60px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      right: -80px; top: -80px;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+    }
+    .cover-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .cover h1 { font-size: 42px; font-weight: 700; line-height: 1.2; margin-bottom: 16px; }
+    .cover p  { font-size: 18px; opacity: 0.85; max-width: 600px; }
+    .cover-meta {
+      margin-top: 40px;
+      display: flex; gap: 40px; flex-wrap: wrap;
+    }
+    .cover-meta div { opacity: 0.75; font-size: 14px; }
+    .cover-meta strong { display: block; font-size: 16px; opacity: 1; color: white; }
+
+    /* ── Layout ── */
+    .layout { display: flex; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 260px;
+      min-height: 100vh;
+      background: #1e293b;
+      padding: 30px 0;
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
+      flex-shrink: 0;
+    }
+    .sidebar-title {
+      color: #64748b;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      padding: 0 24px 12px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 10px 24px;
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all .2s;
+      border-left: 3px solid transparent;
+    }
+    .sidebar a:hover {
+      color: white;
+      background: rgba(255,255,255,0.05);
+      border-left-color: #2563eb;
+    }
+    .sidebar .sep { height: 1px; background: #334155; margin: 12px 24px; }
+
+    /* ── Contenu ── */
+    .content { flex: 1; padding: 50px 60px; max-width: 980px; }
+
+    /* ── Sections ── */
+    .section { margin-bottom: 60px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .section-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #2563eb;
+      color: white;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .section h2 { font-size: 24px; font-weight: 700; color: #0f172a; }
+
+    h3 { font-size: 17px; font-weight: 700; color: #1e40af; margin: 28px 0 12px; }
+    h4 { font-size: 15px; font-weight: 600; color: #334155; margin: 20px 0 8px; }
+    p  { margin-bottom: 12px; color: #475569; }
+
+    /* ── Cards ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+    .card-icon { font-size: 28px; margin-bottom: 10px; }
+    .card-title { font-weight: 700; font-size: 15px; color: #0f172a; margin-bottom: 6px; }
+    .card-desc  { font-size: 13px; color: #64748b; line-height: 1.5; }
+
+    /* ── Tables ── */
+    .table-wrap { overflow-x: auto; margin-bottom: 20px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      font-size: 14px;
+    }
+    thead { background: #1e3a8a; color: white; }
+    thead th { padding: 12px 16px; text-align: left; font-weight: 600; font-size: 13px; }
+    tbody td { padding: 11px 16px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f8fafc; }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-green  { background: #dcfce7; color: #166534; }
+    .badge-red    { background: #fee2e2; color: #991b1b; }
+    .badge-gray   { background: #f1f5f9; color: #475569; }
+    .badge-purple { background: #ede9fe; color: #5b21b6; }
+
+    /* ── Code ── */
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 20px 24px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+    code {
+      background: #f1f5f9;
+      color: #7c3aed;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: 'Consolas', monospace;
+    }
+    pre code { background: none; color: #e2e8f0; padding: 0; }
+
+    /* ── Endpoint list ── */
+    .endpoint {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .method {
+      font-weight: 700;
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      min-width: 52px;
+      text-align: center;
+    }
+    .GET    { background: #dcfce7; color: #166534; }
+    .POST   { background: #dbeafe; color: #1d4ed8; }
+    .PUT    { background: #fef3c7; color: #92400e; }
+    .DELETE { background: #fee2e2; color: #991b1b; }
+    .PATCH  { background: #ede9fe; color: #5b21b6; }
+    .endpoint-url { font-family: 'Consolas', monospace; color: #334155; flex: 1; }
+    .endpoint-desc { color: #64748b; font-size: 13px; }
+
+    /* ── Role matrix ── */
+    .check { color: #16a34a; font-size: 18px; }
+    .cross  { color: #dc2626; font-size: 18px; }
+
+    /* ── Alert ── */
+    .alert {
+      background: #eff6ff;
+      border-left: 4px solid #2563eb;
+      padding: 14px 18px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: #1e40af;
+    }
+    .alert-warn {
+      background: #fffbeb;
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+
+    /* ── Architecture tree ── */
+    .tree {
+      background: #0f172a;
+      color: #94a3b8;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      padding: 24px;
+      border-radius: 10px;
+      line-height: 1.8;
+    }
+    .tree .dir  { color: #60a5fa; font-weight: 600; }
+    .tree .file { color: #e2e8f0; }
+    .tree .note { color: #475569; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 40px;
+      color: #94a3b8;
+      font-size: 13px;
+      border-top: 1px solid #e2e8f0;
+      margin-top: 40px;
+    }
+
+    @media print {
+      .sidebar { display: none; }
+      .cover   { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ COUVERTURE ══ -->
+<div class="cover">
+  <div class="cover-badge">Documentation Technique</div>
+  <h1>Plateforme de Gestion<br>Import / Export & Processus Métier</h1>
+  <p>Application Angular 21 — Gestion des dossiers douaniers, règles métier BPMN et workflow entreprise</p>
+  <div class="cover-meta">
+    <div><strong>Angular</strong>Version 21.2</div>
+    <div><strong>Backend</strong>Spring Boot — Port 8081</div>
+    <div><strong>Auth</strong>Keycloak — Port 8080</div>
+    <div><strong>Date</strong>24 / 05 / 2026</div>
+  </div>
+</div>
+
+<!-- ══ LAYOUT ══ -->
+<div class="layout">
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-title">Table des matières</div>
+    <a href="#vue">1. Vue d'ensemble</a>
+    <a href="#tech">2. Technologies</a>
+    <a href="#archi">3. Architecture</a>
+    <a href="#auth">4. Authentification</a>
+    <a href="#routing">5. Routing</a>
+    <a href="#modeles">6. Modèles de données</a>
+    <div class="sep"></div>
+    <a href="#services">7. Services</a>
+    <a href="#composants">8. Composants</a>
+    <a href="#fonctionnalites">9. Fonctionnalités</a>
+    <a href="#backend">10. Config Backend</a>
+    <a href="#roles">11. Rôles & Permissions</a>
+  </nav>
+
+  <!-- Content -->
+  <main class="content">
+
+    <!-- ── 1. VUE D'ENSEMBLE ── -->
+    <div class="section" id="vue">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2>Vue d'ensemble</h2>
+      </div>
+      <p>Ce projet est une <strong>application Angular 21 standalone</strong> dédiée à la gestion des processus métier dans un contexte de commerce international. Elle couvre l'intégralité du cycle de traitement des dossiers d'importation et d'exportation, avec un moteur de règles métier, un éditeur BPMN et un système de gestion des utilisateurs basé sur Keycloak.</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <div class="card-icon">📂</div>
+          <div class="card-title">Dossiers Import / Export</div>
+          <div class="card-desc">Création, suivi et filtrage des dossiers douaniers avec export PDF et Excel</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">Règles Métier</div>
+          <div class="card-desc">Moteur de règles avec versioning, génération DRL et conversion NLP</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔄</div>
+          <div class="card-title">Processus BPMN</div>
+          <div class="card-desc">Création de processus, gestion des tâches et génération de diagrammes BPMN</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">👥</div>
+          <div class="card-title">Gestion Utilisateurs</div>
+          <div class="card-desc">Création, modification, activation/désactivation des comptes via Keycloak</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🧠</div>
+          <div class="card-title">NLP → Règles</div>
+          <div class="card-desc">Conversion de phrases en langage naturel en règles métier exécutables</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🔐</div>
+          <div class="card-title">Contrôle d'accès</div>
+          <div class="card-desc">Routes et fonctionnalités protégées par rôles Keycloak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 2. TECHNOLOGIES ── -->
+    <div class="section" id="tech">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2>Technologies utilisées</h2>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Technologie</th><th>Version</th><th>Rôle</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Angular</strong></td><td>21.2</td><td>Framework frontend principal (standalone components)</td></tr>
+            <tr><td><strong>TypeScript</strong></td><td>—</td><td>Langage de développement</td></tr>
+            <tr><td><strong>Keycloak JS</strong></td><td>26.2.3</td><td>Authentification SSO et gestion des rôles</td></tr>
+            <tr><td><strong>bpmn-js</strong></td><td>18.16.1</td><td>Rendu et visualisation des diagrammes BPMN 2.0</td></tr>
+            <tr><td><strong>jsPDF</strong></td><td>latest</td><td>Génération de fichiers PDF côté client</td></tr>
+            <tr><td><strong>jspdf-autotable</strong></td><td>latest</td><td>Génération de tableaux dans les PDF</td></tr>
+            <tr><td><strong>xlsx (SheetJS)</strong></td><td>latest</td><td>Export des données en fichiers Excel (.xlsx)</td></tr>
+            <tr><td><strong>RxJS</strong></td><td>7.8</td><td>Programmation réactive et gestion des observables HTTP</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 3. ARCHITECTURE ── -->
+    <div class="section" id="archi">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2>Architecture du projet</h2>
+      </div>
+      <div class="tree">
+<span class="dir">src/</span>
+├── <span class="file">main.ts</span>              <span class="note">← Bootstrap + routes + intercepteurs</span>
+├── <span class="file">index.html</span>
+├── <span class="file">styles.css</span>           <span class="note">← Styles globaux</span>
+└── <span class="dir">app/</span>
+    ├── <span class="file">app.ts / app.html</span> <span class="note">← Composant racine</span>
+    ├── <span class="dir">models/</span>            <span class="note">← Interfaces & types TypeScript</span>
+    ├── <span class="dir">core/</span>
+    │   ├── <span class="dir">services/</span>      <span class="note">← Services HTTP et logique métier</span>
+    │   ├── <span class="dir">guards/</span>        <span class="note">← Protection des routes (AuthGuard)</span>
+    │   └── <span class="dir">interceptors/</span>  <span class="note">← Injection automatique du token Bearer</span>
+    ├── <span class="dir">components/</span>        <span class="note">← Composants partagés</span>
+    │   ├── <span class="dir">regle/</span>         <span class="note">← Moteur de règles métier</span>
+    │   ├── <span class="dir">bpmn-viewer/</span>   <span class="note">← Visionneuse BPMN</span>
+    │   ├── <span class="dir">nlp-input/</span>     <span class="note">← Saisie NLP</span>
+    │   └── <span class="dir">drl-preview/</span>   <span class="note">← Aperçu DRL généré</span>
+    ├── <span class="dir">features/</span>
+    │   ├── <span class="dir">dashboard/</span>     <span class="note">← Tableau de bord</span>
+    │   ├── <span class="dir">processus/</span>     <span class="note">← Gestion processus + tâches</span>
+    │   │   └── <span class="dir">tache-form/</span> <span class="note">← Formulaire tâche paramétrable</span>
+    │   └── <span class="dir">users/</span>         <span class="note">← Gestion utilisateurs (SuperAdmin)</span>
+    ├── <span class="dir">login/</span>             <span class="note">← Page de connexion</span>
+    ├── <span class="dir">register/</span>          <span class="note">← Page d'inscription</span>
+    └── <span class="dir">pages/</span>
+        ├── <span class="dir">import/</span>        <span class="note">← Module dossiers d'importation</span>
+        ├── <span class="file">export.component.ts</span>  <span class="note">← Module dossiers d'exportation</span>
+        └── <span class="file">import-export.component.ts</span>
+      </div>
+    </div>
+
+    <!-- ── 4. AUTHENTIFICATION ── -->
+    <div class="section" id="auth">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2>Authentification & Sécurité</h2>
+      </div>
+
+      <div class="alert">
+        L'authentification repose sur <strong>Keycloak</strong> en mode <code>check-sso</code> — pas de redirection forcée au démarrage. Un <strong>TokenInterceptor</strong> injecte automatiquement le token Bearer dans chaque requête HTTP sortante.
+      </div>
+
+      <h3>Configuration Keycloak</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Paramètre</th><th>Valeur</th></tr></thead>
+          <tbody>
+            <tr><td>URL Keycloak</td><td><code>http://localhost:8080</code></td></tr>
+            <tr><td>Realm</td><td><code>projet</code></td></tr>
+            <tr><td>Client ID</td><td><code>app-angular</code></td></tr>
+            <tr><td>Mode d'initialisation</td><td><code>check-sso</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Méthodes du KeycloakService</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Méthode</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>init()</code></td><td>Initialise la session Keycloak au démarrage</td></tr>
+            <tr><td><code>loginWithCredentials(username, password)</code></td><td>Connexion directe via OpenID Connect</td></tr>
+            <tr><td><code>registerUser(data)</code></td><td>Inscription → POST /auth/register</td></tr>
+            <tr><td><code>forgotPassword(email)</code></td><td>Réinitialisation → POST /auth/forgot-password</td></tr>
+            <tr><td><code>getToken()</code></td><td>Retourne le JWT courant</td></tr>
+            <tr><td><code>getUserRoles()</code></td><td>Décode le token et retourne les rôles realm</td></tr>
+            <tr><td><code>isUserInRole(role)</code></td><td>Vérifie si l'utilisateur possède un rôle donné</td></tr>
+            <tr><td><code>getAllUsersWithRoles()</code></td><td>Liste tous les utilisateurs (admin)</td></tr>
+            <tr><td><code>updateUser(username, data)</code></td><td>Mise à jour d'un utilisateur</td></tr>
+            <tr><td><code>toggleUserStatus(username, enabled)</code></td><td>Activer / désactiver un compte</td></tr>
+            <tr><td><code>deleteUser(username)</code></td><td>Supprimer un utilisateur</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 5. ROUTING ── -->
+    <div class="section" id="routing">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2>Routing & Navigation</h2>
+      </div>
+      <p>Toutes les routes sont définies dans <code>src/main.ts</code>. Les routes protégées passent par <code>AuthGuardService</code> qui vérifie le token et le rôle de l'utilisateur.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>URL</th><th>Composant</th><th>Protégé</th><th>Rôles autorisés</th></tr></thead>
+          <tbody>
+            <tr><td><code>/login</code></td><td>LoginComponent</td><td><span class="badge badge-gray">Public</span></td><td>—</td></tr>
+            <tr><td><code>/register</code></td><td>RegisterComponent</td><td><span class="badge badge-gray">Public</span></td><td>—</td></tr>
+            <tr><td><code>/dashboard</code></td><td>DashboardComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Tous les rôles</td></tr>
+            <tr><td><code>/regles</code></td><td>RegleMetierComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Gestionnaire règles, Gestionnaire processus, SuperAdmin</td></tr>
+            <tr><td><code>/bpmn-viewer/:id</code></td><td>BpmnViewerComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Gestionnaire processus, SuperAdmin</td></tr>
+            <tr><td><code>/import</code></td><td>ImportComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Tous les rôles</td></tr>
+            <tr><td><code>/export</code></td><td>ExportComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Tous les rôles</td></tr>
+            <tr><td><code>/import-export</code></td><td>ImportExportComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Tous les rôles</td></tr>
+            <tr><td><code>/users</code></td><td>UsersComponent</td><td><span class="badge badge-red">Admin</span></td><td>SuperAdmin uniquement</td></tr>
+            <tr><td><code>/users/:username</code></td><td>UserDetailComponent</td><td><span class="badge badge-red">Admin</span></td><td>SuperAdmin uniquement</td></tr>
+            <tr><td><code>/create-user</code></td><td>CreateUserComponent</td><td><span class="badge badge-red">Admin</span></td><td>SuperAdmin uniquement</td></tr>
+            <tr><td><code>/users/edit/:username</code></td><td>EditUserComponent</td><td><span class="badge badge-red">Admin</span></td><td>SuperAdmin uniquement</td></tr>
+            <tr><td><code>/processus</code></td><td>ProcessusListComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Gestionnaire processus, SuperAdmin</td></tr>
+            <tr><td><code>/processus/new</code></td><td>ProcessusFormComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Gestionnaire processus, SuperAdmin</td></tr>
+            <tr><td><code>/processus/:id/edit</code></td><td>ProcessusModifierComponent</td><td><span class="badge badge-blue">Auth</span></td><td>Gestionnaire processus, SuperAdmin</td></tr>
+            <tr><td><code>**</code></td><td>→ /dashboard</td><td>—</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 6. MODÈLES ── -->
+    <div class="section" id="modeles">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2>Modèles de données</h2>
+      </div>
+      <p>Tous les modèles TypeScript se trouvent dans <code>src/app/models/</code>.</p>
+
+      <h3>DossierImport</h3>
+      <pre><code>interface DossierImport {
+  id?:               string;
+  numeroDossier?:    string;
+  importateur:       string;    // obligatoire
+  paysOrigine:       string;    // obligatoire
+  typeProduit:       string;    // obligatoire
+  quantite?:         number;
+  valeur?:           string;
+  codeSH?:           string;
+  fournisseur?:      string;
+  dateDepot?:        string;    // YYYY-MM-DD
+  statut?:           StatutDossier;
+  commentaire?:      string;
+  dateModification?: string;
+}
+
+type StatutDossier = 'EN_ATTENTE' | 'EN_COURS' | 'VALIDE' | 'REFUSE';</code></pre>
+
+      <h3>DossierExport</h3>
+      <pre><code>interface DossierExport {
+  id?:                string;
+  numeroDossier?:     string;
+  exportateur:        string;   // obligatoire
+  paysDestination:    string;   // obligatoire
+  typeProduit:        string;   // obligatoire
+  quantite?:          number;
+  valeurFOB?:         number;
+  codeSH?:            string;
+  destinationFinale?: string;
+  deviseFacture?:     string;   // ex: "USD"
+  dateDepot?:         string;
+  statut?:            StatutDossier;
+  commentaire?:       string;
+  dateModification?:  string;
+}</code></pre>
+
+      <h3>Processus & Tâche</h3>
+      <pre><code>interface Processus {
+  id?:         number;
+  nom:         string;
+  description: string;
+  statut?:     string;
+  actif?:      boolean;
+}
+
+interface Tache {
+  id?:          number;
+  nom:          string;
+  description?: string;
+  ordre?:       number;
+  statut?:      string;
+  processusId:  number;
+  formData?:    Record&lt;string, any&gt;;
+}</code></pre>
+
+      <h3>Règle Métier & Condition</h3>
+      <pre><code>interface RegleMetier {
+  id?:          number;
+  nom:          string;
+  description?: string;
+  categorie?:   Categorie;
+  conditions:   Condition[];
+  actif:        boolean;
+  version?:     number;
+}
+
+interface Condition {
+  champ:     string;
+  operateur: '==' | '!=' | '>' | '&lt;' | '>=' | '&lt;=';
+  valeur:    string;
+}</code></pre>
+    </div>
+
+    <!-- ── 7. SERVICES ── -->
+    <div class="section" id="services">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2>Services</h2>
+      </div>
+      <p>Tous les services se trouvent dans <code>src/app/core/services/</code>. Ils communiquent avec le backend Spring Boot sur le port <strong>8081</strong>.</p>
+
+      <h3>ImportService</h3>
+      <p>Fichier : <code>import.service.ts</code> — Base : <code>http://localhost:8081/api/import</code></p>
+      <div class="endpoint"><span class="method POST">POST</span><span class="endpoint-url">/dossiers</span><span class="endpoint-desc">Créer un dossier d'import</span></div>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/dossiers</span><span class="endpoint-desc">Lister tous les dossiers</span></div>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/dossiers/{id}</span><span class="endpoint-desc">Détail d'un dossier</span></div>
+
+      <h3>ExportService</h3>
+      <p>Fichier : <code>export.service.ts</code> — Base : <code>http://localhost:8081/api/export</code></p>
+      <div class="endpoint"><span class="method POST">POST</span><span class="endpoint-url">/dossiers</span><span class="endpoint-desc">Créer un dossier d'export</span></div>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/dossiers</span><span class="endpoint-desc">Lister tous les dossiers</span></div>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/dossiers/{id}</span><span class="endpoint-desc">Détail d'un dossier</span></div>
+
+      <h3>RegleMetierService</h3>
+      <p>Fichier : <code>regle.service.ts</code> — Base : <code>http://localhost:8081/api/regles</code></p>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/api/regles</span><span class="endpoint-desc">Lister toutes les règles</span></div>
+      <div class="endpoint"><span class="method POST">POST</span><span class="endpoint-url">/api/regles</span><span class="endpoint-desc">Créer une règle</span></div>
+      <div class="endpoint"><span class="method PUT">PUT</span><span class="endpoint-url">/api/regles/{id}</span><span class="endpoint-desc">Mettre à jour une règle</span></div>
+      <div class="endpoint"><span class="method DELETE">DELETE</span><span class="endpoint-url">/api/regles/{id}</span><span class="endpoint-desc">Supprimer une règle</span></div>
+      <div class="endpoint"><span class="method PUT">PUT</span><span class="endpoint-url">/api/regles/{id}/toggle</span><span class="endpoint-desc">Activer / désactiver</span></div>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/api/regles/{id}/versions</span><span class="endpoint-desc">Historique des versions</span></div>
+      <div class="endpoint"><span class="method POST">POST</span><span class="endpoint-url">/api/regles/restaurer/{versionId}</span><span class="endpoint-desc">Restaurer une version</span></div>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/api/categories</span><span class="endpoint-desc">Lister les catégories</span></div>
+
+      <h3>ProcessusService</h3>
+      <p>Fichier : <code>processus.service.ts</code> — Base : <code>http://localhost:8081/api/process</code></p>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/api/process</span><span class="endpoint-desc">Lister les processus</span></div>
+      <div class="endpoint"><span class="method POST">POST</span><span class="endpoint-url">/api/process</span><span class="endpoint-desc">Créer un processus</span></div>
+      <div class="endpoint"><span class="method PUT">PUT</span><span class="endpoint-url">/api/process/{id}</span><span class="endpoint-desc">Mettre à jour</span></div>
+      <div class="endpoint"><span class="method DELETE">DELETE</span><span class="endpoint-url">/api/process/{id}</span><span class="endpoint-desc">Supprimer</span></div>
+      <div class="endpoint"><span class="method PATCH">PATCH</span><span class="endpoint-url">/api/process/{id}/toggle</span><span class="endpoint-desc">Activer / désactiver</span></div>
+
+      <h3>TacheService</h3>
+      <p>Fichier : <code>tache.service.ts</code> — Base : <code>http://localhost:8081/api/taches</code></p>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/api/taches/processus/{id}</span><span class="endpoint-desc">Tâches d'un processus</span></div>
+      <div class="endpoint"><span class="method POST">POST</span><span class="endpoint-url">/api/taches</span><span class="endpoint-desc">Créer une tâche</span></div>
+      <div class="endpoint"><span class="method PUT">PUT</span><span class="endpoint-url">/api/taches/{id}</span><span class="endpoint-desc">Modifier une tâche</span></div>
+      <div class="endpoint"><span class="method DELETE">DELETE</span><span class="endpoint-url">/api/taches/{id}</span><span class="endpoint-desc">Supprimer une tâche</span></div>
+
+      <h3>UserService</h3>
+      <p>Fichier : <code>user.service.ts</code> — Base : <code>http://localhost:8081/api/users</code></p>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/api/users</span><span class="endpoint-desc">Lister les utilisateurs</span></div>
+      <div class="endpoint"><span class="method GET">GET</span><span class="endpoint-url">/api/users/{username}</span><span class="endpoint-desc">Détail utilisateur</span></div>
+      <div class="endpoint"><span class="method PUT">PUT</span><span class="endpoint-url">/api/users/update/{username}</span><span class="endpoint-desc">Modifier un utilisateur</span></div>
+      <div class="endpoint"><span class="method DELETE">DELETE</span><span class="endpoint-url">/api/users/{username}</span><span class="endpoint-desc">Supprimer un utilisateur</span></div>
+      <div class="endpoint"><span class="method PUT">PUT</span><span class="endpoint-url">/api/users/status/{username}?enabled=</span><span class="endpoint-desc">Activer / désactiver</span></div>
+
+      <h3>NlpRegleService</h3>
+      <div class="endpoint"><span class="method POST">POST</span><span class="endpoint-url">http://localhost:8081/api/nlp/convertir</span><span class="endpoint-desc">Phrase → règle métier</span></div>
+
+      <h3>BpmnGeneratorService &nbsp;<span class="badge badge-green">100% Frontend</span></h3>
+      <p>Génère un XML BPMN 2.0 valide à partir des tâches et leurs règles. Gère les passerelles OUI/NON. Permet le téléchargement direct du fichier <code>.bpmn</code>. Aucun appel HTTP.</p>
+
+      <h3>ConditionEvaluatorService &nbsp;<span class="badge badge-green">100% Frontend</span></h3>
+      <p>Évalue les conditions d'une règle métier sur un jeu de données. Opérateurs supportés : <code>==</code>, <code>!=</code>, <code>&gt;</code>, <code>&lt;</code>, <code>&gt;=</code>, <code>&lt;=</code>. Logique AND entre toutes les conditions.</p>
+    </div>
+
+    <!-- ── 8. COMPOSANTS ── -->
+    <div class="section" id="composants">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <h2>Composants</h2>
+      </div>
+
+      <h3>Authentification</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Composant</th><th>Route</th><th>Fonctionnalités principales</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>LoginComponent</strong></td>
+              <td><code>/login</code></td>
+              <td>Connexion Keycloak, lien inscription, lien mot de passe oublié</td>
+            </tr>
+            <tr>
+              <td><strong>RegisterComponent</strong></td>
+              <td><code>/register</code></td>
+              <td>Inscription avec validation, indicateur de force du mot de passe, sélection du rôle</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Règles Métier</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Composant</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong>RegleMetierComponent</strong></td><td>CRUD complet des règles, gestion des conditions, versioning, génération DRL</td></tr>
+            <tr><td><strong>NlpInputComponent</strong></td><td>Saisie d'une phrase → conversion automatique en règle via NLP backend</td></tr>
+            <tr><td><strong>DrlPreviewComponent</strong></td><td>Aperçu du code Drools (DRL) généré pour une règle</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Processus & BPMN</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Composant</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong>ProcessusListComponent</strong></td><td>Liste, création, modification, suppression de processus. Gestion des tâches, génération BPMN, export <code>.bpmn</code></td></tr>
+            <tr><td><strong>ProcessusFormComponent</strong></td><td>Formulaire de création d'un nouveau processus</td></tr>
+            <tr><td><strong>ProcessusModifierComponent</strong></td><td>Modification d'un processus existant</td></tr>
+            <tr><td><strong>TacheFormComponent</strong></td><td>Formulaire tâche paramétrable : champs dynamiques, règles de transition OUI/NON, catalogue de 19 modèles BPMN</td></tr>
+            <tr><td><strong>BpmnViewerComponent</strong></td><td>Visionneuse BPMN 2.0 avec la bibliothèque bpmn-js</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Import / Export Dossiers</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Composant</th><th>Route</th><th>Méthodes clés</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>ImportComponent</strong></td>
+              <td><code>/import</code></td>
+              <td><code>soumettreDossier()</code>, <code>chargerDossiers()</code>, <code>exportExcel()</code>, <code>exportPDF()</code></td>
+            </tr>
+            <tr>
+              <td><strong>ExportComponent</strong></td>
+              <td><code>/export</code></td>
+              <td>Identique à Import, adapté aux champs export (valeur FOB, devise, destination finale)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Gestion des Utilisateurs</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Composant</th><th>Route</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><strong>UsersComponent</strong></td><td><code>/users</code></td><td>Liste, filtre, activation/désactivation, suppression</td></tr>
+            <tr><td><strong>UserDetailComponent</strong></td><td><code>/users/:username</code></td><td>Profil complet de l'utilisateur</td></tr>
+            <tr><td><strong>CreateUserComponent</strong></td><td><code>/create-user</code></td><td>Création d'un nouveau compte utilisateur</td></tr>
+            <tr><td><strong>EditUserComponent</strong></td><td><code>/users/edit/:username</code></td><td>Modification des informations et des rôles</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 9. FONCTIONNALITÉS ── -->
+    <div class="section" id="fonctionnalites">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <h2>Fonctionnalités clés</h2>
+      </div>
+
+      <h3>Export PDF & Excel</h3>
+      <p>Disponible dans les modules Import et Export. Les boutons <strong>Excel</strong> (vert) et <strong>PDF</strong> (rouge) sont affichés à côté des filtres. Ils respectent le filtre de statut actif et sont désactivés si la liste est vide.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Format</th><th>Contenu</th><th>Nom du fichier</th></tr></thead>
+          <tbody>
+            <tr><td>Excel (.xlsx)</td><td>Toutes les colonnes du dossier (numéro, acteur, produit, pays, valeur, code SH, statut, commentaire)</td><td><code>dossiers-import-YYYY-MM-DD.xlsx</code></td></tr>
+            <tr><td>PDF</td><td>Tableau en paysage avec titre, date d'export et en-tête coloré</td><td><code>dossiers-import-YYYY-MM-DD.pdf</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Génération BPMN automatique</h3>
+      <p>Le <code>BpmnGeneratorService</code> génère un XML BPMN 2.0 valide à partir des tâches et de leurs règles de transition. Il gère automatiquement les passerelles (gateways) OUI/NON et les sous-processus. Le diagramme est visualisable directement dans l'application et téléchargeable en <code>.bpmn</code>.</p>
+
+      <h3>Versioning des règles métier</h3>
+      <p>Chaque modification d'une règle crée un snapshot versionné. L'historique complet est consultable et toute version antérieure peut être restaurée en un clic via <code>restaurerVersion(versionId)</code>.</p>
+
+      <h3>NLP → Règles métier</h3>
+      <p>L'utilisateur saisit une phrase en français (ex : "Si la valeur est supérieure à 10000 alors bloquer"). Le backend NLP la convertit en structure <code>RegleMetier</code> avec ses conditions, et un aperçu du code DRL généré est immédiatement affiché.</p>
+
+      <h3>Statuts des dossiers</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Statut</th><th>Libellé affiché</th><th>Couleur</th></tr></thead>
+          <tbody>
+            <tr><td><code>EN_ATTENTE</code></td><td>En attente</td><td><span class="badge" style="background:#fef3c7;color:#92400e">Jaune</span></td></tr>
+            <tr><td><code>EN_COURS</code></td><td>En cours</td><td><span class="badge" style="background:#dbeafe;color:#1d4ed8">Bleu</span></td></tr>
+            <tr><td><code>VALIDE</code></td><td>Approuvé</td><td><span class="badge" style="background:#dcfce7;color:#166534">Vert</span></td></tr>
+            <tr><td><code>REFUSE</code></td><td>Refusé</td><td><span class="badge" style="background:#fee2e2;color:#991b1b">Rouge</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 10. BACKEND ── -->
+    <div class="section" id="backend">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2>Configuration Backend</h2>
+      </div>
+      <div class="alert">
+        Le backend Spring Boot doit tourner sur le port <strong>8081</strong> et Keycloak sur le port <strong>8080</strong>.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Module</th><th>URL de base</th></tr></thead>
+          <tbody>
+            <tr><td>Authentification & Inscription</td><td><code>http://localhost:8081/auth</code></td></tr>
+            <tr><td>Règles métier</td><td><code>http://localhost:8081/api/regles</code></td></tr>
+            <tr><td>Catégories</td><td><code>http://localhost:8081/api/categories</code></td></tr>
+            <tr><td>Processus</td><td><code>http://localhost:8081/api/process</code></td></tr>
+            <tr><td>Tâches</td><td><code>http://localhost:8081/api/taches</code></td></tr>
+            <tr><td>Utilisateurs</td><td><code>http://localhost:8081/api/users</code></td></tr>
+            <tr><td>Dossiers Import</td><td><code>http://localhost:8081/api/import</code></td></tr>
+            <tr><td>Dossiers Export</td><td><code>http://localhost:8081/api/export</code></td></tr>
+            <tr><td>NLP</td><td><code>http://localhost:8081/api/nlp</code></td></tr>
+            <tr><td>Versions</td><td><code>http://localhost:8081/api/versions</code></td></tr>
+            <tr><td>Keycloak</td><td><code>http://localhost:8080</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── 11. RÔLES ── -->
+    <div class="section" id="roles">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2>Rôles & Permissions</h2>
+      </div>
+      <p>Trois rôles principaux sont définis dans le realm Keycloak <code>projet</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fonctionnalité</th>
+              <th style="text-align:center">SuperAdmin</th>
+              <th style="text-align:center">Gestionnaire processus</th>
+              <th style="text-align:center">Gestionnaire règles</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Dashboard</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td></tr>
+            <tr><td>Règles métier</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td></tr>
+            <tr><td>Dossiers Import / Export</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td></tr>
+            <tr><td>Export PDF / Excel</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td></tr>
+            <tr><td>Processus & Tâches</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="cross">✘</td></tr>
+            <tr><td>Visionneuse BPMN</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="cross">✘</td></tr>
+            <tr><td>Gestion utilisateurs</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="cross">✘</td><td style="text-align:center" class="cross">✘</td></tr>
+            <tr><td>Créer / Supprimer des comptes</td><td style="text-align:center" class="check">✔</td><td style="text-align:center" class="cross">✘</td><td style="text-align:center" class="cross">✘</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      Documentation générée le 24/05/2026 &nbsp;·&nbsp; Projet Frontend Angular 21 &nbsp;·&nbsp; Sabrina
+    </footer>
+
+  </main>
+</div>
+
+</body>
+</html>

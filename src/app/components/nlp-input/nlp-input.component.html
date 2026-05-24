@@ -1,0 +1,365 @@
+<!-- ============================================================
+     BOUTON DÉCLENCHEUR — à placer où on veut dans l'application
+     ============================================================ -->
+<button class="nlp-trigger-btn" (click)="ouvrir()" title="Créer une règle en langage naturel avec l'IA">
+  <span class="nlp-trigger-icon">🤖</span>
+  <span class="nlp-trigger-label">Créer avec l'IA</span>
+</button>
+
+<!-- ============================================================
+     MODAL PRINCIPALE
+     ============================================================ -->
+<div *ngIf="showModal" class="nlp-backdrop" (click)="fermer()">
+  <div class="nlp-dialog" (click)="$event.stopPropagation()">
+
+    <!-- =========== EN-TÊTE =========== -->
+    <div class="nlp-header">
+      <div class="nlp-header-left">
+        <div class="nlp-header-icon">🤖</div>
+        <div>
+          <h2 class="nlp-header-title">
+            <ng-container [ngSwitch]="mode">
+              <span *ngSwitchCase="'input'">Créer une règle en langage naturel</span>
+              <span *ngSwitchCase="'preview'">Règle générée par l'IA</span>
+              <span *ngSwitchCase="'edit'">Modifier avant création</span>
+            </ng-container>
+          </h2>
+          <p class="nlp-header-sub">Convertisseur NLP → Règle métier douanière → DRL</p>
+        </div>
+      </div>
+
+      <!-- Indicateur de progression -->
+      <div class="nlp-steps">
+        <div class="nlp-step" [class.active]="mode === 'input'" [class.done]="mode !== 'input'">
+          <span class="nlp-step-num">{{ mode !== 'input' ? '✓' : '1' }}</span>
+          <span class="nlp-step-label">Saisie</span>
+        </div>
+        <div class="nlp-step-line"></div>
+        <div class="nlp-step" [class.active]="mode === 'preview'" [class.done]="mode === 'edit'">
+          <span class="nlp-step-num">{{ mode === 'edit' ? '✓' : '2' }}</span>
+          <span class="nlp-step-label">Aperçu</span>
+        </div>
+        <div class="nlp-step-line"></div>
+        <div class="nlp-step" [class.active]="mode === 'edit'">
+          <span class="nlp-step-num">3</span>
+          <span class="nlp-step-label">Édition</span>
+        </div>
+      </div>
+
+      <button class="nlp-close-btn" (click)="fermer()" title="Fermer">✕</button>
+    </div>
+
+    <!-- =========== CORPS =========== -->
+    <div class="nlp-body">
+
+      <!-- ======= MODE SAISIE ======= -->
+      <div *ngIf="mode === 'input'" class="nlp-mode-saisie">
+
+        <div class="nlp-info-banner">
+          💡 Décrivez votre règle douanière en français ordinaire. L'IA analysera la phrase,
+          extraira les conditions, l'action et la catégorie, puis générera le code DRL exécutable.
+        </div>
+
+        <div class="nlp-form-group">
+          <label class="nlp-label">Votre phrase métier <span class="nlp-req">*</span></label>
+          <textarea
+            class="nlp-textarea"
+            [(ngModel)]="phrase"
+            name="phrase"
+            rows="4"
+            placeholder="Exemple : Si le score de risque est supérieur à 60, déclencher une inspection physique obligatoire..."
+          ></textarea>
+          <div class="nlp-textarea-footer">
+            <span class="nlp-char-count">{{ phrase.length }} caractère(s)</span>
+            <span class="nlp-hint">Plus votre phrase est précise, meilleure est la conversion.</span>
+          </div>
+        </div>
+
+        <div class="nlp-exemples-section">
+          <div class="nlp-exemples-title">📋 Exemples de phrases douanières :</div>
+          <div class="nlp-exemples-list">
+            <button
+              *ngFor="let ex of exemplesPhrases"
+              class="nlp-exemple-item"
+              (click)="appliquerExemple(ex)"
+              [class.selected]="phrase === ex"
+            >
+              {{ ex }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======= MODE APERÇU ======= -->
+      <div *ngIf="mode === 'preview' && result" class="nlp-mode-apercu">
+
+        <!-- Phrase source -->
+        <div class="nlp-phrase-card">
+          <span class="nlp-phrase-quote">💬</span>
+          <em class="nlp-phrase-text">« {{ result.phraseOriginale }} »</em>
+        </div>
+
+        <!-- Barre de confiance -->
+        <div class="nlp-confiance-card">
+          <div class="nlp-confiance-header">
+            <span class="nlp-confiance-label">Confiance de l'IA</span>
+            <span class="nlp-confiance-percent" [style.color]="couleurConfiance()">
+              {{ pourcentageConfiance() }}%
+            </span>
+          </div>
+          <div class="nlp-confiance-bar-bg">
+            <div class="nlp-confiance-bar-fill"
+              [style.width]="pourcentageConfiance() + '%'"
+              [style.background]="couleurConfiance()">
+            </div>
+          </div>
+          <div class="nlp-confiance-description" [style.color]="couleurConfiance()">
+            {{ labelConfiance() }}
+          </div>
+        </div>
+
+        <!-- Règle générée -->
+        <div class="nlp-regle-card">
+          <div class="nlp-regle-card-head">
+            <span class="nlp-regle-badge-generated">Règle générée</span>
+            <span class="nlp-categorie-chip">
+              {{ iconCategorie(result.regle.categorieType) }} {{ result.regle.categorieType }}
+            </span>
+          </div>
+
+          <div class="nlp-regle-fields-grid">
+            <div class="nlp-field-block">
+              <span class="nlp-field-key">Code</span>
+              <span class="nlp-field-val nlp-mono">{{ result.regle.code }}</span>
+            </div>
+            <div class="nlp-field-block">
+              <span class="nlp-field-key">Action</span>
+              <span class="nlp-field-val nlp-action-chip">{{ result.regle.action }}</span>
+            </div>
+            <div class="nlp-field-block nlp-field-full">
+              <span class="nlp-field-key">Nom</span>
+              <span class="nlp-field-val">{{ result.regle.nom }}</span>
+            </div>
+            <div class="nlp-field-block nlp-field-full">
+              <span class="nlp-field-key">Catégorie en base</span>
+              <span class="nlp-field-val" *ngIf="getCategorieMatchee()">
+                ✅ {{ getCategorieMatchee()?.nom }}
+              </span>
+              <span class="nlp-field-val nlp-warning" *ngIf="!getCategorieMatchee()">
+                ⚠️ Non trouvée automatiquement — cliquez "Modifier" pour la sélectionner
+              </span>
+            </div>
+          </div>
+
+          <!-- Conditions -->
+          <div class="nlp-conditions-preview" *ngIf="(result?.regle?.conditions?.length ?? 0) > 0">
+            <div class="nlp-conditions-preview-title">
+              Conditions d'application ({{ result.regle.conditions.length }})
+            </div>
+            <div class="nlp-conditions-preview-list">
+              <div *ngFor="let c of result.regle.conditions; let i = index" class="nlp-cond-row">
+                <span class="nlp-cond-idx">{{ i + 1 }}</span>
+                <span class="nlp-cond-tag-si">SI</span>
+                <span class="nlp-cond-champ">{{ c.champ }}</span>
+                <span class="nlp-cond-op">{{ operateurLabel(c.operateur) }}</span>
+                <span class="nlp-cond-val">{{ c.valeur }}</span>
+              </div>
+              <div class="nlp-cond-result-row">
+                <span class="nlp-cond-tag-alors">ALORS</span>
+                <span class="nlp-cond-arrow">→</span>
+                <span class="nlp-cond-action-text">{{ result.regle.action }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nlp-empty-conditions" *ngIf="!result.regle.conditions || result.regle.conditions.length === 0">
+            ⚠️ Aucune condition extraite. Passez en édition pour en ajouter manuellement.
+          </div>
+        </div>
+
+        <!-- Ambiguïtés -->
+        <div class="nlp-ambiguites-card" *ngIf="result.ambiguites && result.ambiguites.length > 0">
+          <div class="nlp-ambiguites-title">
+            ⚠️ Points à clarifier ({{ result.ambiguites.length }})
+          </div>
+          <ul class="nlp-ambiguites-list">
+            <li *ngFor="let a of result.ambiguites" class="nlp-ambiguite-item">{{ a }}</li>
+          </ul>
+          <p class="nlp-ambiguites-tip">
+            Cliquez sur <strong>Modifier</strong> pour corriger ces points avant de créer la règle.
+          </p>
+        </div>
+
+        <!-- DRL Preview (repliable) -->
+        <div class="nlp-drl-section">
+          <button class="nlp-drl-toggle-btn" (click)="showDrl = !showDrl">
+            <span>{{ showDrl ? '▲' : '▼' }}</span>
+            {{ showDrl ? 'Masquer' : 'Afficher' }} l'aperçu DRL (Drools Rule Language)
+          </button>
+          <div *ngIf="showDrl" class="nlp-drl-content">
+            <app-drl-preview
+              [drl]="result.drl"
+              [phraseOriginale]="result.phraseOriginale">
+            </app-drl-preview>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ======= MODE ÉDITION ======= -->
+      <div *ngIf="mode === 'edit'" class="nlp-mode-edition">
+
+        <div *ngIf="result" class="nlp-edit-source">
+          <span class="nlp-edit-source-icon">💬</span>
+          <em>Phrase source : « {{ result.phraseOriginale }} »</em>
+        </div>
+
+        <div class="nlp-edit-tip">
+          ✎ Modifiez les champs pré-remplis par l'IA avant de créer la règle.
+        </div>
+
+        <form class="nlp-edit-form">
+          <div class="nlp-edit-grid">
+
+            <div class="nlp-edit-group">
+              <label class="nlp-label">Code <span class="nlp-req">*</span></label>
+              <input type="text" class="nlp-input" [(ngModel)]="editCode" name="editCode"
+                placeholder="ex: RISK_CIRCUIT_ROUGE">
+            </div>
+
+            <div class="nlp-edit-group">
+              <label class="nlp-label">Action <span class="nlp-req">*</span></label>
+              <input type="text" class="nlp-input" [(ngModel)]="editAction" name="editAction"
+                placeholder="ex: CIRCUIT_ROUGE">
+            </div>
+
+            <div class="nlp-edit-group nlp-edit-group-full">
+              <label class="nlp-label">Nom <span class="nlp-req">*</span></label>
+              <input type="text" class="nlp-input" [(ngModel)]="editNom" name="editNom"
+                placeholder="Description courte de la règle">
+            </div>
+
+            <div class="nlp-edit-group">
+              <label class="nlp-label">Catégorie <span class="nlp-req">*</span></label>
+              <select class="nlp-input" [(ngModel)]="editCategorieId" name="editCategorieId">
+                <option [ngValue]="null">Sélectionner une catégorie...</option>
+                <option *ngFor="let cat of categories" [ngValue]="cat.id">
+                  {{ iconCategorie(cat.type) }} {{ cat.nom }}
+                </option>
+              </select>
+            </div>
+
+            <div class="nlp-edit-group">
+              <label class="nlp-label">Statut</label>
+              <div class="nlp-checkbox-row">
+                <input type="checkbox" id="nlp-active" [(ngModel)]="editActive" name="editActive">
+                <label for="nlp-active">Activer cette règle immédiatement</label>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Conditions -->
+          <div class="nlp-edit-conditions-section">
+            <div class="nlp-edit-conditions-header">
+              <label class="nlp-label">Conditions</label>
+              <button type="button" class="nlp-btn-add-cond" (click)="ajouterCondition()">
+                + Ajouter une condition
+              </button>
+            </div>
+
+            <div *ngIf="editConditions.length === 0" class="nlp-empty-cond-msg">
+              Aucune condition. Cliquez sur "+ Ajouter une condition" pour en créer.
+            </div>
+
+            <div *ngFor="let c of editConditions; let i = index" class="nlp-edit-cond-row">
+              <div class="nlp-edit-cond-idx">{{ i + 1 }}</div>
+              <input type="text" class="nlp-input" [(ngModel)]="c.champ"
+                [ngModelOptions]="{standalone: true}" placeholder="Nom du champ">
+              <select class="nlp-input nlp-input-sm" [(ngModel)]="c.operateur"
+                [ngModelOptions]="{standalone: true}">
+                <option value="==">== (égal)</option>
+                <option value="!=">!= (différent)</option>
+                <option value=">">&gt; (supérieur)</option>
+                <option value="<">&lt; (inférieur)</option>
+                <option value=">=">&gt;= (≥)</option>
+                <option value="<=">&lt;= (≤)</option>
+              </select>
+              <input type="text" class="nlp-input" [(ngModel)]="c.valeur"
+                [ngModelOptions]="{standalone: true}" placeholder="Valeur">
+              <button type="button" class="nlp-btn-remove-cond"
+                (click)="supprimerCondition(i)" title="Supprimer">✕</button>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+
+    <!-- =========== PIED DE MODAL =========== -->
+    <div class="nlp-footer">
+
+      <!-- Saisie -->
+      <ng-container *ngIf="mode === 'input'">
+        <button class="nlp-btn-secondary" (click)="fermer()">Annuler</button>
+        <button class="nlp-btn-primary" (click)="convertir()" [disabled]="!phrase.trim() || loading">
+          <span *ngIf="!loading">🤖 Convertir avec l'IA</span>
+          <span *ngIf="loading">⏳ Analyse en cours...</span>
+        </button>
+      </ng-container>
+
+      <!-- Aperçu -->
+      <ng-container *ngIf="mode === 'preview'">
+        <button class="nlp-btn-secondary" (click)="recommencer()">↩ Recommencer</button>
+        <button class="nlp-btn-outline" (click)="passEnEdition()">✎ Modifier</button>
+        <button class="nlp-btn-primary" (click)="valider()" [disabled]="saving">
+          <span *ngIf="!saving">✓ Valider et créer</span>
+          <span *ngIf="saving">⏳ Création...</span>
+        </button>
+      </ng-container>
+
+      <!-- Édition -->
+      <ng-container *ngIf="mode === 'edit'">
+        <button class="nlp-btn-secondary" (click)="retourApercu()">← Aperçu</button>
+        <button class="nlp-btn-primary" (click)="sauvegarderEdition()" [disabled]="!isEditFormValid() || saving">
+          <span *ngIf="!saving">+ Créer la règle</span>
+          <span *ngIf="saving">⏳ Création...</span>
+        </button>
+      </ng-container>
+
+    </div>
+
+    <!-- Overlay de chargement IA -->
+    <div *ngIf="loading" class="nlp-loading-overlay">
+      <div class="nlp-loading-box">
+        <div class="nlp-spinner"></div>
+        <p class="nlp-loading-title">L'IA analyse votre phrase...</p>
+        <p class="nlp-loading-sub">Extraction des entités · Normalisation · Génération DRL</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     TOASTS
+     ============================================================ -->
+<div class="nlp-toasts-container">
+  <div *ngFor="let t of toasts" class="nlp-toast" [class]="'nlp-toast-' + t.type">
+    <div class="nlp-toast-body">
+      <ng-container [ngSwitch]="t.type">
+        <span *ngSwitchCase="'success'">✅</span>
+        <span *ngSwitchCase="'error'">❌</span>
+        <span *ngSwitchCase="'warning'">⚠️</span>
+        <span *ngSwitchCase="'info'">ℹ️</span>
+      </ng-container>
+      <div>
+        <strong>{{ t.message }}</strong>
+        <span *ngIf="t.detail" class="nlp-toast-detail">{{ t.detail }}</span>
+      </div>
+    </div>
+    <button class="nlp-toast-close" (click)="dismissToast(t.id)">✕</button>
+  </div>
+</div>

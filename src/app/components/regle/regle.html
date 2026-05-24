@@ -1,97 +1,95 @@
 <div class="regle-metier-container">
-  <!-- ================== HEADER ================== -->
+
+  <!-- ═══════════ HEADER ═══════════ -->
   <header class="regle-header">
-    <div class="header-content">
-      <div class="header-title">
-        <h1><span class="icon">⚙️</span> Gestion des Règles Métier</h1>
-        <p>Configuration des règles douanières et commerciales</p>
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="header-icon-box">⚙️</div>
+        <div class="header-text">
+          <h1>Gestion des Règles Métier</h1>
+          <p>Configurez et gérez vos règles douanières et commerciales</p>
+        </div>
       </div>
-      <button class="btn btn-primary btn-lg" (click)="openCreateForm()" [disabled]="showFormPopup">
-        <span class="btn-icon">+</span> Nouvelle Règle
-      </button>
+      <div class="header-actions">
+        <button class="btn btn-primary btn-lg" (click)="openCreateForm()" [disabled]="showFormPopup">
+          + Nouvelle Règle
+        </button>
+        <app-nlp-input (regleCreee)="loadRegles()"></app-nlp-input>
+      </div>
     </div>
   </header>
 
-  <!-- ================== STATS CARDS ================== -->
+  <!-- ═══════════ STATS ═══════════ -->
   <section class="stats-section">
     <div class="stats-grid">
       <div class="stat-card stat-total">
-        <div class="stat-icon">📋</div>
-        <div class="stat-content">
-          <span class="stat-label">Total Règles</span>
-          <span class="stat-value">{{ regles.length }}</span>
+        <div class="stat-icon-wrap stat-icon-navy">📋</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ regles.length }}</div>
+          <div class="stat-label">Total Règles</div>
         </div>
       </div>
       <div class="stat-card stat-active">
-        <div class="stat-icon">✅</div>
-        <div class="stat-content">
-          <span class="stat-label">Actives</span>
-          <span class="stat-value">{{ countActives() }}</span>
+        <div class="stat-icon-wrap stat-icon-green">✅</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ countActives() }}</div>
+          <div class="stat-label">Actifs</div>
         </div>
       </div>
       <div class="stat-card stat-inactive">
-        <div class="stat-icon">⏸️</div>
-        <div class="stat-content">
-          <span class="stat-label">Inactives</span>
-          <span class="stat-value">{{ countInactives() }}</span>
+        <div class="stat-icon-wrap stat-icon-orange">⏸️</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ countInactives() }}</div>
+          <div class="stat-label">Inactifs</div>
         </div>
       </div>
       <div class="stat-card stat-utilisees">
-        <div class="stat-icon">🔗</div>
-        <div class="stat-content">
-          <span class="stat-label">Utilisées</span>
-          <span class="stat-value">{{ countUtilisees() }}</span>
+        <div class="stat-icon-wrap stat-icon-red">📌</div>
+        <div class="stat-body">
+          <div class="stat-value">{{ countUtilisees() }}</div>
+          <div class="stat-label">Total Tâches</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ================== FILTRES ================== -->
+  <!-- ═══════════ FILTRES ═══════════ -->
   <section class="filters-section">
     <div class="filters-wrapper">
-      <div class="filter-group">
-        <label>Rechercher</label>
-        <div class="search-box">
-          <input type="text" placeholder="Code, nom, action, catégorie..."
-            [(ngModel)]="searchTerm" class="search-input">
-          <span class="search-icon">🔍</span>
-        </div>
+      <div class="search-box-main">
+        <span class="search-icon-main">🔍</span>
+        <input type="text" placeholder="Rechercher un processus..."
+          [(ngModel)]="searchTerm" class="search-input-main">
       </div>
-      <div class="filter-group">
-        <label>Catégorie</label>
+      <div class="filters-right">
         <select [(ngModel)]="filtreCategorieAffichage" class="select-input">
           <option value="TOUS">Toutes les catégories</option>
           <option *ngFor="let cat of getCategoriesUtilisees()" [value]="cat">
             {{ iconCategorie(cat) }} {{ cat }}
           </option>
         </select>
-      </div>
-      <div class="filter-group">
-        <label>Statut</label>
-        <select [(ngModel)]="filtreStatut" class="select-input">
-          <option value="TOUS">Tous</option>
-          <option value="ACTIVE">Actives</option>
-          <option value="INACTIVE">Inactives</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <label>Affichage</label>
+        <div class="statut-toggle">
+          <button class="stgl-btn" [class.active]="filtreStatut === 'TOUS'"
+            (click)="filtreStatut = 'TOUS'">Tous</button>
+          <button class="stgl-btn" [class.active]="filtreStatut === 'ACTIVE'"
+            (click)="filtreStatut = 'ACTIVE'">Actifs</button>
+          <button class="stgl-btn" [class.active]="filtreStatut === 'INACTIVE'"
+            (click)="filtreStatut = 'INACTIVE'">Inactifs</button>
+        </div>
         <div class="view-toggle">
-          <button class="toggle-btn" [class.active]="viewMode === 'cards'"
-            (click)="viewMode = 'cards'">⊞ Cartes</button>
-          <button class="toggle-btn" [class.active]="viewMode === 'table'"
-            (click)="viewMode = 'table'">☰ Tableau</button>
+          <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="viewMode = 'cards'">⊞ Cartes</button>
+          <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'">☰ Tableau</button>
         </div>
       </div>
-      <button class="btn btn-secondary btn-sm" (click)="resetFilters()">↻ Réinitialiser</button>
     </div>
   </section>
 
-  <!-- ================== CONTENU PRINCIPAL ================== -->
+  <!-- ═══════════ CONTENU ═══════════ -->
   <main class="content-section">
+
     <!-- VUE CARTES -->
     <div *ngIf="viewMode === 'cards'" class="cards-view">
-      <div *ngIf="(reglesFiltrees() | slice:0).length === 0" class="empty-state">
+      <div *ngIf="reglesFiltrees().length === 0" class="empty-state">
         <div class="empty-icon">📭</div>
         <h3>Aucune règle trouvée</h3>
         <p>Modifiez vos filtres ou créez une nouvelle règle</p>
@@ -100,41 +98,38 @@
         <div *ngFor="let r of reglesFiltrees(); trackBy: trackById" class="rule-card">
           <div class="card-header">
             <div class="card-title-section">
-              <span class="card-icon" [style.color]="couleurCategorie(r.categorie?.type)">
-                {{ iconCategorie(r.categorie?.type) }}
-              </span>
+              <span class="card-icon">{{ iconCategorie(r.categorie?.type) }}</span>
               <div>
-                <h3 class="card-title">{{ r.code }}</h3>
-                <p class="card-subtitle">{{ r.nom }}</p>
+                <div class="card-title">{{ r.code }}</div>
+                <div class="card-subtitle">{{ r.nom }}</div>
               </div>
             </div>
             <span class="card-status" [class.active]="r.active" [class.inactive]="!r.active">
-              {{ r.active ? '✓ ACTIVE' : '✗ INACTIF' }}
+              {{ r.active ? '✓ Active' : '✗ Inactif' }}
             </span>
           </div>
           <div class="card-body">
             <div class="detail-row">
-              <span class="detail-label">Catégorie:</span>
+              <span class="detail-label">Catégorie</span>
               <span class="detail-value">{{ r.categorie?.nom }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Action:</span>
-              <span class="detail-value action-badge">{{ r.action }}</span>
+              <span class="detail-label">Action</span>
+              <span class="action-badge">{{ r.action }}</span>
             </div>
             <div class="detail-row" *ngIf="r.conditions && r.conditions.length > 0">
-              <span class="detail-label">Conditions:</span>
-              <span class="detail-value">{{ r.conditions.length }} condition(s)</span>
+              <span class="detail-label">Conditions</span>
+              <span class="detail-value">{{ r.conditions.length }}</span>
             </div>
-            <!-- ✅ AJOUT : version affichée sur la carte -->
             <div class="detail-row">
-              <span class="detail-label">Version:</span>
-              <span class="detail-value version-badge">v{{ r.version || 1 }}</span>
+              <span class="detail-label">Version</span>
+              <span class="version-badge">v{{ r.version || 1 }}</span>
             </div>
             <div class="utilisation-info" *ngIf="getUtilisations(r.id).length > 0">
-              <div class="util-label">🔗 Utilisée dans:</div>
+              <div class="util-label">Utilisée dans</div>
               <ul class="util-list">
-                <li *ngFor="let util of getUtilisations(r.id)" class="util-item">
-                  <strong>{{ util.processusNom }}</strong> → {{ util.tacheNom }}
+                <li *ngFor="let u of getUtilisations(r.id)" class="util-item">
+                  <strong>{{ u.processusNom }}</strong> → {{ u.tacheNom }}
                 </li>
               </ul>
             </div>
@@ -145,7 +140,7 @@
             <button class="btn btn-sm btn-outline" (click)="toggleActive(r.id)">
               {{ r.active ? '⏸ Désactiver' : '▶ Activer' }}
             </button>
-            <button class="btn btn-sm btn-danger" (click)="confirmDelete(r)">🗑 Supprimer</button>
+            <button class="btn btn-sm btn-danger" (click)="confirmDelete(r)">🗑</button>
           </div>
         </div>
       </div>
@@ -153,12 +148,12 @@
 
     <!-- VUE TABLEAU -->
     <div *ngIf="viewMode === 'table'" class="table-view">
-      <div *ngIf="(reglesFiltrees() | slice:0).length === 0" class="empty-state">
+      <div *ngIf="reglesFiltrees().length === 0" class="empty-state">
         <div class="empty-icon">📭</div>
         <h3>Aucune règle trouvée</h3>
         <p>Modifiez vos filtres ou créez une nouvelle règle</p>
       </div>
-      <div class="table-wrapper" *ngIf="(reglesFiltrees() | slice:0).length > 0">
+      <div class="table-wrapper" *ngIf="reglesFiltrees().length > 0">
         <table class="rules-table">
           <thead>
             <tr>
@@ -166,7 +161,7 @@
               <th>Nom</th>
               <th>Catégorie</th>
               <th>Action</th>
-              <th>Conditions</th>
+              <th>Cond.</th>
               <th>Version</th>
               <th>Statut</th>
               <th>Actions</th>
@@ -174,32 +169,28 @@
           </thead>
           <tbody>
             <tr *ngFor="let r of reglesFiltrees(); trackBy: trackById" class="table-row">
-              <td class="code-cell"><span class="code-badge">{{ r.code }}</span></td>
+              <td><span class="code-badge">{{ r.code }}</span></td>
               <td class="nom-cell">{{ r.nom }}</td>
-              <td class="categorie-cell">
-                <span class="categorie-tag" [style.backgroundColor]="couleurCategorie(r.categorie?.type)">
+              <td>
+                <span class="categorie-tag"
+                  [style.backgroundColor]="couleurCategorie(r.categorie?.type)">
                   {{ iconCategorie(r.categorie?.type) }} {{ r.categorie?.nom }}
                 </span>
               </td>
-              <td class="action-cell"><span class="action-badge-inline">{{ r.action }}</span></td>
-              <td class="conditions-cell">
-                <span class="badge-secondary" *ngIf="r.conditions && r.conditions.length > 0">
-                  {{ r.conditions.length }}
-                </span>
-                <span class="badge-ghost" *ngIf="!r.conditions || r.conditions.length === 0">—</span>
-              </td>
-              <!-- ✅ AJOUT : colonne version dans le tableau -->
+              <td><span class="action-badge-inline">{{ r.action }}</span></td>
               <td>
-                <span class="version-badge-table">v{{ r.version || 1 }}</span>
+                <span class="badge-secondary" *ngIf="r.conditions && r.conditions.length > 0">{{ r.conditions.length }}</span>
+                <span class="badge-ghost" *ngIf="!r.conditions || !r.conditions.length">—</span>
               </td>
-              <td class="statut-cell">
+              <td><span class="version-badge-table">v{{ r.version || 1 }}</span></td>
+              <td>
                 <span class="status-indicator" [class.active]="r.active" [class.inactive]="!r.active">
-                  {{ r.active ? '✓ ACTIVE' : '✗ INACTIF' }}
+                  {{ r.active ? 'Active' : 'Inactif' }}
                 </span>
               </td>
-              <td class="actions-cell">
+              <td>
                 <div class="action-buttons">
-                  <button class="btn-icon btn-icon-detail" title="Voir le détail" (click)="openDetail(r)">👁</button>
+                  <button class="btn-icon btn-icon-detail" title="Détail" (click)="openDetail(r)">👁</button>
                   <button class="btn-icon" title="Modifier" (click)="openEditForm(r)">✎</button>
                   <button class="btn-icon" title="Basculer statut" (click)="toggleActive(r.id)">⊙</button>
                   <button class="btn-icon danger" title="Supprimer" (click)="confirmDelete(r)">🗑</button>
@@ -212,260 +203,91 @@
     </div>
   </main>
 
-  <!-- ═══════════════════════════════════════════════════════
-       POPUP DÉTAIL DE LA RÈGLE — avec onglet Historique
-       ═══════════════════════════════════════════════════════ -->
+  <!-- ═══════════ MODAL DÉTAIL ═══════════ -->
   <div *ngIf="selectedDetail" class="modal-backdrop" (click)="closeDetail()">
-    <div class="modal-dialog modal-detail" (click)="$event.stopPropagation()">
+    <div class="modal-dialog simple-detail-dialog" (click)="$event.stopPropagation()">
 
-      <div class="modal-header modal-header-detail"
-           [style.background]="'linear-gradient(135deg, ' + couleurCategorie(selectedDetail.categorie?.type) + ' 0%, ' + couleurCategorie(selectedDetail.categorie?.type) + 'dd 100%)'">
-        <div class="detail-header-content">
-          <div class="detail-header-icon">{{ iconCategorie(selectedDetail.categorie?.type) }}</div>
-          <div class="detail-header-info">
-            <div class="detail-header-code">{{ selectedDetail.code }}</div>
-            <h2 class="detail-header-name">{{ selectedDetail.nom }}</h2>
-            <div class="detail-header-meta">
-              <span class="detail-meta-pill">{{ selectedDetail.categorie?.nom || '—' }}</span>
-              <span class="detail-meta-pill detail-meta-status"
-                    [class.active]="selectedDetail.active" [class.inactive]="!selectedDetail.active">
-                {{ selectedDetail.active ? '✓ Active' : '✗ Inactive' }}
+      <!-- EN-TÊTE -->
+      <div class="simple-detail-header">
+        <div class="simple-detail-title">
+          <span class="simple-detail-code">{{ selectedDetail.code }}</span>
+          <span class="simple-detail-nom">{{ selectedDetail.nom }}</span>
+        </div>
+        <button class="btn-close" (click)="closeDetail()">✕</button>
+      </div>
+
+      <!-- CORPS -->
+      <div class="simple-detail-body">
+
+        <div class="simple-row">
+          <span class="simple-label">Catégorie</span>
+          <span class="simple-value">{{ selectedDetail.categorie?.nom || '—' }}</span>
+        </div>
+
+        <div class="simple-row">
+          <span class="simple-label">Type</span>
+          <span class="simple-value">{{ selectedDetail.categorie?.type || '—' }}</span>
+        </div>
+
+        <div class="simple-row">
+          <span class="simple-label">Action</span>
+          <span class="simple-value simple-value-action">{{ selectedDetail.action || '—' }}</span>
+        </div>
+
+        <div class="simple-row">
+          <span class="simple-label">Version</span>
+          <span class="simple-value">v{{ selectedDetail.version || 1 }}</span>
+        </div>
+
+        <div class="simple-row">
+          <span class="simple-label">Statut</span>
+          <span class="status-indicator"
+                [class.active]="selectedDetail.active"
+                [class.inactive]="!selectedDetail.active">
+            {{ selectedDetail.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+
+        <!-- CONDITIONS -->
+        <div class="simple-conditions-block" *ngIf="selectedDetail.conditions && selectedDetail.conditions.length > 0">
+          <span class="simple-label">Conditions ({{ selectedDetail.conditions.length }})</span>
+          <div class="simple-conditions-list">
+            <div *ngFor="let c of selectedDetail.conditions; let i = index" class="simple-condition">
+              <span class="simple-cond-num">{{ i + 1 }}</span>
+              <span class="simple-cond-text">
+                <strong>{{ c.champ || '—' }}</strong>
+                {{ operateurLabel(c.operateur) }}
+                <em>{{ c.valeur || '—' }}</em>
               </span>
-              <span class="detail-meta-pill">v{{ selectedDetail.version || 1 }}</span>
-            </div>
-          </div>
-        </div>
-        <button class="btn-close btn-close-light" (click)="closeDetail()">✕</button>
-      </div>
-
-      <!-- ✅ MODIFICATION : ajout de l'onglet Historique -->
-      <div class="detail-tabs">
-        <button class="detail-tab" [class.active]="detailTab === 'info'"
-          (click)="detailTab = 'info'">
-          ℹ️ Informations
-        </button>
-        <button class="detail-tab" [class.active]="detailTab === 'conditions'"
-          (click)="detailTab = 'conditions'">
-          ⚙️ Conditions
-          <span class="tab-count-badge">{{ selectedDetail.conditions?.length || 0 }}</span>
-        </button>
-        <button class="detail-tab" [class.active]="detailTab === 'utilisations'"
-          (click)="detailTab = 'utilisations'">
-          🔗 Utilisations
-          <span class="tab-count-badge">{{ getUtilisations(selectedDetail.id).length }}</span>
-        </button>
-        <!-- ✅ NOUVEAU : onglet Historique qui charge les données au clic -->
-        <button class="detail-tab" [class.active]="detailTab === 'historique'"
-          (click)="detailTab = 'historique'; chargerHistorique(selectedDetail.id)">
-          🕐 Historique
-          <span class="tab-count-badge" *ngIf="historique.length > 0">{{ historique.length }}</span>
-        </button>
-      </div>
-
-      <div class="modal-body detail-body">
-
-        <!-- ONGLET INFOS (inchangé) -->
-        <div *ngIf="detailTab === 'info'" class="detail-tab-content">
-          <div class="detail-section">
-            <h3 class="detail-section-title">📌 Identification</h3>
-            <div class="detail-grid">
-              <div class="detail-field">
-                <span class="detail-field-label">Code de la règle</span>
-                <span class="detail-field-value detail-code-value">{{ selectedDetail.code }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">Nom</span>
-                <span class="detail-field-value">{{ selectedDetail.nom }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">Version</span>
-                <span class="detail-field-value">v{{ selectedDetail.version || 1 }}</span>
-              </div>
-              <div class="detail-field">
-                <span class="detail-field-label">Statut</span>
-                <span class="status-indicator"
-                      [class.active]="selectedDetail.active" [class.inactive]="!selectedDetail.active">
-                  {{ selectedDetail.active ? '✓ ACTIVE' : '✗ INACTIVE' }}
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="detail-section">
-            <h3 class="detail-section-title">🏷️ Catégorie</h3>
-            <div class="detail-categorie-card"
-                 [style.borderLeftColor]="couleurCategorie(selectedDetail.categorie?.type)">
-              <div class="detail-categorie-icon"
-                   [style.background]="couleurCategorie(selectedDetail.categorie?.type) + '22'"
-                   [style.color]="couleurCategorie(selectedDetail.categorie?.type)">
-                {{ iconCategorie(selectedDetail.categorie?.type) }}
-              </div>
-              <div>
-                <div class="detail-categorie-name">{{ selectedDetail.categorie?.nom || '—' }}</div>
-                <div class="detail-categorie-type">{{ selectedDetail.categorie?.type || '—' }}</div>
-              </div>
-            </div>
-          </div>
-          <div class="detail-section">
-            <h3 class="detail-section-title">⚡ Action douanière</h3>
-            <div class="detail-action-box">
-              <span class="detail-action-arrow">→</span>
-              <span class="detail-action-value">{{ selectedDetail.action }}</span>
-            </div>
-          </div>
-          <div class="detail-section detail-summary-section">
-            <h3 class="detail-section-title">📊 Résumé</h3>
-            <div class="detail-summary-grid">
-              <div class="detail-summary-item">
-                <div class="detail-summary-value">{{ selectedDetail.conditions?.length || 0 }}</div>
-                <div class="detail-summary-label">Condition(s)</div>
-              </div>
-              <div class="detail-summary-item">
-                <div class="detail-summary-value">{{ getUtilisations(selectedDetail.id).length }}</div>
-                <div class="detail-summary-label">Utilisation(s)</div>
-              </div>
-              <div class="detail-summary-item">
-                <div class="detail-summary-value">v{{ selectedDetail.version || 1 }}</div>
-                <div class="detail-summary-label">Version actuelle</div>
-              </div>
             </div>
           </div>
         </div>
 
-        <!-- ONGLET CONDITIONS (inchangé) -->
-        <div *ngIf="detailTab === 'conditions'" class="detail-tab-content">
-          <div class="detail-section">
-            <h3 class="detail-section-title">
-              ⚙️ Conditions d'application
-              <span class="detail-section-count">{{ selectedDetail.conditions?.length || 0 }}</span>
-            </h3>
-            <div *ngIf="!selectedDetail.conditions || selectedDetail.conditions.length === 0"
-                 class="detail-empty-mini">
-              📭 Cette règle n'a aucune condition définie.
-              <p>Elle s'applique sans contrainte particulière.</p>
-            </div>
-            <div *ngIf="selectedDetail.conditions && selectedDetail.conditions.length > 0"
-                 class="detail-conditions-list">
-              <div *ngIf="selectedDetail.conditions.length > 1" class="detail-logic-banner">
-                ℹ️ Toutes les conditions doivent être <strong>VRAIES</strong> (logique ET).
-              </div>
-              <div *ngFor="let c of selectedDetail.conditions; let i = index" class="detail-condition-item">
-                <div class="detail-condition-num">{{ i + 1 }}</div>
-                <div class="detail-condition-body">
-                  <div class="detail-condition-row">
-                    <span class="detail-cond-tag tag-si">SI</span>
-                    <span class="detail-cond-champ">{{ c.champ || '—' }}</span>
-                    <span class="detail-cond-op">{{ operateurLabel(c.operateur) }}</span>
-                    <span class="detail-cond-valeur">{{ c.valeur || '—' }}</span>
-                  </div>
-                </div>
-              </div>
-              <div class="detail-condition-result">
-                <span class="detail-cond-tag tag-alors">ALORS</span>
-                <span class="detail-result-arrow">→</span>
-                <span class="detail-result-action">{{ selectedDetail.action }}</span>
-              </div>
-            </div>
-          </div>
+        <div class="simple-row" *ngIf="!selectedDetail.conditions || selectedDetail.conditions.length === 0">
+          <span class="simple-label">Conditions</span>
+          <span class="simple-value simple-value-muted">Aucune</span>
         </div>
 
-        <!-- ONGLET UTILISATIONS (inchangé) -->
-        <div *ngIf="detailTab === 'utilisations'" class="detail-tab-content">
-          <div class="detail-section">
-            <h3 class="detail-section-title">
-              🔗 Utilisation dans les processus
-              <span class="detail-section-count">{{ getUtilisations(selectedDetail.id).length }}</span>
-            </h3>
-            <div *ngIf="getUtilisations(selectedDetail.id).length === 0" class="detail-empty-mini">
-              📭 Cette règle n'est utilisée dans aucun processus pour le moment.
-              <p>Vous pouvez l'ajouter à une tâche depuis le module « Processus ».</p>
-            </div>
-            <div *ngIf="getUtilisations(selectedDetail.id).length > 0" class="detail-util-list">
-              <div *ngFor="let util of getUtilisations(selectedDetail.id); let i = index"
-                   class="detail-util-item">
-                <div class="detail-util-num">{{ i + 1 }}</div>
-                <div class="detail-util-body">
-                  <div class="detail-util-processus">
-                    <span class="detail-util-icon">📋</span>
-                    <strong>{{ util.processusNom }}</strong>
-                  </div>
-                  <div class="detail-util-arrow">↳</div>
-                  <div class="detail-util-tache">
-                    <span class="detail-util-icon">📌</span>
-                    Tâche : <strong>{{ util.tacheNom }}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ✅ NOUVEAU : ONGLET HISTORIQUE DES VERSIONS -->
-        <div *ngIf="detailTab === 'historique'" class="detail-tab-content">
-          <div class="detail-section">
-            <h3 class="detail-section-title">🕐 Historique des versions</h3>
-
-            <!-- Spinner pendant le chargement -->
-            <div *ngIf="loadingHistorique" class="historique-loading">
-              <div class="loading-spinner"></div>
-              <span>Chargement de l'historique...</span>
-            </div>
-
-            <!-- Aucune version archivée -->
-            <div *ngIf="!loadingHistorique && historique.length === 0" class="detail-empty-mini">
-              📭 Aucune version archivée pour le moment.
-              <p>L'historique apparaît dès la première modification de cette règle.</p>
-            </div>
-
-            <!-- Liste des versions archivées -->
-            <div *ngIf="!loadingHistorique && historique.length > 0" class="historique-list">
-              <div *ngFor="let v of historique; let i = index" class="historique-item">
-
-                <div class="historique-version-badge">v{{ v.numeroVersion }}</div>
-
-                <div class="historique-content">
-                  <div class="historique-header">
-                    <span class="historique-nom">{{ v.nom }}</span>
-                    <span class="historique-date">
-                      {{ v.dateModification | date:'dd/MM/yyyy à HH:mm' }}
-                    </span>
-                  </div>
-
-                  <div class="historique-details">
-                    <span class="historique-action">→ {{ v.action }}</span>
-                    <span *ngIf="v.modifiePar" class="historique-auteur">
-                      👤 {{ v.modifiePar }}
-                    </span>
-                  </div>
-
-                  <!-- Motif de la modification -->
-                  <div *ngIf="v.motifModification" class="historique-motif">
-                    💬 <em>{{ v.motifModification }}</em>
-                  </div>
-                </div>
-
-                <!-- Bouton Restaurer -->
-                <button class="btn-restaurer" (click)="restaurerVersion(v.id)"
-                        title="Revenir à cette version">
-                  ↩️ Restaurer
-                </button>
-              </div>
-            </div>
-          </div>
+        <div class="simple-row">
+          <span class="simple-label">Utilisations</span>
+          <span class="simple-value">{{ getUtilisations(selectedDetail.id).length }}</span>
         </div>
 
       </div>
 
-      <div class="modal-footer detail-footer">
+      <!-- PIED -->
+      <div class="simple-detail-footer">
         <button class="btn btn-secondary" (click)="closeDetail()">Fermer</button>
         <button class="btn btn-outline" (click)="toggleActive(selectedDetail.id); closeDetail()">
-          {{ selectedDetail.active ? '⏸ Désactiver' : '▶ Activer' }}
+          {{ selectedDetail.active ? 'Désactiver' : 'Activer' }}
         </button>
-        <button class="btn btn-primary" (click)="editFromDetail()">✎ Modifier cette règle</button>
+        <button class="btn btn-primary" (click)="editFromDetail()">Modifier</button>
       </div>
+
     </div>
   </div>
 
-  <!-- ================== POPUP FORM ================== -->
+  <!-- ═══════════ MODAL FORM ═══════════ -->
   <div *ngIf="showFormPopup" class="modal-backdrop" (click)="closeFormPopup()">
     <div class="modal-dialog" (click)="$event.stopPropagation()">
       <div class="modal-header">
@@ -475,18 +297,18 @@
       <div class="modal-body">
         <form class="form-grid">
           <div class="form-group">
-            <label for="code" class="form-label">Code <span class="required">*</span></label>
-            <input id="code" type="text" [(ngModel)]="selected.code" name="code"
+            <label class="form-label">Code <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="selected.code" name="code"
               placeholder="ex: R001, TAX_001" class="form-input">
           </div>
           <div class="form-group">
-            <label for="nom" class="form-label">Nom <span class="required">*</span></label>
-            <input id="nom" type="text" [(ngModel)]="selected.nom" name="nom"
+            <label class="form-label">Nom <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="selected.nom" name="nom"
               placeholder="Description courte" class="form-input">
           </div>
           <div class="form-group">
-            <label for="categorie" class="form-label">Catégorie <span class="required">*</span></label>
-            <select id="categorie" [(ngModel)]="selected.categorie"
+            <label class="form-label">Catégorie <span class="required">*</span></label>
+            <select [(ngModel)]="selected.categorie"
               (ngModelChange)="onCategorieChange($event)" name="categorie" class="form-input">
               <option [ngValue]="null">Sélectionner une catégorie</option>
               <option *ngFor="let cat of categories" [ngValue]="cat">
@@ -495,15 +317,13 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="action" class="form-label">Action <span class="required">*</span></label>
+            <label class="form-label">Action <span class="required">*</span></label>
             <div class="action-input-wrapper">
-              <input id="action" type="text" [(ngModel)]="selected.action" name="action"
+              <input type="text" [(ngModel)]="selected.action" name="action"
                 placeholder="ex: CALCULER_DROITS" class="form-input">
               <div class="suggestions-dropdown" *ngIf="getActionsSuggerees().length > 0">
-                <button *ngFor="let action of getActionsSuggerees()" type="button"
-                  (click)="appliquerSuggestionAction(action)" class="suggestion-item">
-                  {{ action }}
-                </button>
+                <button *ngFor="let a of getActionsSuggerees()" type="button"
+                  (click)="appliquerSuggestionAction(a)" class="suggestion-item">{{ a }}</button>
               </div>
             </div>
           </div>
@@ -515,70 +335,73 @@
               <label for="active" class="checkbox-label">Activer cette règle</label>
             </div>
           </div>
-
-          <!-- ✅ AJOUT : champ motif visible seulement en édition -->
           <div class="form-group" *ngIf="isEditing">
-            <label class="form-label">Motif de la modification</label>
+            <label class="form-label">Motif de modification</label>
             <input type="text" [(ngModel)]="motifModification" name="motifModification"
-              placeholder="Ex: Mise à jour réglementaire 2025, correction taux TVA..."
-              class="form-input">
-            <small class="form-hint">
-              Ce motif sera archivé dans l'historique des versions.
-            </small>
+              placeholder="Ex: Mise à jour réglementaire 2025..." class="form-input">
+            <small class="form-hint">Archivé dans l'historique des versions.</small>
           </div>
-
           <div class="form-group full-width">
             <div class="conditions-header">
               <label class="form-label">Conditions</label>
               <button type="button" (click)="addCondition()" class="btn btn-sm btn-secondary">
-                + Ajouter une condition
+                + Ajouter
               </button>
             </div>
             <div class="conditions-list">
-              <div *ngIf="selectedConditions.length === 0" class="empty-conditions">
-                Aucune condition. Cliquez sur "+ Ajouter une condition" pour en créer.
+              <div *ngIf="!selectedConditions.length" class="empty-conditions">
+                Aucune condition. Cliquez sur « + Ajouter » pour en créer.
               </div>
-              <div *ngFor="let condition of selectedConditions; let i = index" class="condition-row">
+              <div *ngFor="let c of selectedConditions; let i = index" class="condition-row">
                 <div class="condition-field">
                   <label class="field-label">Champ</label>
                   <div class="condition-input-wrapper">
-                    <input type="text" [(ngModel)]="condition.champ"
-                      [ngModelOptions]="{standalone: true}"
+                    <input type="text" [(ngModel)]="c.champ" [ngModelOptions]="{standalone: true}"
                       placeholder="Nom du champ" class="form-input">
                     <div class="suggestions-dropdown" *ngIf="getChampsSuggeres().length > 0">
-                      <button *ngFor="let champ of getChampsSuggeres()" type="button"
-                        (click)="appliquerSuggestionChamp(condition, champ)" class="suggestion-item">
-                        {{ champ }}
-                      </button>
+                      <button *ngFor="let ch of getChampsSuggeres()" type="button"
+                        (click)="appliquerSuggestionChamp(c, ch)" class="suggestion-item">{{ ch }}</button>
                     </div>
                   </div>
                 </div>
                 <div class="condition-field">
                   <label class="field-label">Opérateur</label>
-                  <select [(ngModel)]="condition.operateur"
-                    [ngModelOptions]="{standalone: true}" class="form-input">
-                    <option value="==">== (égal)</option>
-                    <option value="!=">!= (différent)</option>
-                    <option value=">">gt (supérieur)</option>
-                    <option value="<">lt (inférieur)</option>
-                    <option value=">=">gte (≥)</option>
-                    <option value="<=">lte (≤)</option>
-                    <option value="IN">IN (dans)</option>
-                    <option value="NOT_IN">NOT_IN (pas dans)</option>
+                  <select [(ngModel)]="c.operateur" [ngModelOptions]="{standalone: true}" class="form-input">
+                    <option value="==">== égal</option>
+                    <option value="!=">!= différent</option>
+                    <option value=">">gt supérieur</option>
+                    <option value="<">lt inférieur</option>
+                    <option value=">=">gte ≥</option>
+                    <option value="<=">lte ≤</option>
+                    <option value="IN">IN dans</option>
+                    <option value="NOT_IN">NOT_IN pas dans</option>
                   </select>
                 </div>
                 <div class="condition-field">
                   <label class="field-label">Valeur</label>
-                  <input type="text" [(ngModel)]="condition.valeur"
-                    [ngModelOptions]="{standalone: true}"
+                  <input type="text" [(ngModel)]="c.valeur" [ngModelOptions]="{standalone: true}"
                     placeholder="Valeur" class="form-input">
                 </div>
                 <button type="button" (click)="removeCondition(i)"
-                  class="btn-remove-condition" title="Supprimer cette condition">✕</button>
+                  class="btn-remove-condition" title="Supprimer">✕</button>
               </div>
             </div>
           </div>
         </form>
+
+        <!-- DRL Preview -->
+        <div class="drl-inline-section">
+          <button type="button" class="btn-drl-toggle" (click)="showDrlPreview = !showDrlPreview">
+            <span class="drl-toggle-chevron">{{ showDrlPreview ? '▲' : '▼' }}</span>
+            {{ showDrlPreview ? 'Masquer' : 'Aperçu' }} le code Drools
+            <span class="drl-inline-badge">DRL</span>
+          </button>
+          <div *ngIf="showDrlPreview" class="drl-preview-inline">
+            <app-drl-preview [drl]="drlGenere"
+              [phraseOriginale]="isEditing ? 'Modification : ' + (selected.nom || selected.code || '') : 'Nouvelle règle : ' + (selected.nom || selected.code || '')">
+            </app-drl-preview>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="closeFormPopup()">Annuler</button>
@@ -590,15 +413,15 @@
     </div>
   </div>
 
-  <!-- ================== DELETE CONFIRMATION ================== -->
+  <!-- ═══════════ CONFIRM DELETE ═══════════ -->
   <div *ngIf="regleToDelete" class="modal-backdrop" (click)="cancelDelete()">
-    <div class="modal-dialog modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header modal-danger">
-        <h2>⚠️ Confirmation de suppression</h2>
+    <div class="modal-dialog modal-sm modal-danger" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>⚠️ Confirmer la suppression</h2>
       </div>
       <div class="modal-body">
-        <p>Êtes-vous sûr de vouloir supprimer la règle <strong>{{ regleToDelete.code }}</strong> ?</p>
-        <p class="warning-text">Cette action est irréversible.</p>
+        <p>Voulez-vous supprimer la règle <strong>{{ regleToDelete.code }}</strong> ?</p>
+        <p class="warning-text" style="margin-top:6px">Cette action est irréversible.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cancelDelete()">Annuler</button>
@@ -610,12 +433,12 @@
     </div>
   </div>
 
-  <!-- ================== TOASTS ================== -->
+  <!-- ═══════════ TOASTS ═══════════ -->
   <div class="toasts-container">
-    <div *ngFor="let toast of toasts" class="toast" [class]="'toast-' + toast.type">
+    <div *ngFor="let t of toasts" class="toast" [class]="'toast-' + t.type">
       <div class="toast-content">
         <span class="toast-icon">
-          <ng-container [ngSwitch]="toast.type">
+          <ng-container [ngSwitch]="t.type">
             <span *ngSwitchCase="'success'">✅</span>
             <span *ngSwitchCase="'error'">❌</span>
             <span *ngSwitchCase="'warning'">⚠️</span>
@@ -623,11 +446,12 @@
           </ng-container>
         </span>
         <div class="toast-message">
-          <strong>{{ toast.message }}</strong>
-          <p *ngIf="toast.detail">{{ toast.detail }}</p>
+          <strong>{{ t.message }}</strong>
+          <p *ngIf="t.detail">{{ t.detail }}</p>
         </div>
       </div>
-      <button class="toast-close" (click)="removeToast(toast.id)">✕</button>
+      <button class="toast-close" (click)="removeToast(t.id)">✕</button>
     </div>
   </div>
+
 </div>

@@ -1,52 +1,34 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { DemandeImport, TacheImport, VariablesImport } from '../../models/import.model';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { DossierImport } from '../../models/import.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ImportService {
 
-  private apiUrl = 'http://localhost:8081/api/import';
+  private readonly BASE = 'http://localhost:8081/api/import';
 
   constructor(private http: HttpClient) {}
 
-  // ▶️ Démarrer le processus
-  demarrerImport(demande: DemandeImport): Observable<any> {
-    return this.http.post<any>(
-      `${this.apiUrl}/demarrer`,
-      demande
-    );
+  creerDossier(dossier: DossierImport): Observable<DossierImport> {
+    return this.http.post<DossierImport>(`${this.BASE}/dossiers`, dossier)
+      .pipe(catchError(this.handleError));
   }
 
-  // 📋 Lister les tâches
-  getTaches(): Observable<TacheImport[]> {
-    return this.http.get<TacheImport[]>(
-      `${this.apiUrl}/taches`
-    );
+  getDossiers(): Observable<DossierImport[]> {
+    return this.http.get<DossierImport[]>(`${this.BASE}/dossiers`)
+      .pipe(catchError(this.handleError));
   }
 
-  // ✅ Compléter une tâche
-  completerTache(taskId: string, variables: any): Observable<any> {
-    return this.http.post<any>(
-      `${this.apiUrl}/taches/${taskId}/completer`,
-      variables ?? {}
-    );
+  getDossier(id: string): Observable<DossierImport> {
+    return this.http.get<DossierImport>(`${this.BASE}/dossiers/${id}`)
+      .pipe(catchError(this.handleError));
   }
 
-  // 🔍 Variables d'une instance
-  getVariables(processInstanceId: string): Observable<VariablesImport> {
-    return this.http.get<VariablesImport>(
-      `${this.apiUrl}/instance/${processInstanceId}/variables`
-    );
+  private handleError(err: HttpErrorResponse): Observable<never> {
+    const message = err.error?.message || err.message || 'Erreur réseau';
+    console.error(`[ImportService] HTTP ${err.status} — ${message}`, err);
+    return throwError(() => ({ status: err.status, message }));
   }
-
-  // 📊 Toutes les instances
-  getInstances(): Observable<any[]> {
-    return this.http.get<any[]>(
-      `${this.apiUrl}/instances`
-    );
-  }
-  
 }

@@ -8,9 +8,10 @@ export interface Tache {
   statut: 'EN_ATTENTE' | 'EN_COURS' | 'TERMINE';
   ordre: number;
   processusId: number;
-  templateId?: string;     
-  formData?: string; 
-regleMetierId?: number;        }
+  templateId?: string;
+  formData?: string;
+}
+
 export interface Processus {
   id?: number;
   nom: string;
@@ -19,6 +20,5 @@ export interface Processus {
   dateFin?: string;
   actif?: boolean;
   bpmnProcessId?: string;
-   fileBpmn?: string;
- 
+  fileBpmn?: string;
 }

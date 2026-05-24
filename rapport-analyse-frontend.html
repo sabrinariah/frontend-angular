@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rapport d'Analyse – Frontend Angular</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --primary: #1a2748;
+      --accent: #f77f00;
+      --danger: #dc2626;
+      --warning: #d97706;
+      --success: #16a34a;
+      --info: #2563eb;
+      --light-bg: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text);
+      background: white;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    /* ── COVER PAGE ── */
+    .cover {
+      height: 100vh;
+      min-height: 800px;
+      background: linear-gradient(135deg, #0a1929 0%, #1a2748 50%, #0f3460 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      text-align: center;
+      padding: 60px;
+      position: relative;
+      page-break-after: always;
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 70% 30%, rgba(247,127,0,0.15) 0%, transparent 60%);
+    }
+    .cover-badge {
+      background: var(--accent);
+      color: white;
+      padding: 6px 20px;
+      border-radius: 30px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      position: relative;
+    }
+    .cover h1 {
+      font-size: 42px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .cover h1 span { color: var(--accent); }
+    .cover .subtitle {
+      font-size: 18px;
+      font-weight: 300;
+      opacity: 0.8;
+      margin-bottom: 50px;
+      position: relative;
+    }
+    .cover-divider {
+      width: 80px;
+      height: 3px;
+      background: var(--accent);
+      margin: 0 auto 40px;
+      position: relative;
+    }
+    .cover-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 30px;
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+    }
+    .cover-meta-item {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .cover-meta-item .label { font-size: 9px; opacity: 0.6; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .cover-meta-item .value { font-size: 13px; font-weight: 600; }
+
+    /* ── PAGE LAYOUT ── */
+    .page {
+      padding: 50px 60px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    @media print {
+      .cover { height: 100vh; }
+      .section { page-break-inside: avoid; }
+      .page-break { page-break-before: always; }
+    }
+
+    /* ── TABLE OF CONTENTS ── */
+    .toc {
+      background: var(--light-bg);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 12px 12px 0;
+      padding: 30px 40px;
+      margin-bottom: 40px;
+    }
+    .toc h2 { color: var(--primary); margin-bottom: 20px; font-size: 16px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin-bottom: 8px; font-size: 11px; color: var(--muted); }
+    .toc li strong { color: var(--text); }
+
+    /* ── SECTION HEADERS ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 40px 0 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+    .section-number {
+      background: var(--primary);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      margin: 20px 0 10px;
+    }
+
+    p { margin-bottom: 10px; color: var(--text); }
+
+    /* ── BADGE / TAG ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .badge-danger  { background: #fee2e2; color: #dc2626; }
+    .badge-warning { background: #fef3c7; color: #b45309; }
+    .badge-success { background: #dcfce7; color: #166534; }
+    .badge-info    { background: #dbeafe; color: #1d4ed8; }
+    .badge-muted   { background: #f1f5f9; color: #475569; }
+    .badge-new     { background: #ede9fe; color: #5b21b6; }
+
+    /* ── ALERT BOXES ── */
+    .alert {
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      border-left: 4px solid;
+      display: flex;
+      gap: 12px;
+    }
+    .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .alert-body h4 { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+    .alert-body p  { font-size: 11px; margin: 0; color: inherit; opacity: 0.85; }
+    .alert-danger  { background: #fef2f2; border-color: #dc2626; color: #7f1d1d; }
+    .alert-warning { background: #fffbeb; border-color: #d97706; color: #78350f; }
+    .alert-success { background: #f0fdf4; border-color: #16a34a; color: #14532d; }
+    .alert-info    { background: #eff6ff; border-color: #2563eb; color: #1e3a8a; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--light-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── TABLE ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 11px;
+    }
+    thead th {
+      background: var(--primary);
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+    thead th:first-child { border-radius: 8px 0 0 0; }
+    thead th:last-child  { border-radius: 0 8px 0 0; }
+    tbody tr:nth-child(even) { background: var(--light-bg); }
+    tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    /* ── CODE BLOCK ── */
+    pre, code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #1e293b;
+      color: #e2e8f0;
+      border-radius: 8px;
+      font-size: 10px;
+      line-height: 1.8;
+    }
+    pre {
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+      border: 1px solid #334155;
+    }
+    code {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    /* ── GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+    /* ── STAT CARDS ── */
+    .stat-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      display: block;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .stat-accent { border-top: 3px solid var(--accent); }
+    .stat-danger { border-top: 3px solid var(--danger); }
+    .stat-success { border-top: 3px solid var(--success); }
+    .stat-info { border-top: 3px solid var(--info); }
+
+    /* ── CHECKLIST ── */
+    .checklist { list-style: none; padding: 0; }
+    .checklist li {
+      padding: 7px 0;
+      border-bottom: 1px dashed var(--border);
+      font-size: 11px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .check-icon { flex-shrink: 0; margin-top: 1px; }
+
+    /* ── PRIORITY BADGE ── */
+    .priority-critical { color: #dc2626; font-weight: 700; font-size: 10px; }
+    .priority-high     { color: #d97706; font-weight: 700; font-size: 10px; }
+    .priority-medium   { color: #2563eb; font-weight: 700; font-size: 10px; }
+    .priority-low      { color: #16a34a; font-weight: 700; font-size: 10px; }
+
+    /* ── TIMELINE ── */
+    .timeline { position: relative; padding-left: 24px; border-left: 2px solid var(--border); margin: 16px 0; }
+    .timeline-item { margin-bottom: 20px; position: relative; }
+    .timeline-dot {
+      width: 12px; height: 12px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: absolute;
+      left: -30px;
+      top: 4px;
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    .timeline-title { font-size: 12px; font-weight: 600; color: var(--primary); margin-bottom: 4px; }
+    .timeline-desc  { font-size: 11px; color: var(--muted); }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 2px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    /* ── PAGE BREAK ── */
+    .page-break { page-break-before: always; margin-top: 60px; }
+
+    /* ── SCORE ── */
+    .score-bar {
+      margin-bottom: 12px;
+    }
+    .score-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .score-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .score-fill { height: 100%; border-radius: 10px; }
+    .fill-danger  { background: var(--danger); }
+    .fill-warning { background: var(--warning); }
+    .fill-success { background: var(--success); }
+    .fill-info    { background: var(--info); }
+    .fill-primary { background: var(--primary); }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════ COVER ══════════════════════ -->
+<div class="cover">
+  <div class="cover-badge">Rapport Technique</div>
+  <h1>Analyse du <span>Frontend Angular</span></h1>
+  <p class="subtitle">Application de Gestion des Règles Métier & Processus BPMN</p>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">Date</div>
+      <div class="value">24 Mai 2026</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Framework</div>
+      <div class="value">Angular 21.2</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Auteur</div>
+      <div class="value">Claude Code</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ RAPPORT ══════════════════════ -->
+<div class="page">
+
+  <!-- TABLE DES MATIÈRES -->
+  <div class="toc">
+    <h2>Table des Matières</h2>
+    <ol>
+      <li><strong>Vue d'ensemble du projet</strong> — Stack technique, dépendances</li>
+      <li><strong>Architecture & Structure</strong> — Organisation des dossiers, routing</li>
+      <li><strong>Composants & Fonctionnalités</strong> — Analyse détaillée de chaque composant</li>
+      <li><strong>Services & API</strong> — Intégration backend, authentification</li>
+      <li><strong>Problèmes de Sécurité</strong> — Vulnérabilités critiques identifiées</li>
+      <li><strong>Qualité du Code</strong> — Scores, patterns, anti-patterns</li>
+      <li><strong>Nouveautés NLP</strong> — Analyse de la fonctionnalité IA</li>
+      <li><strong>Recommandations</strong> — Plan d'action priorisé</li>
+    </ol>
+  </div>
+
+  <!-- ══ 1. VUE D'ENSEMBLE ══ -->
+  <div class="section-header">
+    <div class="section-number">1</div>
+    <h2>Vue d'Ensemble du Projet</h2>
+  </div>
+
+  <p>Il s'agit d'une <strong>application Angular enterprise</strong> dédiée à la gestion des règles métier douanières et des processus BPMN. Elle s'intègre à un backend Spring Boot via une API REST, utilise Keycloak pour l'authentification, et propose une nouvelle fonctionnalité de génération de règles par langage naturel (NLP).</p>
+
+  <div class="grid-3">
+    <div class="stat-card stat-accent">
+      <span class="stat-value">21.2</span>
+      <div class="stat-label">Version Angular</div>
+    </div>
+    <div class="stat-card stat-info">
+      <span class="stat-value">15+</span>
+      <div class="stat-label">Composants</div>
+    </div>
+    <div class="stat-card stat-danger">
+      <span class="stat-value">3</span>
+      <div class="stat-label">Vulnérabilités critiques</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="stat-card stat-success">
+      <span class="stat-value">12</span>
+      <div class="stat-label">Services</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">8</span>
+      <div class="stat-label">Modèles TypeScript</div>
+    </div>
+  </div>
+
+  <h3>Stack Technique</h3>
+  <table>
+    <thead>
+      <tr><th>Technologie</th><th>Version</th><th>Usage</th><th>Statut</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Angular</td><td>21.2.0</td><td>Framework principal</td><td><span class="badge badge-success">Stable</span></td></tr>
+      <tr><td>TypeScript</td><td>5.9.2</td><td>Langage de programmation</td><td><span class="badge badge-success">Stable</span></td></tr>
+      <tr><td>RxJS</td><td>7.8.0</td><td>Programmation réactive</td><td><span class="badge badge-success">Stable</span></td></tr>
+      <tr><td>Keycloak-js</td><td>26.2.3</td><td>Authentification SSO</td><td><span class="badge badge-warning">⚠ Secret exposé</span></td></tr>
+      <tr><td>BPMN-JS</td><td>18.16.1</td><td>Visualisation processus</td><td><span class="badge badge-success">Stable</span></td></tr>
+      <tr><td>TailwindCSS</td><td>4.2.1</td><td>Styles utilitaires</td><td><span class="badge badge-info">Partiel</span></td></tr>
+      <tr><td>Vitest</td><td>4.0.8</td><td>Tests unitaires</td><td><span class="badge badge-danger">Non utilisé</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Configuration Backend</h3>
+  <table>
+    <thead>
+      <tr><th>Service</th><th>URL</th><th>Protocole</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>API Backend (Spring Boot)</td><td><code>http://localhost:8081</code></td><td>REST/JSON</td></tr>
+      <tr><td>Keycloak (Auth)</td><td><code>http://localhost:8080</code></td><td>OAuth2/OIDC</td></tr>
+      <tr><td>API NLP</td><td><code>http://localhost:8081/api/nlp</code></td><td>REST/JSON</td></tr>
+      <tr><td>Camunda (BPMN Engine)</td><td><code>http://localhost:8081/camunda</code></td><td>REST/JSON</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ══ 2. ARCHITECTURE ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">2</div>
+    <h2>Architecture & Structure du Projet</h2>
+  </div>
+
+  <h3>Organisation des Dossiers</h3>
+  <pre>
+src/app/
+├── app.component.ts          ← Layout principal (sidebar + topbar)
+├── app.routes.ts             ← Fichier vide (routes dans main.ts !)
+├── app.config.ts             ← Configuration Angular
+├── app.ts / main.ts          ← Point d'entrée + routes réelles
+│
+├── components/               ← Composants réutilisables
+│   ├── bpmn-viewer/          ← Visualisation BPMN interactive
+│   ├── regle/                ← Gestion des règles métier (506 lignes !)
+│   ├── drl-preview/          ← [NOUVEAU] Aperçu code DRL
+│   └── nlp-input/            ← [NOUVEAU] Saisie NLP
+│
+├── core/                     ← Services transversaux
+│   ├── guards/auth.guard.ts  ← Contrôle d'accès par rôle
+│   └── services/             ← 12 services métier
+│
+├── features/                 ← Pages métier
+│   ├── dashboard/
+│   ├── processus/
+│   ├── taches/
+│   └── users/
+│
+├── pages/                    ← Pages utilitaires
+│   ├── import/
+│   └── export.component
+│
+└── models/                   ← Interfaces TypeScript</pre>
+
+  <h3>Routing & Contrôle d'Accès</h3>
+  <table>
+    <thead>
+      <tr><th>Route</th><th>Composant</th><th>Rôles autorisés</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>/login</td><td>LoginComponent</td><td>Public</td></tr>
+      <tr><td>/register</td><td>RegisterComponent</td><td>Public</td></tr>
+      <tr><td>/dashboard</td><td>DashboardComponent</td><td>Tous utilisateurs connectés</td></tr>
+      <tr><td>/regles</td><td>RegleMetierComponent</td><td>Gestionnaire règles, SuperAdmin</td></tr>
+      <tr><td>/processus</td><td>ProcessusListComponent</td><td>Gestionnaire processus, SuperAdmin</td></tr>
+      <tr><td>/taches-list</td><td>TachesListComponent</td><td>Utilisateurs connectés</td></tr>
+      <tr><td>/users</td><td>UsersComponent</td><td><strong>SuperAdmin uniquement</strong></td></tr>
+      <tr><td>/import-export</td><td>ImportExportComponent</td><td>Gestionnaires, SuperAdmin</td></tr>
+      <tr><td>/bpmn-viewer/:id</td><td>BpmnViewerComponent</td><td>Utilisateurs connectés</td></tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-warning">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <h4>Incohérence Routing</h4>
+      <p>Le fichier <code>app.routes.ts</code> est <strong>vide</strong> alors que les routes sont définies dans <code>main.ts</code>. Cette incohérence peut créer de la confusion pour les développeurs et rendre la maintenance difficile.</p>
+    </div>
+  </div>
+
+  <!-- ══ 3. COMPOSANTS ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">3</div>
+    <h2>Composants & Fonctionnalités</h2>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎯 RegleMetierComponent <span class="badge badge-danger">506 lignes</span></div>
+    <p>Composant central de l'application. Gère l'affichage, la création, la modification et la suppression des règles métier.</p>
+    <table>
+      <thead><tr><th>Fonctionnalité</th><th>Statut</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>Liste / Tableau des règles</td><td><span class="badge badge-success">✓ OK</span></td><td>Vue cartes + tableau</td></tr>
+        <tr><td>Filtrage & Recherche</td><td><span class="badge badge-success">✓ OK</span></td><td>Par catégorie, statut, texte</td></tr>
+        <tr><td>Création / Édition</td><td><span class="badge badge-success">✓ OK</span></td><td>Formulaire complet</td></tr>
+        <tr><td>Suppression</td><td><span class="badge badge-success">✓ OK</span></td><td>Avec confirmation</td></tr>
+        <tr><td>Historique / Versioning</td><td><span class="badge badge-new">✓ NOUVEAU</span></td><td>Restauration de versions</td></tr>
+        <tr><td>Intégration NLP</td><td><span class="badge badge-new">✓ NOUVEAU</span></td><td>Via NlpInputComponent</td></tr>
+        <tr><td>Aperçu DRL</td><td><span class="badge badge-new">✓ NOUVEAU</span></td><td>Via DrlPreviewComponent</td></tr>
+        <tr><td>Gestion du chargement</td><td><span class="badge badge-warning">⚠ Partiel</span></td><td>Pas de skeletons uniformes</td></tr>
+        <tr><td>Tests unitaires</td><td><span class="badge badge-danger">✗ Absent</span></td><td>Aucun test</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 ProcessusListComponent</div>
+    <p>Gestion des processus BPMN avec visualisation et modification via un éditeur intégré.</p>
+    <ul class="checklist">
+      <li><span class="check-icon">✅</span> Affichage de la liste des processus avec filtres</li>
+      <li><span class="check-icon">✅</span> Activation / Désactivation des processus</li>
+      <li><span class="check-icon">✅</span> Visualisation BPMN interactive (via bpmn-js)</li>
+      <li><span class="check-icon">✅</span> Formulaire de création de tâches paramétrable</li>
+      <li><span class="check-icon">⚠️</span> CSS trop volumineuse, difficile à maintenir</li>
+    </ul>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">👥 UsersComponent</div>
+      <ul class="checklist">
+        <li><span class="check-icon">✅</span> Gestion des utilisateurs</li>
+        <li><span class="check-icon">✅</span> Attribution des rôles</li>
+        <li><span class="check-icon">✅</span> Activation / Désactivation</li>
+        <li><span class="check-icon">⚠️</span> Réservé SuperAdmin seulement</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">📦 ImportComponent</div>
+      <ul class="checklist">
+        <li><span class="check-icon">✅</span> Assistant d'import pas-à-pas</li>
+        <li><span class="check-icon">✅</span> Suivi des tâches Camunda</li>
+        <li><span class="check-icon">✅</span> Variables de processus</li>
+        <li><span class="check-icon">⚠️</span> Gestion d'erreurs minimale</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ 4. SERVICES ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">4</div>
+    <h2>Services & Intégration API</h2>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Service</th><th>Endpoints</th><th>Méthodes principales</th><th>Qualité</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>RegleMetierService</strong></td>
+        <td>/api/regles</td>
+        <td>CRUD + toggle + versions + restauration</td>
+        <td><span class="badge badge-warning">⚠ URL codée en dur</span></td>
+      </tr>
+      <tr>
+        <td><strong>ProcessusService</strong></td>
+        <td>/api/process</td>
+        <td>CRUD + toggle</td>
+        <td><span class="badge badge-warning">⚠ URL codée en dur</span></td>
+      </tr>
+      <tr>
+        <td><strong>ExportService</strong></td>
+        <td>/camunda/engine-rest</td>
+        <td>Tâches, variables, historique, instances</td>
+        <td><span class="badge badge-success">Complet</span></td>
+      </tr>
+      <tr>
+        <td><strong>ImportService</strong></td>
+        <td>/api/import</td>
+        <td>Import, tâches, instances</td>
+        <td><span class="badge badge-success">OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>KeycloakService</strong></td>
+        <td>Keycloak + /api/users</td>
+        <td>Auth, roles, users CRUD</td>
+        <td><span class="badge badge-danger">🔴 Secret exposé</span></td>
+      </tr>
+      <tr>
+        <td><strong>NlpRegleService</strong></td>
+        <td>/api/nlp/convertir</td>
+        <td>Conversion phrase → règle</td>
+        <td><span class="badge badge-warning">⚠ Pas de gestion erreur</span></td>
+      </tr>
+      <tr>
+        <td><strong>ConditionEvaluatorService</strong></td>
+        <td>Local</td>
+        <td>Évaluation des conditions</td>
+        <td><span class="badge badge-success">Bien structuré</span></td>
+      </tr>
+      <tr>
+        <td><strong>BpmnGeneratorService</strong></td>
+        <td>Local</td>
+        <td>Génération XML BPMN</td>
+        <td><span class="badge badge-success">OK</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Intercepteur HTTP</h3>
+  <div class="card">
+    <div class="card-title">token.interceptor.ts</div>
+    <p>Un intercepteur est présent pour injecter le token Keycloak dans les requêtes HTTP. Cependant :</p>
+    <ul class="checklist">
+      <li><span class="check-icon">✅</span> Injection automatique du Bearer token</li>
+      <li><span class="check-icon">❌</span> Pas de gestion du refresh token (expiration non gérée)</li>
+      <li><span class="check-icon">❌</span> Pas de gestion globale des erreurs (401, 403, 500)</li>
+      <li><span class="check-icon">❌</span> Pas de retry automatique sur les requêtes échouées</li>
+    </ul>
+  </div>
+
+  <!-- ══ 5. SÉCURITÉ ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">5</div>
+    <h2>Problèmes de Sécurité</h2>
+  </div>
+
+  <div class="alert alert-danger">
+    <div class="alert-icon">🚨</div>
+    <div class="alert-body">
+      <h4>CRITIQUE — Secret Keycloak exposé dans le code source</h4>
+      <p>Le <strong>client secret Keycloak</strong> est codé en dur dans <code>keycloak.service.ts</code> (ligne 103) : <strong>'63728T3LdLgCzHfBoQlbcmuSoADXQ8nP'</strong>. Ce secret est visible dans le navigateur via les DevTools, dans le bundle JS, et dans l'historique Git. Toute personne ayant accès au dépôt peut l'extraire et usurper l'identité de l'application.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-danger">
+    <div class="alert-icon">🚨</div>
+    <div class="alert-body">
+      <h4>CRITIQUE — URLs de production codées en dur</h4>
+      <p>Toutes les URLs backend (<code>localhost:8081</code>, <code>localhost:8080</code>) sont écrites directement dans le code source. Il n'existe aucun fichier <code>environment.ts</code> configuré pour distinguer les environnements dev/prod. Le déploiement en production nécessitera de modifier manuellement des dizaines de fichiers.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-danger">
+    <div class="alert-icon">🚨</div>
+    <div class="alert-body">
+      <h4>CRITIQUE — Authentification directe avec identifiants utilisateur</h4>
+      <p>La méthode <code>loginWithCredentials(username, password)</code> dans <code>KeycloakService</code> envoie les identifiants en clair via une requête directe au serveur Keycloak. Cette approche contourne le flux OAuth2 standard (Authorization Code Flow) et présente des risques si la connexion n'est pas HTTPS.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <h4>MOYEN — Pas de validation côté client sur les entrées utilisateur</h4>
+      <p>Les formulaires de création/édition de règles n'ont pas de validation robuste sur les champs. Des injections de code via les champs libres ne sont pas vérifiées avant envoi au serveur.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-warning">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <h4>MOYEN — Vérification d'authentification synchrone</h4>
+      <p><code>isLoggedIn()</code> retourne une <code>Promise&lt;boolean&gt;</code> mais est utilisée de manière synchrone dans certains templates. Si la vérification échoue silencieusement, l'utilisateur peut accéder à des routes protégées.</p>
+    </div>
+  </div>
+
+  <h3>Plan de Correction Sécurité</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-title">Immédiat — Supprimer le secret du code</div>
+      <div class="timeline-desc">Retirer <code>clientSecret</code> de keycloak.service.ts. Configurer Keycloak pour utiliser PKCE (Authorization Code Flow sans secret). Ne jamais réutiliser ce secret.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-title">Immédiat — Créer les fichiers environment</div>
+      <div class="timeline-desc">Créer <code>src/environments/environment.ts</code> et <code>environment.prod.ts</code> avec les URLs des APIs. Mettre à jour tous les services pour utiliser ces constantes.</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-title">Court terme — Intercepteur d'erreurs global</div>
+      <div class="timeline-desc">Ajouter un <code>HttpInterceptor</code> pour gérer les 401 (refresh token ou redirection login) et les 500 (message d'erreur utilisateur).</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-dot"></div>
+      <div class="timeline-title">Court terme — Validation des formulaires</div>
+      <div class="timeline-desc">Implémenter Angular Reactive Forms avec des validateurs sur tous les champs. Afficher les erreurs de validation champ par champ.</div>
+    </div>
+  </div>
+
+  <!-- ══ 6. QUALITÉ CODE ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">6</div>
+    <h2>Qualité du Code</h2>
+  </div>
+
+  <h3>Scores par Dimension</h3>
+  <div class="score-bar"><div class="score-label"><span>Architecture & Structure</span><span>65/100</span></div><div class="score-track"><div class="score-fill fill-warning" style="width:65%"></div></div></div>
+  <div class="score-bar"><div class="score-label"><span>Sécurité</span><span>30/100</span></div><div class="score-track"><div class="score-fill fill-danger" style="width:30%"></div></div></div>
+  <div class="score-bar"><div class="score-label"><span>Maintenabilité</span><span>55/100</span></div><div class="score-track"><div class="score-fill fill-warning" style="width:55%"></div></div></div>
+  <div class="score-bar"><div class="score-label"><span>Couverture de Tests</span><span>5/100</span></div><div class="score-track"><div class="score-fill fill-danger" style="width:5%"></div></div></div>
+  <div class="score-bar"><div class="score-label"><span>Expérience Utilisateur</span><span>75/100</span></div><div class="score-track"><div class="score-fill fill-success" style="width:75%"></div></div></div>
+  <div class="score-bar"><div class="score-label"><span>Typage TypeScript</span><span>70/100</span></div><div class="score-track"><div class="score-fill fill-info" style="width:70%"></div></div></div>
+  <div class="score-bar"><div class="score-label"><span>Performance</span><span>60/100</span></div><div class="score-track"><div class="score-fill fill-warning" style="width:60%"></div></div></div>
+
+  <h3>Problèmes de Qualité Identifiés</h3>
+
+  <table>
+    <thead>
+      <tr><th>Problème</th><th>Fichier concerné</th><th>Priorité</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Composant trop volumineux (506 lignes)</td><td>regle/regle.ts</td><td><span class="priority-high">HAUTE</span></td></tr>
+      <tr><td>Styles inline dans app.component (3000+ lignes)</td><td>app.component.ts</td><td><span class="priority-high">HAUTE</span></td></tr>
+      <tr><td>Duplication du système de notifications toast</td><td>regle.ts, nlp-input.ts</td><td><span class="priority-medium">MOYENNE</span></td></tr>
+      <tr><td>Logique métier dans les composants</td><td>regle.ts, nlp-input.ts</td><td><span class="priority-medium">MOYENNE</span></td></tr>
+      <tr><td>Routes définies dans main.ts au lieu de app.routes.ts</td><td>main.ts / app.routes.ts</td><td><span class="priority-medium">MOYENNE</span></td></tr>
+      <tr><td>Aucune gestion d'état centralisée (NgRx/Signals)</td><td>Global</td><td><span class="priority-medium">MOYENNE</span></td></tr>
+      <tr><td>Emojis dans les templates (accessibilité)</td><td>nlp-input, drl-preview</td><td><span class="priority-low">FAIBLE</span></td></tr>
+      <tr><td>CSS non-modulaire (1000+ lignes par composant)</td><td>nlp-input.css</td><td><span class="priority-low">FAIBLE</span></td></tr>
+      <tr><td>Aucun test unitaire ou E2E</td><td>Global</td><td><span class="priority-high">HAUTE</span></td></tr>
+      <tr><td>Pas de lazy loading sur les routes</td><td>main.ts</td><td><span class="priority-medium">MOYENNE</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Bonnes Pratiques Respectées</h3>
+  <ul class="checklist">
+    <li><span class="check-icon">✅</span> <strong>Composants Standalone</strong> — Architecture moderne Angular sans NgModules</li>
+    <li><span class="check-icon">✅</span> <strong>TypeScript Strict</strong> — Mode strict activé dans tsconfig.json</li>
+    <li><span class="check-icon">✅</span> <strong>Interfaces TypeScript</strong> — Modèles bien définis dans /models</li>
+    <li><span class="check-icon">✅</span> <strong>Séparation des préoccupations</strong> — Services distincts par domaine métier</li>
+    <li><span class="check-icon">✅</span> <strong>Guard de route</strong> — Contrôle d'accès basé sur les rôles</li>
+    <li><span class="check-icon">✅</span> <strong>RxJS</strong> — Utilisation correcte des Observables pour les appels HTTP</li>
+    <li><span class="check-icon">✅</span> <strong>Intercepteur HTTP</strong> — Injection automatique du token d'authentification</li>
+  </ul>
+
+  <!-- ══ 7. NLP ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">7</div>
+    <h2>Nouvelle Fonctionnalité NLP (Fichiers non committés)</h2>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">ℹ️</div>
+    <div class="alert-body">
+      <h4>4 nouveaux fichiers non committés</h4>
+      <p>Les fichiers <code>nlp-regle.service.ts</code>, <code>nlp.model.ts</code>, <code>drl-preview/</code>, et <code>nlp-input/</code> sont présents localement mais pas encore enregistrés dans Git.</p>
+    </div>
+  </div>
+
+  <h3>Architecture de la Fonctionnalité NLP</h3>
+  <div class="card">
+    <div class="card-title">Flux de traitement</div>
+    <div style="text-align:center; padding: 16px; font-family: 'JetBrains Mono'; font-size: 11px; line-height: 2.5; color: #475569;">
+      Utilisateur saisit une phrase en français<br>
+      ↓<br>
+      <strong>NlpInputComponent</strong> — Validation et envoi<br>
+      ↓<br>
+      <strong>NlpRegleService</strong> — POST /api/nlp/convertir<br>
+      ↓<br>
+      Backend IA — Analyse sémantique<br>
+      ↓<br>
+      Retour : règle structurée + code DRL + score de confiance<br>
+      ↓<br>
+      <strong>DrlPreviewComponent</strong> — Affichage syntaxe colorée<br>
+      ↓<br>
+      Confirmation → Sauvegarde via RegleMetierService
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">✅ Points Forts</div>
+      <ul class="checklist">
+        <li><span class="check-icon">✅</span> Interface utilisateur très soignée</li>
+        <li><span class="check-icon">✅</span> Workflow en 3 étapes clair (input → preview → edit)</li>
+        <li><span class="check-icon">✅</span> Indicateur de confiance visuel (vert/orange/rouge)</li>
+        <li><span class="check-icon">✅</span> Affichage des ambiguïtés détectées</li>
+        <li><span class="check-icon">✅</span> Phrases d'exemple contextualisées (douane)</li>
+        <li><span class="check-icon">✅</span> Coloration syntaxique DRL complète</li>
+        <li><span class="check-icon">✅</span> Bouton copier avec retour visuel</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">❌ Problèmes</div>
+      <ul class="checklist">
+        <li><span class="check-icon">❌</span> Aucune gestion d'erreur dans NlpRegleService</li>
+        <li><span class="check-icon">❌</span> Pas de timeout sur la requête NLP</li>
+        <li><span class="check-icon">❌</span> Pas de cache des résultats NLP</li>
+        <li><span class="check-icon">❌</span> Composant NlpInput trop grand (280 lignes)</li>
+        <li><span class="check-icon">❌</span> Mélange UI + logique métier</li>
+        <li><span class="check-icon">❌</span> Emojis non accessibles aux lecteurs d'écran</li>
+        <li><span class="check-icon">❌</span> Pas de retry en cas d'échec réseau</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Modèle de Données NLP</h3>
+  <pre>
+// nlp.model.ts
+interface NlpRegleDto {
+  code: string;
+  nom: string;
+  action: string;
+  categorieType: string;
+  conditions: Condition[];
+}
+
+interface NlpConversionResult {
+  regle: NlpRegleDto;       // Règle structurée générée
+  drl: string;              // Code Drools Rule Language
+  confidence: number;       // Score de confiance (0.0 → 1.0)
+  ambiguites: string[];     // Liste des ambiguïtés détectées
+  phraseOriginale: string;  // La phrase saisie par l'utilisateur
+}
+
+interface NlpConversionRequest {
+  phrase: string;           // Phrase en langage naturel
+}</pre>
+
+  <!-- ══ 8. RECOMMANDATIONS ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">8</div>
+    <h2>Recommandations & Plan d'Action</h2>
+  </div>
+
+  <h3>Priorité 1 — Actions Immédiates (Sécurité)</h3>
+
+  <div class="alert alert-danger">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <h4>1. Supprimer le client secret Keycloak du code</h4>
+      <p>Utiliser le flux OAuth2 PKCE (sans secret client) ou déplacer toute communication sensible Keycloak vers le backend. Régénérer le secret actuel car il est compromis dès lors qu'il est dans l'historique Git.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-danger">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <h4>2. Créer les fichiers d'environnement Angular</h4>
+      <p>Créer <code>src/environments/environment.ts</code> (dev) et <code>environment.prod.ts</code> (production) avec toutes les URLs. Remplacer tous les <code>http://localhost:8081</code> par <code>environment.apiUrl</code>.</p>
+    </div>
+  </div>
+
+  <h3>Priorité 2 — Court Terme (1-2 semaines)</h3>
+
+  <ul class="checklist">
+    <li>
+      <span class="check-icon">🟡</span>
+      <div>
+        <strong>Ajouter un intercepteur d'erreurs HTTP global</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Gérer 401 (refresh token), 403 (accès refusé), 500 (erreur serveur) avec des messages utilisateur clairs</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🟡</span>
+      <div>
+        <strong>Déplacer les routes dans app.routes.ts</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Et activer le lazy loading pour améliorer les performances initiales</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🟡</span>
+      <div>
+        <strong>Créer un service de notifications toast centralisé</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Éliminer la duplication du code toast dans RegleMetierComponent et NlpInputComponent</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🟡</span>
+      <div>
+        <strong>Améliorer NlpRegleService</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Ajouter catchError, timeout(30000), et retry(2) via les opérateurs RxJS</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🟡</span>
+      <div>
+        <strong>Valider les formulaires avec Angular Reactive Forms</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Remplacer les validations manuelles par des Validators Angular</span>
+      </div>
+    </li>
+  </ul>
+
+  <h3>Priorité 3 — Moyen Terme (1-2 mois)</h3>
+
+  <ul class="checklist">
+    <li>
+      <span class="check-icon">🔵</span>
+      <div>
+        <strong>Décomposer RegleMetierComponent</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Créer RegleListComponent, RegleDetailComponent, RegleFormComponent — chacun ≤ 150 lignes</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🔵</span>
+      <div>
+        <strong>Extraire les styles d'app.component.ts</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Déplacer les 3000+ lignes de styles inline vers app.component.scss</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🔵</span>
+      <div>
+        <strong>Remplacer les emojis par des icônes accessibles</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Utiliser Angular Material Icons ou une bibliothèque SVG avec attributs aria-label</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🔵</span>
+      <div>
+        <strong>Écrire les premiers tests unitaires</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Commencer par les services (RegleMetierService, NlpRegleService) et les guards</span>
+      </div>
+    </li>
+    <li>
+      <span class="check-icon">🔵</span>
+      <div>
+        <strong>Migrer vers Angular Signals</strong><br>
+        <span style="font-size:10px;color:var(--muted)">Remplacer les Observables dans les composants par des Signals pour une meilleure réactivité</span>
+      </div>
+    </li>
+  </ul>
+
+  <h3>Priorité 4 — Long Terme (3-6 mois)</h3>
+
+  <ul class="checklist">
+    <li><span class="check-icon">⚪</span> Mettre en place NgRx ou un store basé sur les Signals pour la gestion d'état</li>
+    <li><span class="check-icon">⚪</span> Ajouter des tests E2E avec Playwright ou Cypress</li>
+    <li><span class="check-icon">⚪</span> Configurer un pipeline CI/CD (GitHub Actions / GitLab CI)</li>
+    <li><span class="check-icon">⚪</span> Implémenter WebSocket pour les mises à jour en temps réel des tâches</li>
+    <li><span class="check-icon">⚪</span> Créer une bibliothèque de composants réutilisables (Storybook)</li>
+  </ul>
+
+  <h3>Exemple de Correction — NlpRegleService</h3>
+  <pre>
+// AVANT (problématique)
+convertir(phrase: string): Observable&lt;NlpConversionResult&gt; {
+  return this.http.post&lt;NlpConversionResult&gt;(
+    'http://localhost:8081/api/nlp/convertir', { phrase }
+  );
+}
+
+// APRÈS (recommandé)
+convertir(phrase: string): Observable&lt;NlpConversionResult&gt; {
+  return this.http.post&lt;NlpConversionResult&gt;(
+    `${environment.apiUrl}/nlp/convertir`, { phrase }
+  ).pipe(
+    timeout(30000),
+    retry(2),
+    catchError(err => throwError(() => new Error(
+      err.status === 0
+        ? 'Serveur inaccessible'
+        : `Erreur ${err.status} : ${err.error?.message ?? 'Inconnue'}`
+    )))
+  );
+}</pre>
+
+  <h3>Exemple de Correction — Fichiers Environnement</h3>
+  <pre>
+// src/environments/environment.ts (développement)
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8081/api',
+  keycloakUrl: 'http://localhost:8080',
+  keycloakRealm: 'douane',
+  keycloakClientId: 'frontend-client'
+};
+
+// src/environments/environment.prod.ts (production)
+export const environment = {
+  production: true,
+  apiUrl: 'https://api.votre-domaine.com/api',
+  keycloakUrl: 'https://auth.votre-domaine.com',
+  keycloakRealm: 'douane',
+  keycloakClientId: 'frontend-client'
+};</pre>
+
+  <!-- ══ CONCLUSION ══ -->
+  <div class="page-break"></div>
+  <div class="section-header">
+    <div class="section-number">✓</div>
+    <h2>Conclusion</h2>
+  </div>
+
+  <p>L'application frontend Angular analysée est un projet <strong>enterprise bien structuré</strong>, avec une architecture moderne (composants standalone, TypeScript strict, intégration Keycloak/Camunda/BPMN) et une interface utilisateur soignée. La nouvelle fonctionnalité NLP est particulièrement bien conçue côté UX.</p>
+
+  <p>Cependant, <strong>trois problèmes critiques de sécurité</strong> doivent être résolus avant tout déploiement en production, notamment l'exposition du secret Keycloak et l'absence de configuration d'environnement. L'absence totale de tests unitaires représente également un risque important pour la maintenabilité future.</p>
+
+  <div class="grid-3" style="margin-top:24px">
+    <div class="stat-card stat-success">
+      <span class="stat-value" style="color:#16a34a">✓</span>
+      <div class="stat-label">Architecture solide</div>
+    </div>
+    <div class="stat-card stat-danger">
+      <span class="stat-value" style="color:#dc2626">!</span>
+      <div class="stat-label">Sécurité à corriger</div>
+    </div>
+    <div class="stat-card stat-accent">
+      <span class="stat-value" style="color:#f77f00">→</span>
+      <div class="stat-label">Potentiel élevé</div>
+    </div>
+  </div>
+
+  <div class="alert alert-success" style="margin-top:24px">
+    <div class="alert-icon">🎯</div>
+    <div class="alert-body">
+      <h4>Priorité absolue : Sécuriser avant de déployer</h4>
+      <p>En appliquant les recommandations de Priorité 1 et 2 (environ 1 semaine de travail), l'application peut passer d'un état "risqué" à un état "production-ready" sur les aspects critiques. Le reste des améliorations peut être intégré progressivement.</p>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>Rapport d'Analyse Frontend Angular — projet-angulars</div>
+    <div>Généré le 24 Mai 2026 par Claude Code</div>
+    <div>Confidentiel</div>
+  </div>
+
+</div>
+
+<script>
+  // Auto-open print dialog for PDF export
+  window.addEventListener('load', () => {
+    const printBtn = document.createElement('div');
+    printBtn.innerHTML = `
+      <div style="position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px">
+        <button onclick="window.print()" style="background:#1a2748;color:white;border:none;padding:12px 24px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.25)">
+          🖨️ Imprimer / Enregistrer en PDF
+        </button>
+      </div>`;
+    document.body.appendChild(printBtn);
+  });
+</script>
+
+<style media="print">
+  body { font-size: 11px; }
+  .cover { height: 100vh; page-break-after: always; }
+  .page-break { page-break-before: always; }
+  [style*="position:fixed"] { display: none !important; }
+  pre { white-space: pre-wrap; word-break: break-all; }
+</style>
+
+</body>
+</html>

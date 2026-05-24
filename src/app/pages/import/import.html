@@ -1,797 +1,240 @@
-<!-- ============================================================
-     CONTAINER PRINCIPAL
-     ============================================================ -->
 <div class="import-container">
 
-  <!-- ============================================================
-       HEADER
-       ============================================================ -->
-  <header class="import-header">
-    <div class="header-content">
-      <div class="header-title">
-        <h1>
-          <span class="icon">📦</span> Gestion des Imports
-        </h1>
-        <p>Suivi des processus d'importation et dédouanement</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn-secondary" (click)="rafraichir()" [disabled]="loading">
-          <span [class.spin]="loading">🔄</span> Actualiser
-        </button>
-        <button class="btn btn-primary" (click)="changerOnglet('demarrer')">
-          + Nouveau Processus
-        </button>
-      </div>
-    </div>
-  </header>
-
-  <!-- ============================================================
-       STATISTIQUES
-       ============================================================ -->
-  <section class="stats-section">
-    <div class="stats-grid">
-      <div class="stat-card stat-total">
-        <div class="stat-icon">📋</div>
-        <div class="stat-content">
-          <div class="stat-label">Total Tâches</div>
-          <div class="stat-value">{{ totalTaches }}</div>
-        </div>
-      </div>
-      <div class="stat-card stat-active">
-        <div class="stat-icon">⚙️</div>
-        <div class="stat-content">
-          <div class="stat-label">En Cours</div>
-          <div class="stat-value">{{ instancesEnCours }}</div>
-        </div>
-      </div>
-      <div class="stat-card stat-success">
-        <div class="stat-icon">✅</div>
-        <div class="stat-content">
-          <div class="stat-label">Terminées</div>
-          <div class="stat-value">{{ instancesTerminees }}</div>
-        </div>
-      </div>
-      <div class="stat-card stat-warning">
-        <div class="stat-icon">⏸️</div>
-        <div class="stat-content">
-          <div class="stat-label">Suspendues</div>
-          <div class="stat-value">{{ instancesSuspendues }}</div>
-        </div>
-      </div>
-      <div class="stat-card stat-danger">
-        <div class="stat-icon">🔥</div>
-        <div class="stat-content">
-          <div class="stat-label">Urgentes</div>
-          <div class="stat-value">{{ tachesUrgentes }}</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       ONGLETS
-       ============================================================ -->
-  <section class="tabs-section">
-    <div class="tabs-wrapper">
-      <button
-        class="tab-btn"
-        [class.active]="activeTab === 'demarrer'"
-        (click)="changerOnglet('demarrer')">
-        <span class="tab-icon">🚀</span>
-        <span class="tab-label">Démarrer un Processus</span>
-      </button>
-      <button
-        class="tab-btn"
-        [class.active]="activeTab === 'taches'"
-        (click)="changerOnglet('taches')">
-        <span class="tab-icon">📝</span>
-        <span class="tab-label">Mes Tâches</span>
-        <span class="tab-badge" *ngIf="totalTaches > 0">{{ totalTaches }}</span>
-      </button>
-      <button
-        class="tab-btn"
-        [class.active]="activeTab === 'instances'"
-        (click)="changerOnglet('instances')">
-        <span class="tab-icon">📊</span>
-        <span class="tab-label">Instances</span>
-        <span class="tab-badge" *ngIf="instances.length > 0">{{ instances.length }}</span>
-      </button>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       LOADER GLOBAL
-       ============================================================ -->
-  <div class="loader-overlay" *ngIf="loading">
-    <div class="loader-spinner"></div>
-    <p>Chargement des données...</p>
+  <!-- ══ ONGLETS ══ -->
+  <div class="main-tabs">
+    <button [class.active]="activeTab === 'nouveau'" (click)="changerOnglet('nouveau')">
+      + Nouveau dossier
+    </button>
+    <button [class.active]="activeTab === 'mes-dossiers'" (click)="changerOnglet('mes-dossiers')">
+      Mes dossiers ({{ dossiers.length }})
+    </button>
   </div>
 
-  <!-- ============================================================
-       ONGLET 1 : DÉMARRER UN PROCESSUS
-       ============================================================ -->
-  <section class="content-section" *ngIf="activeTab === 'demarrer'">
+  <!-- ══ MESSAGE ══ -->
+  @if (message) {
+    <div class="message-bar" [ngClass]="'msg-' + messageType">
+      {{ message }}
+    </div>
+  }
+
+  <!-- ══════════════════════════════════════════
+       ONGLET 1 : NOUVEAU DOSSIER
+       ══════════════════════════════════════════ -->
+  @if (activeTab === 'nouveau') {
     <div class="form-card">
-      <div class="form-card-header">
-        <h2>🚀 Nouveau Processus d'Import</h2>
-        <p>Remplissez les informations pour démarrer une nouvelle instance</p>
+
+      <div class="card-header">
+        <h2>Nouveau dossier d'importation</h2>
+        <p>Remplissez les informations de votre dossier pour le soumettre au traitement.</p>
       </div>
 
-      <div class="form-card-body">
-        <div class="form-grid">
+      <div class="form-grid">
 
-          <!-- ID Dossier -->
-          <div class="form-group">
-            <label class="form-label">
-              ID Dossier <span class="required">*</span>
-            </label>
-            <input
-              type="text"
-              class="form-input"
-              [class.error]="formErrors['dossierId']"
-              [(ngModel)]="demande.dossierId"
-              placeholder="ex: DOS-2026-001">
-            <span class="error-message" *ngIf="formErrors['dossierId']">
-              {{ formErrors['dossierId'] }}
-            </span>
-          </div>
-
-          <!-- Importateur -->
-          <div class="form-group">
-            <label class="form-label">
-              Importateur <span class="required">*</span>
-            </label>
-            <input
-              type="text"
-              class="form-input"
-              [class.error]="formErrors['importateur']"
-              [(ngModel)]="demande.importateur"
-              placeholder="Nom de la société importatrice">
-            <span class="error-message" *ngIf="formErrors['importateur']">
-              {{ formErrors['importateur'] }}
-            </span>
-          </div>
-
-          <!-- Pays Origine -->
-          <div class="form-group">
-            <label class="form-label">
-              Pays d'Origine <span class="required">*</span>
-            </label>
-            <select
-              class="form-input"
-              [class.error]="formErrors['paysOrigine']"
-              [(ngModel)]="demande.paysOrigine">
-              <option value="">-- Sélectionner --</option>
-              <option *ngFor="let p of paysList" [value]="p">{{ p }}</option>
-            </select>
-            <span class="error-message" *ngIf="formErrors['paysOrigine']">
-              {{ formErrors['paysOrigine'] }}
-            </span>
-          </div>
-
-          <!-- Type Produit -->
-          <div class="form-group">
-            <label class="form-label">
-              Type de Produit <span class="required">*</span>
-            </label>
-            <select
-              class="form-input"
-              [class.error]="formErrors['typeProduit']"
-              [(ngModel)]="demande.typeProduit">
-              <option value="">-- Sélectionner --</option>
-              <option *ngFor="let t of typesProduit" [value]="t">{{ t }}</option>
-            </select>
-            <span class="error-message" *ngIf="formErrors['typeProduit']">
-              {{ formErrors['typeProduit'] }}
-            </span>
-          </div>
-
-          <!-- Nom Dossier -->
-          <div class="form-group">
-            <label class="form-label">Nom du Dossier</label>
-            <input
-              type="text"
-              class="form-input"
-              [(ngModel)]="demande.nomDossier"
-              placeholder="Description courte">
-          </div>
-
-          <!-- Code SH -->
-          <div class="form-group">
-            <label class="form-label">
-              Code SH <span class="required">*</span>
-            </label>
-            <input
-              type="text"
-              class="form-input"
-              [class.error]="formErrors['codeSH']"
-              [(ngModel)]="demande.codeSH"
-              placeholder="ex: 6109.10.00">
-            <span class="error-message" *ngIf="formErrors['codeSH']">
-              {{ formErrors['codeSH'] }}
-            </span>
-          </div>
-
-          <!-- Quantité -->
-          <div class="form-group">
-            <label class="form-label">
-              Quantité <span class="required">*</span>
-            </label>
-            <input
-              type="number"
-              class="form-input"
-              [class.error]="formErrors['quantite']"
-              [(ngModel)]="demande.quantite"
-              min="0"
-              placeholder="0">
-            <span class="error-message" *ngIf="formErrors['quantite']">
-              {{ formErrors['quantite'] }}
-            </span>
-          </div>
-
-          <!-- Fournisseur -->
-          <div class="form-group">
-            <label class="form-label">
-              Fournisseur <span class="required">*</span>
-            </label>
-            <input
-              type="text"
-              class="form-input"
-              [class.error]="formErrors['fournisseur']"
-              [(ngModel)]="demande.fournisseur"
-              placeholder="Nom du fournisseur">
-            <span class="error-message" *ngIf="formErrors['fournisseur']">
-              {{ formErrors['fournisseur'] }}
-            </span>
-          </div>
-
-          <!-- Mode Transport -->
-          <div class="form-group">
-            <label class="form-label">Mode de Transport</label>
-            <select class="form-input" [(ngModel)]="demande.modeTransport">
-              <option *ngFor="let m of modesTransport" [value]="m.value">
-                {{ m.label }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Devise -->
-          <div class="form-group">
-            <label class="form-label">Devise</label>
-            <select class="form-input" [(ngModel)]="demande.devise">
-              <option *ngFor="let d of devises" [value]="d">{{ d }}</option>
-            </select>
-          </div>
-
-          <!-- Valeur Estimée -->
-          <div class="form-group">
-            <label class="form-label">Valeur Estimée</label>
-            <input
-              type="number"
-              class="form-input"
-              [(ngModel)]="demande.valeurEstimee"
-              min="0"
-              placeholder="0.00">
-          </div>
-
-          <!-- Date Arrivée -->
-          <div class="form-group">
-            <label class="form-label">Date d'Arrivée Prévue</label>
-            <input
-              type="date"
-              class="form-input"
-              [(ngModel)]="demande.dateArrivee">
-          </div>
-
+        <div class="form-group">
+          <label>Importateur <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="dossier.importateur"
+                 placeholder="Nom de la societe ou de la personne" />
         </div>
+
+        <div class="form-group">
+          <label>Pays d'origine <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="dossier.paysOrigine"
+                 placeholder="Ex : Chine, France, USA..." />
+        </div>
+
+        <div class="form-group">
+          <label>Type de produit <span class="required">*</span></label>
+          <input type="text" [(ngModel)]="dossier.typeProduit"
+                 placeholder="Ex : Electronique, Textile, Alimentaire..." />
+        </div>
+
+        <div class="form-group">
+          <label>Quantite</label>
+          <input type="number" [(ngModel)]="dossier.quantite" min="0" />
+        </div>
+
+        <div class="form-group">
+          <label>Valeur (devise)</label>
+          <input type="text" [(ngModel)]="dossier.valeur"
+                 placeholder="Ex : 50 000 USD" />
+        </div>
+
+        <div class="form-group">
+          <label>Code SH</label>
+          <input type="text" [(ngModel)]="dossier.codeSH"
+                 placeholder="Code douanier harmonise" />
+        </div>
+
+        <div class="form-group">
+          <label>Fournisseur</label>
+          <input type="text" [(ngModel)]="dossier.fournisseur"
+                 placeholder="Nom du fournisseur etranger" />
+        </div>
+
+        <div class="form-group">
+          <label>Date de depot</label>
+          <input type="date" [(ngModel)]="dossier.dateDepot" />
+        </div>
+
       </div>
 
-      <div class="form-card-footer">
-        <button class="btn btn-secondary" (click)="resetDemande()">
-          🔄 Réinitialiser
-        </button>
-        <button
-          class="btn btn-primary"
-          (click)="demarrerProcessus()"
-          [disabled]="loadingAction">
-          <span *ngIf="!loadingAction">🚀 Démarrer le Processus</span>
-          <span *ngIf="loadingAction">⏳ Démarrage en cours...</span>
+      <div class="form-actions">
+        <button class="btn-primary" (click)="soumettreDossier()" [disabled]="loading">
+          {{ loading ? 'Envoi en cours...' : 'Soumettre le dossier' }}
         </button>
       </div>
+
     </div>
-  </section>
+  }
 
-  <!-- ============================================================
-       ONGLET 2 : TÂCHES
-       ============================================================ -->
-  <section class="content-section" *ngIf="activeTab === 'taches'">
+  <!-- ══════════════════════════════════════════
+       ONGLET 2 : MES DOSSIERS
+       ══════════════════════════════════════════ -->
+  @if (activeTab === 'mes-dossiers') {
+    <div>
 
-    <!-- Filtres -->
-    <div class="filters-wrapper">
-      <div class="filter-group">
-        <label>Rechercher</label>
-        <div class="search-box">
-          <input
-            type="text"
-            class="search-input"
-            [(ngModel)]="searchTache"
-            (input)="appliquerFiltresTaches()"
-            placeholder="Nom, assigné, instance...">
-          <span class="search-icon">🔍</span>
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card attente">
+          <div class="stat-num">{{ nbEnAttente }}</div>
+          <div class="stat-label">En attente</div>
+        </div>
+        <div class="stat-card encours">
+          <div class="stat-num">{{ nbEnCours }}</div>
+          <div class="stat-label">En cours</div>
+        </div>
+        <div class="stat-card valide">
+          <div class="stat-num">{{ nbValide }}</div>
+          <div class="stat-label">Approuves</div>
+        </div>
+        <div class="stat-card refuse">
+          <div class="stat-num">{{ nbRefuse }}</div>
+          <div class="stat-label">Refuses</div>
         </div>
       </div>
 
-      <div class="filter-group">
-        <label>Phase</label>
-        <select
-          class="select-input"
-          [(ngModel)]="filterPhase"
-          (change)="appliquerFiltresTaches()">
-          <option value="TOUTES">Toutes les phases</option>
-          <option *ngFor="let p of phasesUniques" [value]="p">{{ p }}</option>
-        </select>
+      <!-- Filtres -->
+      <div class="filtres">
+        <button [class.active]="filtre === 'TOUS'"       (click)="filtre = 'TOUS'">Tous</button>
+        <button [class.active]="filtre === 'EN_ATTENTE'" (click)="filtre = 'EN_ATTENTE'">En attente</button>
+        <button [class.active]="filtre === 'EN_COURS'"   (click)="filtre = 'EN_COURS'">En cours</button>
+        <button [class.active]="filtre === 'VALIDE'"     (click)="filtre = 'VALIDE'">Approuves</button>
+        <button [class.active]="filtre === 'REFUSE'"     (click)="filtre = 'REFUSE'">Refuses</button>
+        <button class="btn-refresh" (click)="chargerDossiers()" title="Rafraichir">&#8635;</button>
+        <button class="btn-export-excel" (click)="exportExcel()" [disabled]="dossiersFiltres.length === 0" title="Exporter en Excel">Excel</button>
+        <button class="btn-export-pdf"   (click)="exportPDF()"   [disabled]="dossiersFiltres.length === 0" title="Exporter en PDF">PDF</button>
       </div>
 
-      <div class="filter-group">
-        <label>Assigné à</label>
-        <select
-          class="select-input"
-          [(ngModel)]="filterAssignee"
-          (change)="appliquerFiltresTaches()">
-          <option value="TOUS">Tous</option>
-          <option *ngFor="let a of assigneesUniques" [value]="a">{{ a }}</option>
-        </select>
-      </div>
+      @if (loadingDossiers) {
+        <div class="loading-state">Chargement des dossiers...</div>
+      }
 
-      <div class="filter-group">
-        <label>Priorité</label>
-        <select
-          class="select-input"
-          [(ngModel)]="filterPriorite"
-          (change)="appliquerFiltresTaches()">
-          <option value="TOUTES">Toutes</option>
-          <option value="URGENTE">🔥 Urgente</option>
-          <option value="HAUTE">⚠️ Haute</option>
-          <option value="NORMALE">📌 Normale</option>
-          <option value="BASSE">⬇️ Basse</option>
-        </select>
-      </div>
+      @if (!loadingDossiers && dossiersFiltres.length === 0) {
+        <div class="empty-state">Aucun dossier trouve.</div>
+      }
 
-      <button class="btn btn-secondary" (click)="resetFiltresTaches()">
-        🔄 Réinitialiser
-      </button>
+      @if (!loadingDossiers && dossiersFiltres.length > 0) {
+        <table class="dossiers-table">
+          <thead>
+            <tr>
+              <th>N Dossier</th>
+              <th>Importateur</th>
+              <th>Produit</th>
+              <th>Pays</th>
+              <th>Date depot</th>
+              <th>Statut</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of dossiersFiltres; track d.id) {
+              <tr>
+                <td class="num-col">{{ d.numeroDossier || d.id }}</td>
+                <td>{{ d.importateur }}</td>
+                <td>{{ d.typeProduit }}</td>
+                <td>{{ d.paysOrigine }}</td>
+                <td>{{ formatDate(d.dateDepot) }}</td>
+                <td>
+                  <span class="statut-badge" [ngClass]="getStatutInfo(d.statut).cls">
+                    {{ getStatutInfo(d.statut).label }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-detail" (click)="voirDossier(d)">Voir</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
     </div>
+  }
 
-    <!-- Liste des tâches -->
-    <div class="table-wrapper" *ngIf="tachesFiltrees.length > 0">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th (click)="trierPar('taskName')" class="sortable">
-              Tâche
-              <span class="sort-icon" *ngIf="sortColumn === 'taskName'">
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
-            <th (click)="trierPar('phase')" class="sortable">Phase</th>
-            <th (click)="trierPar('assignee')" class="sortable">Assigné à</th>
-            <th>Priorité</th>
-            <th>Statut</th>
-            <th (click)="trierPar('dateEcheance')" class="sortable">Échéance</th>
-            <th>Instance</th>
-            <th class="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="let tache of tachesPaginees; trackBy: trackByTacheId"
-            class="table-row">
-            <td>
-              <div class="cell-title">{{ tache.taskName }}</div>
-              <div class="cell-subtitle">{{ tache.description }}</div>
-            </td>
-            <td>
-              <span
-                class="phase-tag"
-                [style.background]="getPhaseColor(tache.phase)">
-                {{ tache.phase }}
-              </span>
-            </td>
-            <td>
-              <div class="assignee-cell">
-                <span class="assignee-avatar">{{ tache.assignee.charAt(0) }}</span>
-                {{ tache.assignee }}
-              </div>
-            </td>
-            <td>
-              <span class="priorite-badge" [ngClass]="getPrioriteClass(tache.priorite)">
-                {{ tache.priorite }}
-              </span>
-            </td>
-            <td>
-              <span class="statut-badge" [ngClass]="getStatutClass(tache.statut)">
-                {{ tache.statut }}
-              </span>
-            </td>
-            <td>
-              <span [class.en-retard]="estEnRetard(tache.dateEcheance)">
-                {{ formatDateCourte(tache.dateEcheance) }}
-                <span *ngIf="estEnRetard(tache.dateEcheance)" class="retard-icon">⚠️</span>
-              </span>
-            </td>
-            <td>
-              <span class="code-badge">{{ tache.processInstanceId }}</span>
-            </td>
-            <td class="text-center">
-              <div class="action-buttons">
-                <button
-                  class="btn-icon"
-                  (click)="selectionnerTache(tache)"
-                  title="Traiter la tâche">
-                  ✏️
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- ══════════════════════════════════════════
+       MODAL DETAIL
+       ══════════════════════════════════════════ -->
+  @if (dossierSelectionne) {
+    <div class="modal-overlay" (click)="fermerDetail()">
+      <div class="modal-box" (click)="$event.stopPropagation()">
 
-      <!-- Pagination -->
-      <div class="table-footer" *ngIf="totalPagesTaches > 1">
-        <div class="table-info">
-          Affichage de <strong>{{ tachesPaginees.length }}</strong> sur
-          <strong>{{ tachesFiltrees.length }}</strong> tâche(s)
+        <div class="modal-header">
+          <h3>Dossier {{ dossierSelectionne.numeroDossier || dossierSelectionne.id }}</h3>
+          <button class="btn-close" (click)="fermerDetail()">&#10005;</button>
         </div>
-        <div class="table-pagination">
-          <button
-            class="pagination-btn"
-            (click)="pagePrecedente('taches')"
-            [disabled]="currentPageTaches === 1">
-            ← Précédent
-          </button>
-          <span class="pagination-info">
-            Page {{ currentPageTaches }} / {{ totalPagesTaches }}
-          </span>
-          <button
-            class="pagination-btn"
-            (click)="pageSuivante('taches')"
-            [disabled]="currentPageTaches === totalPagesTaches">
-            Suivant →
-          </button>
-        </div>
-      </div>
-    </div>
 
-    <!-- État vide -->
-    <div class="empty-state" *ngIf="tachesFiltrees.length === 0 && !loading">
-      <div class="empty-icon">📭</div>
-      <h3>Aucune tâche trouvée</h3>
-      <p>Il n'y a pas de tâche correspondant à vos critères</p>
-    </div>
-  </section>
+        <div class="modal-body">
 
-  <!-- ============================================================
-       ONGLET 3 : INSTANCES
-       ============================================================ -->
-  <section class="content-section" *ngIf="activeTab === 'instances'">
-
-    <!-- Filtres -->
-    <div class="filters-wrapper">
-      <div class="filter-group">
-        <label>Rechercher</label>
-        <div class="search-box">
-          <input
-            type="text"
-            class="search-input"
-            [(ngModel)]="searchInstance"
-            (input)="appliquerFiltresInstances()"
-            placeholder="ID, importateur...">
-          <span class="search-icon">🔍</span>
-        </div>
-      </div>
-
-      <div class="filter-group">
-        <label>Statut</label>
-        <select
-          class="select-input"
-          [(ngModel)]="filterStatutInstance"
-          (change)="appliquerFiltresInstances()">
-          <option value="TOUS">Tous</option>
-          <option value="EN_COURS">⚙️ En cours</option>
-          <option value="TERMINE">✅ Terminé</option>
-          <option value="SUSPENDU">⏸️ Suspendu</option>
-          <option value="ANNULE">❌ Annulé</option>
-        </select>
-      </div>
-
-      <button class="btn btn-secondary" (click)="resetFiltresInstances()">
-        🔄 Réinitialiser
-      </button>
-
-      <button class="btn btn-outline" (click)="exporterInstances()">
-        📥 Exporter CSV
-      </button>
-    </div>
-
-    <!-- Liste des instances -->
-    <div class="table-wrapper" *ngIf="instancesFiltrees.length > 0">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th (click)="trierPar('id')" class="sortable">ID Instance</th>
-            <th (click)="trierPar('importateur')" class="sortable">Importateur</th>
-            <th>Phase Actuelle</th>
-            <th>Progression</th>
-            <th>Statut</th>
-            <th (click)="trierPar('startTime')" class="sortable">Date Début</th>
-            <th (click)="trierPar('endTime')" class="sortable">Date Fin</th>
-            <th class="text-center">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="let instance of instancesPaginees; trackBy: trackByInstanceId"
-            class="table-row">
-            <td>
-              <span class="code-badge">{{ instance.id }}</span>
-            </td>
-            <td class="cell-title">{{ instance.importateur }}</td>
-            <td>
-              <span
-                class="phase-tag"
-                [style.background]="getPhaseColor(instance.phaseActuelle || '')">
-                {{ instance.phaseActuelle }}
-              </span>
-            </td>
-            <td>
-              <div class="progress-container">
-                <div class="progress-bar">
-                  <div
-                    class="progress-fill"
-                    [style.width.%]="instance.progression || 0"
-                    [class.complete]="instance.progression === 100">
-                  </div>
-                </div>
-                <span class="progress-text">{{ instance.progression || 0 }}%</span>
-              </div>
-            </td>
-            <td>
-              <span class="statut-badge" [ngClass]="getStatutClass(instance.statut)">
-                {{ instance.statut }}
-              </span>
-            </td>
-            <td>{{ formatDate(instance.startTime) }}</td>
-            <td>{{ formatDate(instance.endTime) }}</td>
-            <td class="text-center">
-              <div class="action-buttons">
-                <button
-                  class="btn-icon"
-                  (click)="voirVariables(instance.id)"
-                  title="Voir détails">
-                  👁️
-                </button>
-                <button
-                  class="btn-icon"
-                  *ngIf="instance.statut === 'EN_COURS'"
-                  (click)="suspendreInstance(instance.id)"
-                  title="Suspendre">
-                  ⏸️
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <!-- Pagination -->
-      <div class="table-footer" *ngIf="totalPagesInstances > 1">
-        <div class="table-info">
-          Affichage de <strong>{{ instancesPaginees.length }}</strong> sur
-          <strong>{{ instancesFiltrees.length }}</strong> instance(s)
-        </div>
-        <div class="table-pagination">
-          <button
-            class="pagination-btn"
-            (click)="pagePrecedente('instances')"
-            [disabled]="currentPageInstances === 1">
-            ← Précédent
-          </button>
-          <span class="pagination-info">
-            Page {{ currentPageInstances }} / {{ totalPagesInstances }}
-          </span>
-          <button
-            class="pagination-btn"
-            (click)="pageSuivante('instances')"
-            [disabled]="currentPageInstances === totalPagesInstances">
-            Suivant →
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- État vide -->
-    <div class="empty-state" *ngIf="instancesFiltrees.length === 0 && !loading">
-      <div class="empty-icon">📭</div>
-      <h3>Aucune instance trouvée</h3>
-      <p>Démarrez un nouveau processus pour commencer</p>
-    </div>
-  </section>
-
-  <!-- ============================================================
-       MODAL : TRAITER TÂCHE
-       ============================================================ -->
-  <div class="modal-backdrop" *ngIf="tacheSelectionnee" (click)="annulerTache()">
-    <div class="modal-dialog" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>📝 Traiter la Tâche</h2>
-        <button class="btn-close" (click)="annulerTache()">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="task-details">
-          <div class="detail-item">
-            <span class="detail-label">Tâche :</span>
-            <strong>{{ tacheSelectionnee.taskName }}</strong>
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Phase :</span>
-            <span class="phase-tag" [style.background]="getPhaseColor(tacheSelectionnee.phase)">
-              {{ tacheSelectionnee.phase }}
+          <div class="detail-statut">
+            <span class="statut-badge lg" [ngClass]="getStatutInfo(dossierSelectionne.statut).cls">
+              {{ getStatutInfo(dossierSelectionne.statut).label }}
             </span>
           </div>
-          <div class="detail-item">
-            <span class="detail-label">Assigné à :</span>
-            {{ tacheSelectionnee.assignee }}
-          </div>
-          <div class="detail-item">
-            <span class="detail-label">Instance :</span>
-            <span class="code-badge">{{ tacheSelectionnee.processInstanceId }}</span>
-          </div>
-          <div class="detail-item" *ngIf="tacheSelectionnee.description">
-            <span class="detail-label">Description :</span>
-            <p>{{ tacheSelectionnee.description }}</p>
-          </div>
-        </div>
 
-        <div class="form-group full-width">
-          <label class="form-label">Commentaire</label>
-          <textarea
-            class="form-input"
-            rows="3"
-            [(ngModel)]="formData['commentaire']"
-            placeholder="Ajouter un commentaire (optionnel)">
-          </textarea>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="annulerTache()">
-          Annuler
-        </button>
-        <button
-          class="btn btn-primary"
-          (click)="completerTache()"
-          [disabled]="loadingAction">
-          ✅ Compléter la Tâche
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       MODAL : VARIABLES INSTANCE
-       ============================================================ -->
-  <div class="modal-backdrop" *ngIf="variablesInstance" (click)="fermerVariables()">
-    <div class="modal-dialog" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>📊 Détails de l'Instance {{ instanceSelectionnee }}</h2>
-        <button class="btn-close" (click)="fermerVariables()">✕</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="variables-grid">
-          <div class="variable-item">
-            <div class="variable-label">Importateur</div>
-            <div class="variable-value">{{ variablesInstance.importateur }}</div>
-          </div>
-          <div class="variable-item">
-            <div class="variable-label">Pays d'Origine</div>
-            <div class="variable-value">{{ variablesInstance.paysOrigine }}</div>
-          </div>
-          <div class="variable-item">
-            <div class="variable-label">Type Produit</div>
-            <div class="variable-value">{{ variablesInstance.typeProduit }}</div>
-          </div>
-          <div class="variable-item">
-            <div class="variable-label">Phase Actuelle</div>
-            <div class="variable-value">
-              <span class="phase-tag" [style.background]="getPhaseColor(variablesInstance.phase)">
-                {{ variablesInstance.phase }}
-              </span>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="detail-key">Importateur</span>
+              <span class="detail-val">{{ dossierSelectionne.importateur }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Pays d'origine</span>
+              <span class="detail-val">{{ dossierSelectionne.paysOrigine }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Type produit</span>
+              <span class="detail-val">{{ dossierSelectionne.typeProduit }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Quantite</span>
+              <span class="detail-val">{{ dossierSelectionne.quantite || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Valeur</span>
+              <span class="detail-val">{{ dossierSelectionne.valeur || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Code SH</span>
+              <span class="detail-val">{{ dossierSelectionne.codeSH || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Fournisseur</span>
+              <span class="detail-val">{{ dossierSelectionne.fournisseur || '—' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-key">Date depot</span>
+              <span class="detail-val">{{ formatDate(dossierSelectionne.dateDepot) }}</span>
             </div>
           </div>
-          <div class="variable-item">
-            <div class="variable-label">Statut</div>
-            <div class="variable-value">
-              <span class="statut-badge" [ngClass]="getStatutClass(variablesInstance.statut)">
-                {{ variablesInstance.statut }}
-              </span>
+
+          @if (dossierSelectionne.commentaire) {
+            <div class="detail-commentaire">
+              <b>Commentaire :</b> {{ dossierSelectionne.commentaire }}
             </div>
-          </div>
-          <div class="variable-item">
-            <div class="variable-label">Progression</div>
-            <div class="variable-value">
-              <div class="progress-container">
-                <div class="progress-bar">
-                  <div class="progress-fill" [style.width.%]="variablesInstance.progression"></div>
-                </div>
-                <span class="progress-text">{{ variablesInstance.progression }}%</span>
-              </div>
-            </div>
-          </div>
-          <div class="variable-item">
-            <div class="variable-label">Date Début</div>
-            <div class="variable-value">{{ formatDate(variablesInstance.dateDebut) }}</div>
-          </div>
-          <div class="variable-item">
-            <div class="variable-label">Date Fin</div>
-            <div class="variable-value">{{ formatDate(variablesInstance.dateFin) }}</div>
-          </div>
+          }
+
         </div>
       </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="fermerVariables()">
-          Fermer
-        </button>
-      </div>
     </div>
-  </div>
-
-  <!-- ============================================================
-       MODAL : CONFIRMATION
-       ============================================================ -->
-  <div class="modal-backdrop" *ngIf="showConfirmModal" (click)="fermerConfirmation()">
-    <div class="modal-dialog modal-sm" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>⚠️ {{ confirmTitle }}</h2>
-        <button class="btn-close" (click)="fermerConfirmation()">✕</button>
-      </div>
-      <div class="modal-body">
-        <p>{{ confirmMessage }}</p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" (click)="fermerConfirmation()">
-          Annuler
-        </button>
-        <button class="btn btn-primary" (click)="confirmer()">
-          Confirmer
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================================
-       TOASTS
-       ============================================================ -->
-  <div class="toasts-container">
-    <div
-      *ngFor="let toast of toasts"
-      class="toast"
-      [ngClass]="'toast-' + toast.type">
-      <div class="toast-content">
-        <span class="toast-icon">
-          {{ toast.type === 'success' ? '✅' :
-             toast.type === 'error' ? '❌' :
-             toast.type === 'warning' ? '⚠️' : 'ℹ️' }}
-        </span>
-        <div class="toast-message">
-          <strong>{{ toast.title }}</strong>
-          <p>{{ toast.message }}</p>
-        </div>
-      </div>
-      <button class="toast-close" (click)="fermerToast(toast.id)">✕</button>
-    </div>
-  </div>
+  }
 
 </div>

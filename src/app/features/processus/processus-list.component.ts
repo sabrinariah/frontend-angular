@@ -7,7 +7,7 @@ import { TacheService } from '../../core/services/tache.service';
 import { RegleMetierService } from '../../core/services/regle.service';
 import { Processus, Tache } from '../../models/processus.model';
 import { RegleMetier } from '../../models/regle.model';
-import { BpmnViewerComponent } from '../processus/bpmn-viewer.component';
+import { BpmnViewerComponent } from './bpmn-viewer.component';
 
 export type ChampType = 'string' | 'number' | 'date' | 'boolean' | 'enum' | 'textarea';
 export type OperateurCondition =
@@ -84,6 +84,12 @@ export interface BpmnElement {
   virtualTaches?: { nom: string; type: string; assignee?: string }[];
 }
 
+export interface SubprocessDirect {
+  actif: boolean;
+  nom: string;
+  taches: { nom: string; type: 'HUMAINE' | 'SYSTEME'; assignee?: string }[];
+}
+
 export interface BpmnEdge {
   id: string;
   from: string;
@@ -134,9 +140,10 @@ export class ProcessusListComponent implements OnInit {
 
   formTaskOpen: Tache | null = null;
   isNewTask = false;
-  editorTab: 'info' | 'champs' | 'regles' | 'donnees' = 'info';
+  editorTab: 'info' | 'champs' | 'regles' | 'donnees' | 'subprocess' = 'info';
   currentChamps: ChampDynamique[] = [];
   currentRegles: RegleTransition[] = [];
+  currentSubprocess: SubprocessDirect = { actif: false, nom: '', taches: [] };
   formValues: Record<string, any> = {};
   formError = '';
 
@@ -147,6 +154,18 @@ export class ProcessusListComponent implements OnInit {
   viewMode: 'svg' | 'bpmn' = 'svg';
   generatedBpmnUrl: string | null = null;
   private originalFileBpmn: string | undefined = undefined;
+
+  // ── Modal nouveau processus ──
+  showNewProcessusModal = false;
+  newProcessusLoading = false;
+  newProcessusError = '';
+  newProcessus: Partial<Processus> = this.emptyProcessus();
+
+  // ── Modal modifier processus ──
+  showEditProcessusModal = false;
+  editProcessusLoading = false;
+  editProcessusError = '';
+  editProcessus: Partial<Processus> = {};
 
   reglesMetierDisponibles: RegleMetier[] = [];
   filtreCategorieRegle: string = 'TOUS';
@@ -379,6 +398,40 @@ export class ProcessusListComponent implements OnInit {
       });
       prevId = taskId;
       x += TASK_W + H_GAP;
+
+      // ── Subprocess direct (sans condition) ──
+      const spDirect = this.getSubprocessDirect(t);
+      if (spDirect?.actif && (spDirect.taches?.length ?? 0) > 0) {
+        const spId = 'sp_direct_' + t.id;
+        const spColor = '#6366f1';
+        const spTaskIds: string[] = [];
+
+        spDirect.taches.forEach((vt, vi) => {
+          const vtId = `${spId}_task_${vi}`;
+          spTaskIds.push(vtId);
+          elements.push({
+            type: 'subprocess', id: vtId,
+            x, y: LANE_TOP_Y - this.SP_TASK_H / 2,
+            width: this.SP_TASK_W, height: this.SP_TASK_H,
+            label: vt.nom, sublabel: vt.type,
+            isVirtual: true, subprocessId: spId, subprocessColor: spColor,
+            lane: 0
+          });
+          x += this.SP_TASK_W + this.SP_H_GAP;
+        });
+
+        edges.push({
+          id: `e_sp_enter_${taskId}`, from: taskId, to: spTaskIds[0],
+          branchType: 'normal', routing: 'straight'
+        });
+        for (let vi = 0; vi < spTaskIds.length - 1; vi++) {
+          edges.push({
+            id: `e_sp_inner_${vi}_${t.id}`, from: spTaskIds[vi], to: spTaskIds[vi + 1],
+            branchType: 'normal', routing: 'straight'
+          });
+        }
+        prevId = spTaskIds[spTaskIds.length - 1];
+      }
 
       const regles = this.getRegles(t);
       if (regles.length > 0) {
@@ -1214,6 +1267,7 @@ ${edgesXml}
       processusId: this.selectedProcessus.id, formData: ''
     };
     this.currentChamps = []; this.currentRegles = []; this.formValues = {};
+    this.currentSubprocess = { actif: false, nom: '', taches: [] };
     this.formError = ''; this.editorTab = 'info';
   }
 
@@ -1242,12 +1296,14 @@ ${edgesXml}
       };
     });
     this.formValues = { ...this.getValeurs(tache) };
+    this.currentSubprocess = this.getSubprocessDirect(tache) || { actif: false, nom: '', taches: [] };
     this.formError = ''; this.editorTab = 'info';
   }
 
   closeTaskForm() {
     this.formTaskOpen = null;
     this.currentChamps = []; this.currentRegles = [];
+    this.currentSubprocess = { actif: false, nom: '', taches: [] };
     this.formValues = {}; this.formError = '';
   }
 
@@ -1323,7 +1379,7 @@ ${edgesXml}
       }
     }
 
-    const evaluation = this.getEvaluationResult();
+    const evaluation = this.editorTab === 'donnees' ? this.getEvaluationResult() : null;
     if (evaluation) this.formTaskOpen.statut = 'TERMINE';
 
     const payload: Tache = {
@@ -1334,7 +1390,7 @@ ${edgesXml}
       statut: this.formTaskOpen.statut,
       ordre: this.formTaskOpen.ordre,
       processusId: this.formTaskOpen.processusId,
-      formData: JSON.stringify({ champs: this.currentChamps, regles: this.currentRegles, valeurs: this.formValues })
+      formData: JSON.stringify({ champs: this.currentChamps, regles: this.currentRegles, valeurs: this.formValues, subprocess: this.currentSubprocess })
     };
 
     const obs = (!this.isNewTask && this.formTaskOpen.id)
@@ -1442,6 +1498,32 @@ ${edgesXml}
 
   removeRegle(i: number) { this.currentRegles.splice(i, 1); }
 
+  // ── Subprocess direct (sans condition) ──────────────────────
+  getSubprocessDirect(t: Tache): SubprocessDirect | null {
+    try {
+      if (!t.formData) return null;
+      const data = JSON.parse(t.formData);
+      return data.subprocess?.taches ? data.subprocess : null;
+    } catch { return null; }
+  }
+
+  hasSubprocessDirect(t: Tache): boolean {
+    const sp = this.getSubprocessDirect(t);
+    return !!(sp?.actif && sp.taches?.length > 0);
+  }
+
+  addSubprocessDirectTache(): void {
+    if (!this.currentSubprocess.taches) this.currentSubprocess.taches = [];
+    this.currentSubprocess.taches.push({ nom: 'Nouvelle étape', type: 'HUMAINE', assignee: '' });
+  }
+
+  removeSubprocessDirectTache(i: number): void {
+    this.currentSubprocess.taches.splice(i, 1);
+    if (this.currentSubprocess.taches.length === 0) {
+      this.currentSubprocess.actif = false;
+    }
+  }
+
   autresTaches(): Tache[] {
     if (!this.formTaskOpen) return [];
     return this.tachesSorted().filter(t => t.ordre !== this.formTaskOpen!.ordre);
@@ -1513,9 +1595,14 @@ ${edgesXml}
   private evaluerRegle(r: RegleTransition, vals: Record<string, any>): boolean {
     if (r.modeRegle === 'metier') {
       if (!r.regleMetierIds?.length) return false;
+      const champIds = new Set(this.currentChamps.map(c => c.id));
       const resultats = r.regleMetierIds.map(rmId => {
         const rm = this.reglesMetierDisponibles.find(x => x.id === rmId);
         if (!rm?.conditions?.length) return false;
+        const champsManquants = rm.conditions.filter(c => c.champ && !champIds.has(c.champ));
+        if (champsManquants.length > 0) {
+          console.warn(`[Règle métier "${rm.code}"] Champs introuvables dans la tâche : ${champsManquants.map(c => c.champ).join(', ')}. Ajoutez ces champs dans l'onglet "Champs".`);
+        }
         return rm.conditions.every(c => this.evaluerConditionSimple(c.champ, c.operateur, c.valeur, vals));
       });
       return r.logiqueCombinaison === 'OU' ? resultats.some(ok => ok) : resultats.every(ok => ok);
@@ -1523,12 +1610,23 @@ ${edgesXml}
     return this.evaluerConditionSimple(r.champId || '', r.operateur || '==', r.valeur, vals);
   }
 
+  getChampsManquantsRegleMetier(r: RegleTransition): string[] {
+    if (r.modeRegle !== 'metier' || !r.regleMetierIds?.length) return [];
+    const champIds = new Set(this.currentChamps.map(c => c.id));
+    const manquants = new Set<string>();
+    r.regleMetierIds.forEach(rmId => {
+      const rm = this.reglesMetierDisponibles.find(x => x.id === rmId);
+      (rm?.conditions || []).forEach(c => { if (c.champ && !champIds.has(c.champ)) manquants.add(c.champ); });
+    });
+    return Array.from(manquants);
+  }
+
   private evaluerConditionSimple(champ: string, operateur: string, valeur: any, vals: Record<string, any>): boolean {
     if (!champ) return false;
     const v = vals[champ];
     switch (operateur) {
-      case '==': return this.norm(v) == this.norm(valeur);
-      case '!=': return this.norm(v) != this.norm(valeur);
+      case '==': return this.norm(v) === this.norm(valeur);
+      case '!=': return this.norm(v) !== this.norm(valeur);
       case '>':  return Number(v) > Number(valeur);
       case '<':  return Number(v) < Number(valeur);
       case '>=': return Number(v) >= Number(valeur);
@@ -1554,6 +1652,104 @@ ${edgesXml}
   }
 
   removeToast(id: number): void { this.toasts = this.toasts.filter(t => t.id !== id); }
+
+  // ── Modal nouveau processus ──────────────────────────────
+  private emptyProcessus(): Partial<Processus> {
+    return { nom: '', typeProcessus: '', dateDebut: '', dateFin: '', actif: true };
+  }
+
+  openNewProcessusModal(): void {
+    this.newProcessus = this.emptyProcessus();
+    this.newProcessusError = '';
+    this.showNewProcessusModal = true;
+  }
+
+  closeNewProcessusModal(): void {
+    this.showNewProcessusModal = false;
+    this.newProcessusError = '';
+  }
+
+  saveNewProcessus(): void {
+    if (!this.newProcessus.nom?.trim()) { this.newProcessusError = 'Le nom du processus est obligatoire.'; return; }
+    if (!this.newProcessus.typeProcessus)  { this.newProcessusError = 'Le type de processus est obligatoire.'; return; }
+    if (!this.newProcessus.dateDebut)      { this.newProcessusError = 'La date de début est obligatoire.'; return; }
+
+    this.newProcessusLoading = true;
+    this.newProcessusError = '';
+    this.processusService.create(this.newProcessus as Processus).subscribe({
+      next: () => {
+        this.newProcessusLoading = false;
+        this.closeNewProcessusModal();
+        this.load();
+        this.addToast('success', `Processus "${this.newProcessus.nom}" créé avec succès`);
+      },
+      error: (err) => {
+        this.newProcessusLoading = false;
+        this.newProcessusError = err?.error?.message || err?.error?.error || 'Erreur lors de la création';
+      }
+    });
+  }
+
+  // ── Modal modifier processus ─────────────────────────────
+  openEditProcessusModal(p: Processus): void {
+    this.editProcessus = { ...p };
+    this.editProcessusError = '';
+    this.showEditProcessusModal = true;
+  }
+
+  closeEditProcessusModal(): void {
+    this.showEditProcessusModal = false;
+    this.editProcessusError = '';
+  }
+
+  saveEditProcessus(): void {
+    if (!this.editProcessus.nom?.trim())    { this.editProcessusError = 'Le nom est obligatoire.'; return; }
+    if (!this.editProcessus.typeProcessus) { this.editProcessusError = 'Le type est obligatoire.'; return; }
+    if (!this.editProcessus.dateDebut)     { this.editProcessusError = 'La date de début est obligatoire.'; return; }
+    if (!this.editProcessus.id)            { this.editProcessusError = 'Identifiant manquant.'; return; }
+
+    this.editProcessusLoading = true;
+    this.editProcessusError = '';
+    this.processusService.update(this.editProcessus.id, this.editProcessus as Processus).subscribe({
+      next: () => {
+        this.editProcessusLoading = false;
+        const nom = this.editProcessus.nom;
+        this.closeEditProcessusModal();
+        this.load();
+        this.addToast('success', `Processus "${nom}" mis à jour avec succès`);
+      },
+      error: (err) => {
+        this.editProcessusLoading = false;
+        this.editProcessusError = err?.error?.message || err?.error?.error || 'Erreur lors de la mise à jour';
+      }
+    });
+  }
+
+  calculateEditDuration(): string {
+    if (!this.editProcessus.dateDebut || !this.editProcessus.dateFin) return '—';
+    const debut = new Date(this.editProcessus.dateDebut);
+    const fin   = new Date(this.editProcessus.dateFin);
+    const days  = Math.ceil((fin.getTime() - debut.getTime()) / 86400000);
+    if (days < 0)   return 'Date de fin invalide';
+    if (days === 0)  return 'Même jour';
+    if (days === 1)  return '1 jour';
+    if (days < 30)   return `${days} jours`;
+    if (days < 365)  return `${Math.round(days / 30)} mois (${days} j)`;
+    return `${(days / 365).toFixed(1)} an(s) (${days} j)`;
+  }
+
+  calculateNewDuration(): string {
+    if (!this.newProcessus.dateDebut || !this.newProcessus.dateFin) return '—';
+    const debut = new Date(this.newProcessus.dateDebut);
+    const fin   = new Date(this.newProcessus.dateFin);
+    const days  = Math.ceil((fin.getTime() - debut.getTime()) / 86400000);
+    if (days < 0)  return 'Date de fin invalide';
+    if (days === 0) return 'Même jour';
+    if (days === 1) return '1 jour';
+    if (days < 30)  return `${days} jours`;
+    if (days < 365) return `${Math.round(days / 30)} mois (${days} j)`;
+    return `${(days / 365).toFixed(1)} an(s) (${days} j)`;
+  }
 
   getBpmnDiagram(): BpmnDiagram { return this.bpmnDiagram; }
   resetBpmnDiagram(): void { this.bpmnDiagram = { elements: [], edges: [], viewWidth: 800, viewHeight: 280 }; }

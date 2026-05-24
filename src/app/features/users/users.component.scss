@@ -1,3 +1,4 @@
+@use 'sass:color';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 // ═══════════════════════════════════════════════════════════
@@ -453,7 +454,7 @@ $shadow-navy:    0 4px 14px rgba(16, 42, 67, .25);
   &.manager {
     background: $info-light;
     color: $info;
-    border-color: lighten($info, 35%);
+    border-color: color.adjust($info, $lightness: 35%);
   }
 
   // USER = Gris léger
