@@ -55,6 +55,11 @@ export class UserService {
     );
   }
 
+  // 🔹 créer un user
+  createUser(user: Partial<User> & { password?: string }): Observable<string> {
+    return this.http.post(`${this.apiUrl}/create`, user, { responseType: 'text' });
+  }
+
   // 🔹 Keycloak users (si utilisé)
   getKeycloakUsers(): Observable<User[]> {
     return this.http.get<User[]>(`${this.apiUrl}/keycloak`);

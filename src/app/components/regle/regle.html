@@ -11,10 +11,10 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-primary btn-lg" (click)="openCreateForm()" [disabled]="showFormPopup">
+        <button class="btn btn-orange btn-lg" (click)="openCreateForm()" [disabled]="showFormPopup">
           + Nouvelle Règle
         </button>
-        <app-nlp-input (regleCreee)="loadRegles()"></app-nlp-input>
+<!--app-nlp-input (regleCreee)="loadRegles()"></app-nlp-input-->
       </div>
     </div>
   </header>
@@ -77,7 +77,7 @@
             (click)="filtreStatut = 'INACTIVE'">Inactifs</button>
         </div>
         <div class="view-toggle">
-          <button class="toggle-btn" [class.active]="viewMode === 'cards'" (click)="viewMode = 'cards'">⊞ Cartes</button>
+          
           <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'">☰ Tableau</button>
         </div>
       </div>
@@ -87,65 +87,7 @@
   <!-- ═══════════ CONTENU ═══════════ -->
   <main class="content-section">
 
-    <!-- VUE CARTES -->
-    <div *ngIf="viewMode === 'cards'" class="cards-view">
-      <div *ngIf="reglesFiltrees().length === 0" class="empty-state">
-        <div class="empty-icon">📭</div>
-        <h3>Aucune règle trouvée</h3>
-        <p>Modifiez vos filtres ou créez une nouvelle règle</p>
-      </div>
-      <div class="cards-grid">
-        <div *ngFor="let r of reglesFiltrees(); trackBy: trackById" class="rule-card">
-          <div class="card-header">
-            <div class="card-title-section">
-              <span class="card-icon">{{ iconCategorie(r.categorie?.type) }}</span>
-              <div>
-                <div class="card-title">{{ r.code }}</div>
-                <div class="card-subtitle">{{ r.nom }}</div>
-              </div>
-            </div>
-            <span class="card-status" [class.active]="r.active" [class.inactive]="!r.active">
-              {{ r.active ? '✓ Active' : '✗ Inactif' }}
-            </span>
-          </div>
-          <div class="card-body">
-            <div class="detail-row">
-              <span class="detail-label">Catégorie</span>
-              <span class="detail-value">{{ r.categorie?.nom }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Action</span>
-              <span class="action-badge">{{ r.action }}</span>
-            </div>
-            <div class="detail-row" *ngIf="r.conditions && r.conditions.length > 0">
-              <span class="detail-label">Conditions</span>
-              <span class="detail-value">{{ r.conditions.length }}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Version</span>
-              <span class="version-badge">v{{ r.version || 1 }}</span>
-            </div>
-            <div class="utilisation-info" *ngIf="getUtilisations(r.id).length > 0">
-              <div class="util-label">Utilisée dans</div>
-              <ul class="util-list">
-                <li *ngFor="let u of getUtilisations(r.id)" class="util-item">
-                  <strong>{{ u.processusNom }}</strong> → {{ u.tacheNom }}
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="card-footer">
-            <button class="btn btn-sm btn-detail" (click)="openDetail(r)">👁 Détail</button>
-            <button class="btn btn-sm btn-outline" (click)="openEditForm(r)">✎ Modifier</button>
-            <button class="btn btn-sm btn-outline" (click)="toggleActive(r.id)">
-              {{ r.active ? '⏸ Désactiver' : '▶ Activer' }}
-            </button>
-            <button class="btn btn-sm btn-danger" (click)="confirmDelete(r)">🗑</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  
     <!-- VUE TABLEAU -->
     <div *ngIf="viewMode === 'table'" class="table-view">
       <div *ngIf="reglesFiltrees().length === 0" class="empty-state">
@@ -172,8 +114,7 @@
               <td><span class="code-badge">{{ r.code }}</span></td>
               <td class="nom-cell">{{ r.nom }}</td>
               <td>
-                <span class="categorie-tag"
-                  [style.backgroundColor]="couleurCategorie(r.categorie?.type)">
+                <span [class]="'categorie-tag cat-' + (r.categorie?.type || '').toLowerCase()">
                   {{ iconCategorie(r.categorie?.type) }} {{ r.categorie?.nom }}
                 </span>
               </td>
@@ -191,8 +132,8 @@
               <td>
                 <div class="action-buttons">
                   <button class="btn-icon btn-icon-detail" title="Détail" (click)="openDetail(r)">👁</button>
-                  <button class="btn-icon" title="Modifier" (click)="openEditForm(r)">✎</button>
-                  <button class="btn-icon" title="Basculer statut" (click)="toggleActive(r.id)">⊙</button>
+                  <button class="btn-icon btn-icon-edit" title="Modifier" (click)="openEditForm(r)">✎</button>
+                  <button class="btn-icon btn-icon-toggle" title="Basculer statut" (click)="toggleActive(r.id)">⊙</button>
                   <button class="btn-icon danger" title="Supprimer" (click)="confirmDelete(r)">🗑</button>
                 </div>
               </td>

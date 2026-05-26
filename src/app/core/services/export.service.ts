@@ -26,6 +26,16 @@ export class ExportService {
       .pipe(catchError(this.handleError));
   }
 
+  updateDossier(id: string, dossier: DossierExport): Observable<DossierExport> {
+    return this.http.put<DossierExport>(`${this.BASE}/dossiers/${id}`, dossier)
+      .pipe(catchError(this.handleError));
+  }
+
+  deleteDossier(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.BASE}/dossiers/${id}`)
+      .pipe(catchError(this.handleError));
+  }
+
   private handleError(err: HttpErrorResponse): Observable<never> {
     const message = err.error?.message || err.message || 'Erreur réseau';
     console.error(`[ExportService] HTTP ${err.status} — ${message}`, err);

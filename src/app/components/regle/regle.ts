@@ -41,7 +41,7 @@ export class RegleMetierComponent implements OnInit {
   filtreCategorieAffichage: string = 'TOUS';
   searchTerm: string = '';
   filtreStatut: 'TOUS' | 'ACTIVE' | 'INACTIVE' = 'TOUS';
-  viewMode: 'cards' | 'table' = 'cards';
+  viewMode:  'table' = 'table';
 
   showFormPopup = false;
   showDrlPreview = false;

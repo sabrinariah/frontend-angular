@@ -8,13 +8,13 @@
 
 // ── Variables ─────────────────────────────────
 // Bleu marine (principal)
-$navy-900:       #0a1929;
-$navy-800:       #102a43;
-$navy-700:       #1e3a5f;
-$navy-600:       #243b53;
-$navy-500:       #334e68;
-$navy-100:       #e3edf7;
-$navy-50:        #f0f5fa;
+$navy-900:       #0d47a1;
+$navy-800:       #1565c0;
+$navy-700:       #1976d2;
+$navy-600:       #1e88e5;
+$navy-500:       #42a5f5;
+$navy-100:       #dde8f5;
+$navy-50:        #eef4fb;
 
 // Orange (accent / actions principales)
 $orange:         #f97316;
@@ -50,11 +50,11 @@ $text-muted:     #64748b;
 $text-light:     #94a3b8;
 
 // Background
-$bg-page:        #f1f5f9;
+$bg-page:        #f0f4fb;
 $bg-card:        #ffffff;
-$bg-subtle:      #f8fafc;
-$border:         #e2e8f0;
-$border-strong:  #cbd5e1;
+$bg-subtle:      #f8fafd;
+$border:         #e2e8f2;
+$border-strong:  #c8d5e8;
 
 // Radius
 $radius-sm:      6px;
@@ -871,11 +871,65 @@ $shadow-navy:    0 4px 14px rgba(16, 42, 67, .25);
   }
 }
 
+// ── Modal large (formulaire) ──────────────────
+.modal-form-wide {
+  max-width: 640px;
+}
+
+// ── En-tête modal formulaire ──────────────────
+.modal-head-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modal-form-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, $orange 0%, $orange-dark 100%);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: $shadow-orange;
+  letter-spacing: -1px;
+  transition: all .25s;
+}
+
+.modal-head-sub {
+  font-size: 12px;
+  color: $text-muted;
+  margin: 3px 0 0;
+}
+
+// ── Corps modal formulaire ────────────────────
+.modal-body-form {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+// ── Erreur globale formulaire ─────────────────
+.form-global-error {
+  background: $danger-light;
+  color: $danger-dark;
+  border-left: 3px solid $danger;
+  border-radius: $radius-sm;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
 // ── Formulaire dans modal (Ajout/Édition user) ─
 .modal-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
 
   .form-group {
     display: flex;
@@ -890,8 +944,11 @@ $shadow-navy:    0 4px 14px rgba(16, 42, 67, .25);
       color: $navy-900;
       text-transform: uppercase;
       letter-spacing: .5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
 
-      .required { color: $orange-dark; margin-left: 2px; }
+      .required { color: $orange-dark; }
     }
 
     input,
@@ -904,26 +961,170 @@ $shadow-navy:    0 4px 14px rgba(16, 42, 67, .25);
       color: $text-primary;
       background: white;
       outline: none;
-      transition: all .18s;
+      transition: border-color .18s, box-shadow .18s;
       font-family: inherit;
+      box-sizing: border-box;
 
       &:focus {
         border-color: $orange;
         box-shadow: 0 0 0 3px rgba($orange, .15);
       }
 
-      &.error {
-        border-color: $danger;
-        background: $danger-light;
+      &.readonly-field {
+        background: $bg-subtle;
+        color: $text-muted;
+        cursor: not-allowed;
       }
+    }
+
+    &.has-error input,
+    &.has-error select {
+      border-color: $danger;
+      background: $danger-light;
     }
 
     .error-message {
       font-size: 11px;
       color: $danger;
       font-weight: 600;
-      margin-top: 2px;
     }
+  }
+
+  // ── Statut toggle inline ──
+  &.form-status-row,
+  .form-status-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+
+    label {
+      margin: 0;
+      min-width: 100px;
+    }
+
+    .status-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: $text-muted;
+
+      &.active { color: $success; }
+    }
+  }
+}
+
+// ── Ligne statut (full-width flex) ───────────
+.form-status-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 14px;
+  grid-column: 1 / -1;
+
+  label {
+    min-width: 100px;
+    margin: 0;
+  }
+
+  .status-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: $text-muted;
+    &.active { color: $success; }
+  }
+}
+
+// ── Rôles checkboxes ──────────────────────────
+.roles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1.5px solid $border-strong;
+  border-radius: $radius-md;
+  font-size: 12px;
+  font-weight: 600;
+  color: $text-secondary;
+  background: $bg-subtle;
+  cursor: pointer;
+  transition: all .18s;
+  user-select: none;
+
+  input[type="checkbox"] { display: none; }
+
+  .role-chip-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: $border-strong;
+    transition: background .18s;
+    flex-shrink: 0;
+  }
+
+  &:hover {
+    border-color: $orange;
+    background: $orange-light;
+    color: $orange-dark;
+  }
+
+  &.active {
+    border-color: $orange;
+    background: $orange-soft;
+    color: $orange-dark;
+
+    .role-chip-dot { background: $orange; }
+  }
+}
+
+// ── Spinner bouton ────────────────────────────
+.btn-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── Toast global liste ────────────────────────
+.global-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: $navy-900;
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: $radius-lg;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: $shadow-lg;
+  transition: transform .3s cubic-bezier(.16,1,.3,1), opacity .3s;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2000;
+  white-space: nowrap;
+  border-left: 4px solid $orange;
+
+  &.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  &.error {
+    background: $danger-dark;
+    border-left-color: $danger-light;
   }
 }
 

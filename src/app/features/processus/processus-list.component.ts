@@ -30,6 +30,12 @@ export interface SubProcess {
   tacheIds?: number[];
 }
 
+export interface SubprocessDirect {
+  actif: boolean;
+  nom: string;
+  taches: { nom: string; type: 'HUMAINE' | 'SYSTEME'; assignee?: string; branche?: 'OUI' | 'NON' | null }[];
+}
+
 export interface RegleTransition {
   id: string;
   nom: string;
@@ -42,15 +48,9 @@ export interface RegleTransition {
   actionDouaniere?: string;
   tacheOuiOrdres?: number[];
   tacheSinonOrdre?: number;
-  subprocessOuiId?: string;
-  subprocessSinonId?: string;
-  subprocessOuiNom?: string;
-  subprocessSinonNom?: string;
-  subprocessOuiTaches?: { nom: string; type: 'HUMAINE' | 'SYSTEME'; assignee?: string }[];
-  subprocessSinonTaches?: { nom: string; type: 'HUMAINE' | 'SYSTEME'; assignee?: string }[];
   tacheOuiOrdre?: number;
   tacheCibleOrdre: number;
-  cibleType: 'suivante' | 'specifique' | 'subprocess';
+  cibleType: 'suivante' | 'specifique';
   actif: boolean;
 }
 
@@ -79,15 +79,7 @@ export interface BpmnElement {
   isCorrection?: boolean;
   lane?: number;
   isVirtual?: boolean;
-  subprocessId?: string;
-  subprocessColor?: string;
   virtualTaches?: { nom: string; type: string; assignee?: string }[];
-}
-
-export interface SubprocessDirect {
-  actif: boolean;
-  nom: string;
-  taches: { nom: string; type: 'HUMAINE' | 'SYSTEME'; assignee?: string }[];
 }
 
 export interface BpmnEdge {
@@ -97,7 +89,7 @@ export interface BpmnEdge {
   label?: string;
   dashed?: boolean;
   branchType?: 'oui' | 'non' | 'normal';
-  routing?: 'straight' | 'down-loop' | 'oui-jump' | 'oui-fork' | 'subprocess-oui' | 'subprocess-non';
+  routing?: 'straight' | 'down-loop' | 'oui-jump' | 'oui-fork';
   isLoopBack?: boolean;
   jumpIndex?: number;
 }
@@ -141,9 +133,9 @@ export class ProcessusListComponent implements OnInit {
   formTaskOpen: Tache | null = null;
   isNewTask = false;
   editorTab: 'info' | 'champs' | 'regles' | 'donnees' | 'subprocess' = 'info';
+  currentSubprocess: SubprocessDirect = { actif: false, nom: '', taches: [] };
   currentChamps: ChampDynamique[] = [];
   currentRegles: RegleTransition[] = [];
-  currentSubprocess: SubprocessDirect = { actif: false, nom: '', taches: [] };
   formValues: Record<string, any> = {};
   formError = '';
 
@@ -160,17 +152,28 @@ export class ProcessusListComponent implements OnInit {
   newProcessusLoading = false;
   newProcessusError = '';
   newProcessus: Partial<Processus> = this.emptyProcessus();
+  newTypeSelect = '';
+  newTypeLibre = '';
 
   // ── Modal modifier processus ──
   showEditProcessusModal = false;
   editProcessusLoading = false;
   editProcessusError = '';
   editProcessus: Partial<Processus> = {};
+  editTypeSelect = '';
+  editTypeLibre = '';
+
+  private readonly predefinedTypes = ['import', 'export', 'transit', 'dedouanement', 'entreposage'];
 
   reglesMetierDisponibles: RegleMetier[] = [];
   filtreCategorieRegle: string = 'TOUS';
 
-  subprocessColors = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ec4899','#8b5cf6'];
+  // ── Popup liste des tâches ──
+  showTachesListPopup = false;
+  tachesListProcessus: Processus | null = null;
+  tachesList: Tache[] = [];
+  tachesListLoading = false;
+  selectedTacheDetail: Tache | null = null;
 
   private actionsSuggeresParCategorie: Record<string, string[]> = {
     'TAXE':          ['CALCULER_DROITS', 'APPLIQUER_TVA', 'EXONERER', 'TAXATION_REDUITE'],
@@ -190,10 +193,6 @@ export class ProcessusListComponent implements OnInit {
   private readonly H_GAP = 70;
   private readonly LANE_TOP_Y = 200;
   private readonly LANE_BOT_OFFSET = 130;
-  private readonly SP_TASK_W = 140;
-  private readonly SP_TASK_H = 60;
-  private readonly SP_H_GAP = 50;
-  private readonly SP_LANE_OFFSET = 150;
   private toastCounter = 0;
 
   ngOnInit() {
@@ -335,28 +334,6 @@ export class ProcessusListComponent implements OnInit {
   }
 
   // ============================================================
-  // CLIC SUR SUBPROCESS — Ouvre la règle parente
-  // ============================================================
-  onSubprocessClick(el: BpmnElement): void {
-    if (!el.subprocessId) return;
-    const match = el.subprocessId.match(/^sp_(oui|non)_(\d+)$/);
-    if (!match) return;
-    const tacheId = parseInt(match[2], 10);
-    const tacheParente = this.taches.find(t => t.id === tacheId);
-    if (!tacheParente) {
-      this.addToast('warning', 'Tâche parente introuvable');
-      return;
-    }
-    this.openTaskForm(tacheParente);
-    this.editorTab = 'regles';
-    this.addToast('info',
-      `📝 Édition du SubProcess "${el.label}"`,
-      `via la règle de la tâche "${tacheParente.nom}"`,
-      3500
-    );
-  }
-
-  // ============================================================
   // BUILD BPMN DIAGRAM (vue SVG dynamique)
   // ============================================================
   buildBpmnDiagram(): void {
@@ -382,7 +359,18 @@ export class ProcessusListComponent implements OnInit {
     const ordreToTaskId = new Map<number, string>();
     const ordreToGwId = new Map<number, string>();
 
-    sorted.forEach((t) => {
+    const SP_TASK_W = 130;
+    const SP_TASK_H = 56;
+    const SP_V_GAP  = 80;
+
+    // sous-tâches orphelines à relier en post-pass (tâche sans règle)
+    const pendingSpTasks: { spIds: string[]; tIdx: number }[] = [];
+    const pendingNonSpTasks: { lastSpId: string; tIdx: number }[] = [];
+    const gwToLastOuiSpId = new Map<string, string>();
+    const gwToLastNonSpId = new Map<string, string>();
+    let skipNextMainEdge = false;
+
+    sorted.forEach((t, tIdx) => {
       const taskId = 'task_' + t.id;
       elements.push({
         type: 'task', id: taskId,
@@ -392,48 +380,19 @@ export class ProcessusListComponent implements OnInit {
       });
       ordreToTaskId.set(t.ordre ?? 0, taskId);
 
-      edges.push({
-        id: `e_${prevId}_${taskId}`, from: prevId, to: taskId,
-        branchType: 'normal', routing: 'straight'
-      });
+      if (!skipNextMainEdge) {
+        const effectivePrev = gwToLastOuiSpId.get(prevId) ?? prevId;
+        edges.push({ id: `e_${effectivePrev}_${taskId}`, from: effectivePrev, to: taskId, branchType: 'normal', routing: 'straight' });
+      }
+      skipNextMainEdge = false;
       prevId = taskId;
       x += TASK_W + H_GAP;
 
-      // ── Subprocess direct (sans condition) ──
-      const spDirect = this.getSubprocessDirect(t);
-      if (spDirect?.actif && (spDirect.taches?.length ?? 0) > 0) {
-        const spId = 'sp_direct_' + t.id;
-        const spColor = '#6366f1';
-        const spTaskIds: string[] = [];
-
-        spDirect.taches.forEach((vt, vi) => {
-          const vtId = `${spId}_task_${vi}`;
-          spTaskIds.push(vtId);
-          elements.push({
-            type: 'subprocess', id: vtId,
-            x, y: LANE_TOP_Y - this.SP_TASK_H / 2,
-            width: this.SP_TASK_W, height: this.SP_TASK_H,
-            label: vt.nom, sublabel: vt.type,
-            isVirtual: true, subprocessId: spId, subprocessColor: spColor,
-            lane: 0
-          });
-          x += this.SP_TASK_W + this.SP_H_GAP;
-        });
-
-        edges.push({
-          id: `e_sp_enter_${taskId}`, from: taskId, to: spTaskIds[0],
-          branchType: 'normal', routing: 'straight'
-        });
-        for (let vi = 0; vi < spTaskIds.length - 1; vi++) {
-          edges.push({
-            id: `e_sp_inner_${vi}_${t.id}`, from: spTaskIds[vi], to: spTaskIds[vi + 1],
-            branchType: 'normal', routing: 'straight'
-          });
-        }
-        prevId = spTaskIds[spTaskIds.length - 1];
-      }
-
+      const sp = this.getSubprocessDirect(t);
+      const spIds: string[] = [];
       const regles = this.getRegles(t);
+
+      // Gateway de règle (OUI/NON) — sert aussi de fork pour les sous-tâches
       if (regles.length > 0) {
         const gwId = 'gw_' + t.id;
         const regle = regles[0];
@@ -445,12 +404,81 @@ export class ProcessusListComponent implements OnInit {
           sourceTache: t, lane: 0
         });
         ordreToGwId.set(t.ordre ?? 0, gwId);
-        edges.push({
-          id: `e_${prevId}_${gwId}`, from: prevId, to: gwId,
-          branchType: 'normal', routing: 'straight'
-        });
+        edges.push({ id: `e_${prevId}_${gwId}`, from: prevId, to: gwId, branchType: 'normal', routing: 'straight' });
         prevId = gwId;
         x += GW_SIZE + H_GAP;
+
+        // Sous-tâches : OUI branch (au-dessus), NON branch (en-dessous), neutres (parallèles)
+        const spTaches = sp ? sp.taches : [];
+        const ouiSpTaches  = spTaches.filter(st => st.branche === 'OUI');
+        const nonSpTaches  = spTaches.filter(st => st.branche === 'NON');
+        const neutralTaches = spTaches.filter(st => !st.branche);
+        const spX = x;
+
+        if (ouiSpTaches.length > 0) {
+          let prevSp = gwId;
+          ouiSpTaches.forEach((st, i) => {
+            const spY = LANE_TOP_Y - TASK_H - 70 - i * (SP_TASK_H + 24);
+            const spId = `sp_task_${t.id}_oui_${i}`;
+            elements.push({ type: 'task', id: spId, x: spX, y: spY, width: SP_TASK_W, height: SP_TASK_H,
+              label: st.nom || `Sous-tâche OUI ${i + 1}`, sublabel: st.type, lane: 1 });
+            edges.push({ id: `e_${prevSp}_${spId}`, from: prevSp, to: spId,
+              label: i === 0 ? 'Oui' : undefined, branchType: 'oui', routing: 'straight' });
+            prevSp = spId;
+          });
+          gwToLastOuiSpId.set(gwId, prevSp);
+        }
+
+        if (nonSpTaches.length > 0) {
+          let prevSp = gwId;
+          nonSpTaches.forEach((st, i) => {
+            const spY = LANE_TOP_Y + TASK_H / 2 + 60 + i * (SP_TASK_H + 24);
+            const spId = `sp_task_${t.id}_non_${i}`;
+            elements.push({ type: 'task', id: spId, x: spX, y: spY, width: SP_TASK_W, height: SP_TASK_H,
+              label: st.nom || `Sous-tâche NON ${i + 1}`, sublabel: st.type, lane: 1 });
+            edges.push({ id: `e_${prevSp}_${spId}`, from: prevSp, to: spId,
+              label: i === 0 ? 'Non' : undefined, branchType: 'non', routing: 'straight' });
+            prevSp = spId;
+          });
+          gwToLastNonSpId.set(gwId, prevSp);
+          pendingNonSpTasks.push({ lastSpId: prevSp, tIdx });
+        }
+
+        if (neutralTaches.length > 0) {
+          const N = neutralTaches.length;
+          neutralTaches.forEach((st, i) => {
+            const subY = LANE_TOP_Y + (i - (N - 1) / 2) * SP_V_GAP - SP_TASK_H / 2;
+            const spId = `sp_task_${t.id}_${i}`;
+            elements.push({ type: 'task', id: spId, x: spX, y: subY, width: SP_TASK_W, height: SP_TASK_H,
+              label: st.nom || `Sous-tâche ${i + 1}`, sublabel: st.type, lane: 1 });
+            edges.push({ id: `e_${gwId}_${spId}`, from: gwId, to: spId, branchType: 'oui', routing: 'straight' });
+            spIds.push(spId);
+          });
+          pendingSpTasks.push({ spIds: [...spIds], tIdx });
+        }
+
+        if (ouiSpTaches.length > 0 || nonSpTaches.length > 0 || neutralTaches.length > 0) {
+          x += SP_TASK_W + H_GAP;
+        }
+
+      } else if (sp && sp.taches.length > 0) {
+        // Pas de règle : sous-tâches branchent directement depuis la tâche
+        const N = sp.taches.length;
+        for (let i = 0; i < N; i++) {
+          const subY = LANE_TOP_Y + (i - (N - 1) / 2) * SP_V_GAP - SP_TASK_H / 2;
+          const spId = `sp_task_${t.id}_${i}`;
+          elements.push({
+            type: 'task', id: spId,
+            x, y: subY, width: SP_TASK_W, height: SP_TASK_H,
+            label: sp.taches[i].nom || `Sous-tâche ${i + 1}`,
+            sublabel: sp.taches[i].type, lane: 1
+          });
+          edges.push({ id: `e_${prevId}_${spId}`, from: prevId, to: spId, branchType: 'oui', routing: 'straight' });
+          spIds.push(spId);
+        }
+        x += SP_TASK_W + H_GAP;
+        pendingSpTasks.push({ spIds: [...spIds], tIdx });
+        skipNextMainEdge = true;
       }
     });
 
@@ -461,9 +489,19 @@ export class ProcessusListComponent implements OnInit {
       label: 'Fin', lane: 0
     });
 
-    const lastIsGateway = prevId.startsWith('gw_');
+    // Post-pass : sous-tâches sans rule gateway → tâche suivante ou fin
+    pendingSpTasks.forEach(({ spIds, tIdx }) => {
+      const nextT = sorted[tIdx + 1];
+      const nextId = nextT ? `task_${nextT.id}` : endId;
+      spIds.forEach(spId => {
+        edges.push({ id: `e_${spId}_${nextId}`, from: spId, to: nextId, branchType: 'normal', routing: 'straight' });
+      });
+    });
+
+    const effectiveLastPrev = gwToLastOuiSpId.get(prevId) ?? prevId;
+    const lastIsGateway = prevId.startsWith('gw_') && !gwToLastOuiSpId.has(prevId);
     edges.push({
-      id: `e_${prevId}_${endId}`, from: prevId, to: endId,
+      id: `e_${effectiveLastPrev}_${endId}`, from: effectiveLastPrev, to: endId,
       label: lastIsGateway ? 'Oui' : undefined,
       branchType: lastIsGateway ? 'oui' : 'normal',
       routing: 'straight'
@@ -479,7 +517,6 @@ export class ProcessusListComponent implements OnInit {
     });
 
     // BRANCHES OUI
-    let colorIdx = 0;
     sorted.forEach(t => {
       const regles = this.getRegles(t);
       regles.forEach(regle => {
@@ -487,54 +524,27 @@ export class ProcessusListComponent implements OnInit {
         if (!gwId) return;
 
         const nextInOrder = sorted.find(tt => (tt.ordre ?? 0) > (t.ordre ?? 0));
+        const cibles = this.getOuiOrdres(regle);
+        const lastOuiSpId = gwToLastOuiSpId.get(gwId);
 
-        if (regle.cibleType === 'subprocess' && regle.subprocessOuiTaches && regle.subprocessOuiTaches.length > 0) {
-          const spId = regle.subprocessOuiId || ('sp_oui_' + t.id);
-          const spColor = this.subprocessColors[colorIdx % this.subprocessColors.length];
-          colorIdx++;
-
-          const oldIdx = edges.findIndex(e => e.from === gwId && e.branchType === 'oui');
+        // Si le gateway a des sp-tâches OUI, elles gèrent le chemin OUI
+        if (lastOuiSpId) {
+          if (cibles.length === 0) return; // déjà routé via effectivePrev dans le main loop
+          // Cible spécifique : retirer l'edge sp_last → next normal, ajouter sp_last → cible
+          const oldIdx = edges.findIndex(e => e.from === lastOuiSpId);
           if (oldIdx >= 0) edges.splice(oldIdx, 1);
-
-          const spY = LANE_TOP_Y - this.SP_LANE_OFFSET - this.SP_TASK_H;
-          let spX = elements.find(el => el.id === gwId)!.x;
-
-          const spTaskIds: string[] = [];
-          regle.subprocessOuiTaches.forEach((vt, vi) => {
-            const vtId = `${spId}_task_${vi}`;
-            spTaskIds.push(vtId);
-            elements.push({
-              type: 'subprocess', id: vtId,
-              x: spX, y: spY,
-              width: this.SP_TASK_W, height: this.SP_TASK_H,
-              label: vt.nom, sublabel: vt.type,
-              isVirtual: true, subprocessId: spId, subprocessColor: spColor,
-              lane: -1
+          cibles.forEach((ordreCible, idx) => {
+            const cibleId = ordreToTaskId.get(ordreCible);
+            if (cibleId) edges.push({
+              id: `e_oui_sp_${lastOuiSpId}_${cibleId}_${idx}`,
+              from: lastOuiSpId, to: cibleId,
+              label: cibles.length > 1 ? `Oui #${idx + 1}` : undefined,
+              branchType: 'oui', routing: 'straight'
             });
-            spX += this.SP_TASK_W + this.SP_H_GAP;
-          });
-
-          edges.push({
-            id: `e_oui_sp_${gwId}_${spTaskIds[0]}`, from: gwId, to: spTaskIds[0],
-            label: 'Oui', branchType: 'oui', routing: 'subprocess-oui', jumpIndex: 0
-          });
-          for (let vi = 0; vi < spTaskIds.length - 1; vi++) {
-            edges.push({
-              id: `e_sp_${spTaskIds[vi]}_${spTaskIds[vi + 1]}`,
-              from: spTaskIds[vi], to: spTaskIds[vi + 1],
-              branchType: 'normal', routing: 'straight'
-            });
-          }
-          const nextMainId = nextInOrder ? ordreToTaskId.get(nextInOrder.ordre ?? 0) || endId : endId;
-          edges.push({
-            id: `e_sp_return_${spTaskIds[spTaskIds.length - 1]}_${nextMainId}`,
-            from: spTaskIds[spTaskIds.length - 1], to: nextMainId,
-            branchType: 'oui', routing: 'subprocess-oui', jumpIndex: 1
           });
           return;
         }
 
-        const cibles = this.getOuiOrdres(regle);
         if (cibles.length === 0) return;
 
         if (cibles.length === 1) {
@@ -574,45 +584,18 @@ export class ProcessusListComponent implements OnInit {
         const gwId = ordreToGwId.get(t.ordre ?? 0);
         if (!gwId) return;
 
-        if (regle.cibleType === 'subprocess' && regle.subprocessSinonTaches && regle.subprocessSinonTaches.length > 0) {
-          const spId = regle.subprocessSinonId || ('sp_non_' + t.id);
-          const spColor = '#ef4444';
-
-          const spY = LANE_TOP_Y + TASK_H + this.SP_LANE_OFFSET;
-          let spX = elements.find(el => el.id === gwId)!.x;
-
-          const spTaskIds: string[] = [];
-          regle.subprocessSinonTaches.forEach((vt, vi) => {
-            const vtId = `${spId}_task_${vi}`;
-            spTaskIds.push(vtId);
-            elements.push({
-              type: 'subprocess', id: vtId,
-              x: spX, y: spY,
-              width: this.SP_TASK_W, height: this.SP_TASK_H,
-              label: vt.nom, sublabel: vt.type,
-              isVirtual: true, subprocessId: spId, subprocessColor: spColor,
-              lane: 1
-            });
-            spX += this.SP_TASK_W + this.SP_H_GAP;
-          });
-
-          edges.push({
-            id: `e_non_sp_${gwId}_${spTaskIds[0]}`, from: gwId, to: spTaskIds[0],
-            label: 'Non', branchType: 'non', routing: 'subprocess-non'
-          });
-          for (let vi = 0; vi < spTaskIds.length - 1; vi++) {
-            edges.push({
-              id: `e_sp_non_${spTaskIds[vi]}_${spTaskIds[vi + 1]}`,
-              from: spTaskIds[vi], to: spTaskIds[vi + 1],
-              branchType: 'non', routing: 'straight'
-            });
-          }
-          return;
-        }
-
         if (regle.tacheSinonOrdre && regle.tacheSinonOrdre > 0) {
           const cibleId = ordreToTaskId.get(regle.tacheSinonOrdre);
-          if (gwId && cibleId) {
+          if (!cibleId) return;
+          const lastNonSpId = gwToLastNonSpId.get(gwId);
+          if (lastNonSpId) {
+            // Edge gw→sp_non_1 déjà ajouté, connecter la dernière sp-tâche NON → cible
+            edges.push({
+              id: `e_non_sp_${lastNonSpId}_${cibleId}`,
+              from: lastNonSpId, to: cibleId,
+              branchType: 'non', routing: 'straight'
+            });
+          } else {
             edges.push({
               id: `e_non_${gwId}_${cibleId}`, from: gwId, to: cibleId,
               label: 'Non', branchType: 'non',
@@ -624,19 +607,31 @@ export class ProcessusListComponent implements OnInit {
       });
     });
 
+    // Post-pass NON sp-tâches sans cible explicite → tâche suivante ou fin
+    pendingNonSpTasks.forEach(({ lastSpId, tIdx }) => {
+      const regle = this.getRegles(sorted[tIdx])?.[0];
+      if (regle?.tacheSinonOrdre && regle.tacheSinonOrdre > 0) return;
+      const nextT = sorted[tIdx + 1];
+      const targetId = nextT ? `task_${nextT.id}` : endId;
+      edges.push({ id: `e_non_sp_${lastSpId}_${targetId}`, from: lastSpId, to: targetId, branchType: 'non', routing: 'straight' });
+    });
+
     const hasBranchesNon = edges.some(e => e.branchType === 'non');
     const hasJumps = edges.some(e => e.routing === 'oui-jump');
-    const hasSubprocessOui = edges.some(e => e.routing === 'subprocess-oui');
-    const hasSubprocessNon = edges.some(e => e.routing === 'subprocess-non');
     const maxJumpIdx = Math.max(0, ...edges.filter(e => e.routing === 'oui-jump').map(e => e.jumpIndex ?? 0));
     const totalW = Math.max(x + EVT_R * 2 + 80, 900);
     const jumpTopSpace = hasJumps ? (80 + maxJumpIdx * 28) : 0;
-    const spOuiSpace = hasSubprocessOui ? this.SP_LANE_OFFSET + this.SP_TASK_H + 30 : 0;
-    const spNonSpace = hasSubprocessNon ? this.SP_LANE_OFFSET + this.SP_TASK_H + 30 : 0;
-    const loopSpace = hasBranchesNon && !hasSubprocessNon ? this.LANE_BOT_OFFSET + 50 : 0;
+    const loopSpace = hasBranchesNon ? this.LANE_BOT_OFFSET + 50 : 0;
 
-    const topExtra = Math.max(jumpTopSpace, spOuiSpace);
-    const botExtra = Math.max(loopSpace, spNonSpace);
+    // Espace vertical occupé par les sous-processus
+    const spElements = elements.filter(e => e.lane === 1);
+    const spTopY  = spElements.length > 0 ? Math.min(...spElements.map(e => e.y)) : LANE_TOP_Y;
+    const spBotY  = spElements.length > 0 ? Math.max(...spElements.map(e => e.y + e.height)) : LANE_TOP_Y;
+    const spTopExtra = spTopY < LANE_TOP_Y ? LANE_TOP_Y - spTopY + 30 : 0;
+    const spBotExtra = spBotY > LANE_TOP_Y + TASK_H ? spBotY - (LANE_TOP_Y + TASK_H) + 30 : 0;
+
+    const topExtra = Math.max(jumpTopSpace, spTopExtra);
+    const botExtra = Math.max(loopSpace, spBotExtra);
 
     const baseH = LANE_TOP_Y + TASK_H + 50;
     const totalH = baseH + botExtra + (topExtra > LANE_TOP_Y ? topExtra - LANE_TOP_Y : 0);
@@ -714,6 +709,10 @@ export class ProcessusListComponent implements OnInit {
       spBranche?: 'oui' | 'non';
       gatewayId?: string;
       internalNodes?: InternalNode[];
+      isSpTask?: boolean;
+      spTaskType?: string;
+      spTaskAssignee?: string;
+      spNodeIds?: string[];
     }
 
     interface InternalNode {
@@ -739,7 +738,8 @@ export class ProcessusListComponent implements OnInit {
     });
     curX += EVT_R*2 + H_GAP;
 
-    // ─── TÂCHES + GATEWAYS + SUBPROCESS ───
+    // ─── TÂCHES + GATEWAYS + SOUS-TÂCHES ───
+    const SP_Y_GAP = 100;
     sorted.forEach(t => {
       const tid = `Task_${t.id}`;
       nodes.push({
@@ -750,84 +750,35 @@ export class ProcessusListComponent implements OnInit {
       curX += TASK_W + H_GAP;
 
       const regles = this.getRegles(t);
+      const sp = this.getSubprocessDirect(t);
+
       if (regles.length > 0) {
         const gwId = `Gateway_${t.id}`;
-        const gwX = curX;
+        const spNodeIds: string[] = [];
         nodes.push({
           kind: 'gateway', id: gwId,
-          x: gwX, y: Y_CENTER - GW_SIZE/2, w: GW_SIZE, h: GW_SIZE,
-          label: 'SI/SINON', tache: t, regles
+          x: curX, y: Y_CENTER - GW_SIZE/2, w: GW_SIZE, h: GW_SIZE,
+          label: 'SI/SINON', tache: t, regles, spNodeIds
         });
         curX += GW_SIZE + H_GAP;
 
-        const regle = regles[0];
-
-        if (regle.cibleType === 'subprocess' && regle.subprocessOuiTaches?.length) {
-          const spId = `SubProcess_OUI_${t.id}`;
-          const numTaches = regle.subprocessOuiTaches.length;
-          const innerWidth = numTaches * (SP_INNER_W + SP_INNER_GAP) - SP_INNER_GAP;
-          const spW = innerWidth + SP_PADDING * 2;
-          const spH = SP_INNER_H + SP_PADDING * 2 + 20;
-          const spX = gwX + GW_SIZE + 20;
-          const spY = Y_CENTER - 230;
-
-          const internalNodes: InternalNode[] = [];
-          let ix = spX + SP_PADDING;
-          const iy = spY + SP_PADDING + 10;
-
-          regle.subprocessOuiTaches.forEach((vt, vi) => {
-            internalNodes.push({
-              kind: 'task', id: `${spId}_t${vi}`,
-              x: ix, y: iy,
-              w: SP_INNER_W, h: SP_INNER_H,
-              label: vt.nom, type: vt.type, assignee: vt.assignee
+        // Sous-tâches du sous-processus branchant depuis ce gateway
+        if (sp && sp.taches.length > 0) {
+          const N = sp.taches.length;
+          for (let i = 0; i < N; i++) {
+            const spY = Y_CENTER + (i - (N - 1) / 2) * SP_Y_GAP - TASK_H / 2;
+            const spId = `SpTask_${t.id}_${i}`;
+            nodes.push({
+              kind: 'task', id: spId,
+              x: curX, y: spY, w: TASK_W, h: TASK_H,
+              label: sp.taches[i].nom || `Sous-tâche ${i + 1}`,
+              isSpTask: true,
+              spTaskType: sp.taches[i].type,
+              spTaskAssignee: sp.taches[i].assignee
             });
-            ix += SP_INNER_W + SP_INNER_GAP;
-          });
-
-          nodes.push({
-            kind: 'subProcess', id: spId,
-            x: spX, y: spY, w: spW, h: spH,
-            label: regle.subprocessOuiNom || 'SubProcess OUI',
-            spTaches: regle.subprocessOuiTaches,
-            spBranche: 'oui',
-            gatewayId: gwId,
-            internalNodes
-          });
-        }
-
-        if (regle.cibleType === 'subprocess' && regle.subprocessSinonTaches?.length) {
-          const spId = `SubProcess_NON_${t.id}`;
-          const numTaches = regle.subprocessSinonTaches.length;
-          const innerWidth = numTaches * (SP_INNER_W + SP_INNER_GAP) - SP_INNER_GAP;
-          const spW = innerWidth + SP_PADDING * 2;
-          const spH = SP_INNER_H + SP_PADDING * 2 + 20;
-          const spX = gwX + GW_SIZE + 20;
-          const spY = Y_CENTER + 100;
-
-          const internalNodes: InternalNode[] = [];
-          let ix = spX + SP_PADDING;
-          const iy = spY + SP_PADDING + 10;
-
-          regle.subprocessSinonTaches.forEach((vt, vi) => {
-            internalNodes.push({
-              kind: 'task', id: `${spId}_t${vi}`,
-              x: ix, y: iy,
-              w: SP_INNER_W, h: SP_INNER_H,
-              label: vt.nom, type: vt.type, assignee: vt.assignee
-            });
-            ix += SP_INNER_W + SP_INNER_GAP;
-          });
-
-          nodes.push({
-            kind: 'subProcess', id: spId,
-            x: spX, y: spY, w: spW, h: spH,
-            label: regle.subprocessSinonNom || 'SubProcess NON',
-            spTaches: regle.subprocessSinonTaches,
-            spBranche: 'non',
-            gatewayId: gwId,
-            internalNodes
-          });
+            spNodeIds.push(spId);
+          }
+          curX += TASK_W + H_GAP;
         }
       }
     });
@@ -851,7 +802,8 @@ export class ProcessusListComponent implements OnInit {
     }
     const flows: Flow[] = [];
 
-    const mainFlow = nodes.filter(n => n.kind !== 'subProcess');
+    // mainFlow exclut les sous-tâches sp (elles sont gérées séparément)
+    const mainFlow = nodes.filter(n => n.kind !== 'subProcess' && !n.isSpTask);
 
     for (let i = 0; i < mainFlow.length - 1; i++) {
       const cur = mainFlow[i];
@@ -860,21 +812,20 @@ export class ProcessusListComponent implements OnInit {
       if (cur.kind === 'gateway' && cur.regles?.length) {
         const regle = cur.regles[0];
         const cibles = this.getOuiOrdres(regle);
+        const hasSp = (cur.spNodeIds?.length ?? 0) > 0;
 
-        if (regle.cibleType === 'subprocess' && regle.subprocessOuiTaches?.length) {
-          const spOui = nodes.find(n => n.id === `SubProcess_OUI_${cur.tache?.id}`);
-          if (spOui) {
+        if (hasSp) {
+          // Sous-tâches branchent depuis ce gateway → chaque sous-tâche → nxt
+          cur.spNodeIds!.forEach((spId, idx) => {
             flows.push({
-              id: `Flow_OUI_SP_${cur.id}`, from: cur.id, to: spOui.id,
-              name: `✓ ${regle.subprocessOuiNom || 'OUI'}`,
-              isCondition: true, condExpr: this.buildCondExpression(regle),
-              type: 'oui-sp'
+              id: `Flow_SP_GW_${cur.id}_${idx}`, from: cur.id, to: spId,
+              name: `✓ ${idx + 1}`, isCondition: true,
+              condExpr: this.buildCondExpression(regle), type: 'main'
             });
             flows.push({
-              id: `Flow_RET_OUI_SP_${cur.id}`, from: spOui.id, to: nxt.id,
-              type: 'sp-return'
+              id: `Flow_SP_${spId}_next`, from: spId, to: nxt.id, type: 'main'
             });
-          }
+          });
         } else if (cibles.length === 0) {
           flows.push({
             id: `Flow_OUI_${cur.id}`, from: cur.id, to: nxt.id,
@@ -895,19 +846,7 @@ export class ProcessusListComponent implements OnInit {
           });
         }
 
-        if (regle.cibleType === 'subprocess' && regle.subprocessSinonTaches?.length) {
-          const spNon = nodes.find(n => n.id === `SubProcess_NON_${cur.tache?.id}`);
-          if (spNon) {
-            flows.push({
-              id: `Flow_NON_SP_${cur.id}`, from: cur.id, to: spNon.id,
-              name: '✗ SINON', type: 'non-sp'
-            });
-            flows.push({
-              id: `Flow_RET_NON_SP_${cur.id}`, from: spNon.id, to: nxt.id,
-              type: 'sp-return'
-            });
-          }
-        } else if (regle.tacheSinonOrdre && regle.tacheSinonOrdre > 0) {
+        if (regle.tacheSinonOrdre && regle.tacheSinonOrdre > 0) {
           const cibleAlt = sorted.find(t => t.ordre === regle.tacheSinonOrdre);
           flows.push({
             id: `Flow_NON_${cur.id}`, from: cur.id,
@@ -973,9 +912,14 @@ ${innerFlows}
     </bpmn:subProcess>`;
         }
         case 'task': {
-          const t = n.tache!;
           const inF  = flows.filter(f => f.to   === n.id).map(f => `<bpmn:incoming>${f.id}</bpmn:incoming>`).join('');
           const outF = flows.filter(f => f.from === n.id).map(f => `<bpmn:outgoing>${f.id}</bpmn:outgoing>`).join('');
+          if (n.isSpTask) {
+            const tt = n.spTaskType === 'HUMAINE' ? 'bpmn:userTask' : 'bpmn:serviceTask';
+            const aa = n.spTaskAssignee ? ` camunda:assignee="${esc(n.spTaskAssignee)}"` : '';
+            return `    <${tt} id="${n.id}" name="${esc(n.label)}"${aa}>${inF}${outF}</${tt}>`;
+          }
+          const t = n.tache!;
           const tt = t.type === 'HUMAINE' ? 'bpmn:userTask' : 'bpmn:serviceTask';
           const aa = t.assignee ? ` camunda:assignee="${esc(t.assignee)}"` : '';
           return `    <${tt} id="${n.id}" name="${esc(t.nom)}"${aa}>${inF}${outF}</${tt}>`;
@@ -988,7 +932,6 @@ ${innerFlows}
           return `    <bpmn:exclusiveGateway id="${n.id}" name="${esc(n.label)}" gatewayDirection="Diverging"${defAttr}>${inF}${outF}</bpmn:exclusiveGateway>`;
         }
       }
-      return '';
     }).join('\n');
 
     const flowsXml = flows
@@ -1140,26 +1083,6 @@ ${edgesXml}
     const toCx   = to.x + to.width / 2;
     const toCy   = to.y + to.height / 2;
 
-    if (edge.routing === 'subprocess-oui') {
-      if (edge.jumpIndex === 0) {
-        const fromTopY = from.y;
-        const peakY    = Math.min(fromTopY, to.y) - 18;
-        const d = `M ${fromCx},${fromTopY} L ${fromCx},${peakY} L ${toCx},${peakY} L ${toCx},${to.y + to.height}`;
-        return { d, labelX: (fromCx + toCx) / 2, labelY: peakY - 8 };
-      } else {
-        const peakY    = Math.min(from.y, to.y) - 18;
-        const d = `M ${fromCx},${from.y} L ${fromCx},${peakY} L ${toCx},${peakY} L ${toCx},${to.y}`;
-        return { d, labelX: (fromCx + toCx) / 2, labelY: peakY - 8 };
-      }
-    }
-
-    if (edge.routing === 'subprocess-non') {
-      const fromBotY = from.y + from.height;
-      const peakY    = Math.max(fromBotY, to.y + to.height) + 20;
-      const d = `M ${fromCx},${fromBotY} L ${fromCx},${peakY} L ${toCx},${peakY} L ${toCx},${to.y}`;
-      return { d, labelX: (fromCx + toCx) / 2, labelY: fromBotY + 12 };
-    }
-
     if (edge.routing === 'down-loop') {
       const fromBotY = from.y + from.height;
       const toBotY   = to.y + to.height;
@@ -1291,20 +1214,23 @@ ${edgesXml}
         tacheSinonOrdre: r.tacheSinonOrdre || 0,
         cibleType: r.cibleType || 'suivante',
         tacheCibleOrdre: r.tacheCibleOrdre || 0,
-        subprocessOuiTaches: r.subprocessOuiTaches || [],
-        subprocessSinonTaches: r.subprocessSinonTaches || []
       };
     });
     this.formValues = { ...this.getValeurs(tache) };
-    this.currentSubprocess = this.getSubprocessDirect(tache) || { actif: false, nom: '', taches: [] };
+    try {
+      const data = JSON.parse(tache.formData || '{}');
+      const sp = data.subprocess || { actif: false, nom: '', taches: [] };
+      if (sp.taches) sp.taches.forEach((st: any) => { if (!st.branche) st.branche = ''; });
+      this.currentSubprocess = sp;
+    } catch { this.currentSubprocess = { actif: false, nom: '', taches: [] }; }
     this.formError = ''; this.editorTab = 'info';
   }
 
   closeTaskForm() {
     this.formTaskOpen = null;
     this.currentChamps = []; this.currentRegles = [];
-    this.currentSubprocess = { actif: false, nom: '', taches: [] };
     this.formValues = {}; this.formError = '';
+    this.currentSubprocess = { actif: false, nom: '', taches: [] };
   }
 
   toggleOuiCible(regle: RegleTransition, ordre: number): void {
@@ -1319,10 +1245,6 @@ ${edgesXml}
   }
 
   getOuiCiblesLabel(regle: RegleTransition): string {
-    if (regle.cibleType === 'subprocess') {
-      const n = regle.subprocessOuiTaches?.length || 0;
-      return n > 0 ? `SubProcess : ${n} tâche(s) virtuelle(s)` : 'SubProcess vide';
-    }
     const ordres = regle.tacheOuiOrdres || [];
     if (ordres.length === 0) {
       const suiv = this.getTacheSuivante();
@@ -1330,24 +1252,6 @@ ${edgesXml}
     }
     if (ordres.length === 1) return `#${ordres[0]} ${this.getTacheNameByOrdre(ordres[0])}`;
     return `${ordres.length} tâches en parallèle : ${ordres.map(o => `#${o}`).join(', ')}`;
-  }
-
-  addSubprocessOuiTache(regle: RegleTransition): void {
-    if (!regle.subprocessOuiTaches) regle.subprocessOuiTaches = [];
-    regle.subprocessOuiTaches.push({ nom: 'Nouvelle tâche', type: 'HUMAINE', assignee: '' });
-  }
-
-  removeSubprocessOuiTache(regle: RegleTransition, idx: number): void {
-    if (regle.subprocessOuiTaches) regle.subprocessOuiTaches.splice(idx, 1);
-  }
-
-  addSubprocessSinonTache(regle: RegleTransition): void {
-    if (!regle.subprocessSinonTaches) regle.subprocessSinonTaches = [];
-    regle.subprocessSinonTaches.push({ nom: 'Nouvelle tâche', type: 'HUMAINE', assignee: '' });
-  }
-
-  removeSubprocessSinonTache(regle: RegleTransition, idx: number): void {
-    if (regle.subprocessSinonTaches) regle.subprocessSinonTaches.splice(idx, 1);
   }
 
   saveTaskForm() {
@@ -1363,14 +1267,9 @@ ${edgesXml}
       if (r.modeRegle === 'simple' && !r.champId) {
         this.formError = `La règle "${r.nom || 'sans nom'}" : champ manquant.`; return;
       }
-      if (r.cibleType === 'subprocess') {
-        if (!r.subprocessOuiTaches || r.subprocessOuiTaches.length === 0) {
-          this.formError = `La règle "${r.nom || 'sans nom'}" : ajoutez au moins une tâche dans le SubProcess OUI.`; return;
-        }
-      }
     }
 
-    if (this.editorTab === 'donnees') {
+    if (!this.isNewTask && this.currentChamps.length > 0) {
       for (const c of this.currentChamps) {
         if (c.required) {
           const v = this.formValues[c.id];
@@ -1379,7 +1278,7 @@ ${edgesXml}
       }
     }
 
-    const evaluation = this.editorTab === 'donnees' ? this.getEvaluationResult() : null;
+    const evaluation = (!this.isNewTask && this.currentChamps.length > 0) ? this.getEvaluationResult() : null;
     if (evaluation) this.formTaskOpen.statut = 'TERMINE';
 
     const payload: Tache = {
@@ -1404,18 +1303,8 @@ ${edgesXml}
           let ordreCible: number;
           if (evaluation.match) {
             const ouiOrdres = this.getOuiOrdres(evaluation.regle);
-            if (evaluation.regle.cibleType === 'subprocess') {
-              this.loadTaches();
-              this.addToast('success', `✅ Règle « ${evaluation.regle.nom || 'sans nom'} » VALIDÉE`, `→ SubProcess OUI lancé`, 5000);
-              return;
-            }
             ordreCible = ouiOrdres.length > 0 ? ouiOrdres[0] : (this.getTacheSuivante()?.ordre ?? 0);
           } else {
-            if (evaluation.regle.cibleType === 'subprocess') {
-              this.loadTaches();
-              this.addToast('info', `↪️ Règle « ${evaluation.regle.nom || 'sans nom'} » non validée`, `→ SubProcess SINON lancé`, 5000);
-              return;
-            }
             ordreCible = evaluation.regle.tacheSinonOrdre ?? 0;
           }
 
@@ -1455,6 +1344,10 @@ ${edgesXml}
         this.deleting = false; this.tacheToDelete = null;
         if (this.formTaskOpen?.id === id) this.closeTaskForm();
         this.loadTaches();
+        if (this.showTachesListPopup && this.tachesListProcessus) {
+          this.tachesList = this.tachesList.filter(t => t.id !== id);
+          if (this.tachesListProcessus.id) this.taskCounts[this.tachesListProcessus.id] = this.tachesList.length;
+        }
         this.addToast('success', `Tâche "${nom}" supprimée`);
       },
       error: (err) => {
@@ -1490,38 +1383,48 @@ ${edgesXml}
       tacheSinonOrdre: 0,
       tacheCibleOrdre: 0,
       cibleType: 'suivante',
-      subprocessOuiTaches: [],
-      subprocessSinonTaches: [],
       actif: true
     });
   }
 
   removeRegle(i: number) { this.currentRegles.splice(i, 1); }
 
-  // ── Subprocess direct (sans condition) ──────────────────────
-  getSubprocessDirect(t: Tache): SubprocessDirect | null {
+  getSubprocessDirect(tache: Tache): SubprocessDirect | null {
     try {
-      if (!t.formData) return null;
-      const data = JSON.parse(t.formData);
-      return data.subprocess?.taches ? data.subprocess : null;
+      const data = JSON.parse(tache.formData || '{}');
+      const sp = data.subprocess as SubprocessDirect;
+      return sp?.actif && (sp?.taches?.length ?? 0) > 0 ? sp : null;
     } catch { return null; }
   }
 
-  hasSubprocessDirect(t: Tache): boolean {
-    const sp = this.getSubprocessDirect(t);
-    return !!(sp?.actif && sp.taches?.length > 0);
+  hasSubprocessDirect(tache: Tache): boolean {
+    return this.getSubprocessDirect(tache) !== null;
   }
 
   addSubprocessDirectTache(): void {
-    if (!this.currentSubprocess.taches) this.currentSubprocess.taches = [];
-    this.currentSubprocess.taches.push({ nom: 'Nouvelle étape', type: 'HUMAINE', assignee: '' });
+    this.currentSubprocess = {
+      ...this.currentSubprocess,
+      taches: [...(this.currentSubprocess.taches || []), { nom: '', type: 'HUMAINE', assignee: '', branche: null }]
+    };
   }
 
-  removeSubprocessDirectTache(i: number): void {
-    this.currentSubprocess.taches.splice(i, 1);
-    if (this.currentSubprocess.taches.length === 0) {
-      this.currentSubprocess.actif = false;
-    }
+  removeSubprocessDirectTache(idx: number): void {
+    this.currentSubprocess = {
+      ...this.currentSubprocess,
+      taches: this.currentSubprocess.taches.filter((_, i) => i !== idx)
+    };
+  }
+
+  trackByIndex(index: number): number { return index; }
+
+  openSubprocessParent(el: BpmnElement): void {
+    const match = el.id.match(/^sp_task_(\d+)(?:_(?:oui|non))?_\d+$/);
+    if (!match) return;
+    const parentId = parseInt(match[1], 10);
+    const parentTache = this.taches.find(t => t.id === parentId);
+    if (!parentTache) return;
+    this.openTaskForm(parentTache);
+    this.editorTab = 'subprocess';
   }
 
   autresTaches(): Tache[] {
@@ -1645,6 +1548,47 @@ ${edgesXml}
     return v;
   }
 
+  // ── Popup liste des tâches ────────────────────────────────
+  openTachesListPopup(p: Processus): void {
+    this.tachesListProcessus = p;
+    this.showTachesListPopup = true;
+    this.tachesListLoading = true;
+    this.tachesList = [];
+    this.selectedTacheDetail = null;
+    this.tacheService.getByProcessus(p.id!).subscribe({
+      next: (data) => {
+        this.tachesList = data.sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0));
+        this.tachesListLoading = false;
+      },
+      error: () => { this.tachesListLoading = false; }
+    });
+  }
+
+  closeTachesListPopup(): void {
+    this.tachesListProcessus = null;
+    this.showTachesListPopup = false;
+    this.tachesList = [];
+    this.selectedTacheDetail = null;
+  }
+
+  editTacheFromList(t: Tache): void {
+    if (!this.tachesListProcessus) return;
+    const p = this.tachesListProcessus;
+    const tId = t.id;
+    this.selectedProcessus = p;
+    this.originalFileBpmn = p.fileBpmn;
+    this.viewMode = 'svg';
+    this.errorMessage = ''; this.successMessage = '';
+    this.taches = [...this.tachesList];
+    this.buildBpmnDiagram();
+    this.closeTachesListPopup();
+    const tache = this.taches.find(tt => tt.id === tId);
+    if (tache) this.openTaskForm(tache);
+  }
+
+  openTacheDetail(t: Tache): void { this.selectedTacheDetail = t; }
+  closeTacheDetail(): void { this.selectedTacheDetail = null; }
+
   addToast(type: Toast['type'], message: string, detail?: string, duration = 4000): void {
     const id = ++this.toastCounter;
     this.toasts.push({ id, type, message, detail });
@@ -1661,15 +1605,22 @@ ${edgesXml}
   openNewProcessusModal(): void {
     this.newProcessus = this.emptyProcessus();
     this.newProcessusError = '';
+    this.newTypeSelect = '';
+    this.newTypeLibre = '';
     this.showNewProcessusModal = true;
   }
 
   closeNewProcessusModal(): void {
     this.showNewProcessusModal = false;
     this.newProcessusError = '';
+    this.newTypeSelect = '';
+    this.newTypeLibre = '';
   }
 
   saveNewProcessus(): void {
+    this.newProcessus.typeProcessus = this.newTypeSelect === 'autre'
+      ? this.newTypeLibre.trim()
+      : this.newTypeSelect;
     if (!this.newProcessus.nom?.trim()) { this.newProcessusError = 'Le nom du processus est obligatoire.'; return; }
     if (!this.newProcessus.typeProcessus)  { this.newProcessusError = 'Le type de processus est obligatoire.'; return; }
     if (!this.newProcessus.dateDebut)      { this.newProcessusError = 'La date de début est obligatoire.'; return; }
@@ -1694,15 +1645,27 @@ ${edgesXml}
   openEditProcessusModal(p: Processus): void {
     this.editProcessus = { ...p };
     this.editProcessusError = '';
+    if (p.typeProcessus && this.predefinedTypes.includes(p.typeProcessus)) {
+      this.editTypeSelect = p.typeProcessus;
+      this.editTypeLibre = '';
+    } else {
+      this.editTypeSelect = p.typeProcessus ? 'autre' : '';
+      this.editTypeLibre = p.typeProcessus || '';
+    }
     this.showEditProcessusModal = true;
   }
 
   closeEditProcessusModal(): void {
     this.showEditProcessusModal = false;
     this.editProcessusError = '';
+    this.editTypeSelect = '';
+    this.editTypeLibre = '';
   }
 
   saveEditProcessus(): void {
+    this.editProcessus.typeProcessus = this.editTypeSelect === 'autre'
+      ? this.editTypeLibre.trim()
+      : this.editTypeSelect;
     if (!this.editProcessus.nom?.trim())    { this.editProcessusError = 'Le nom est obligatoire.'; return; }
     if (!this.editProcessus.typeProcessus) { this.editProcessusError = 'Le type est obligatoire.'; return; }
     if (!this.editProcessus.dateDebut)     { this.editProcessusError = 'La date de début est obligatoire.'; return; }
@@ -1753,8 +1716,8 @@ ${edgesXml}
 
   getBpmnDiagram(): BpmnDiagram { return this.bpmnDiagram; }
   resetBpmnDiagram(): void { this.bpmnDiagram = { elements: [], edges: [], viewWidth: 800, viewHeight: 280 }; }
-  hasOuiBranch(tache: Tache): boolean { return this.getRegles(tache).some(r => this.getOuiOrdres(r).length > 0 || r.cibleType === 'subprocess'); }
-  hasNonBranch(tache: Tache): boolean { return this.getRegles(tache).some(r => (r.tacheSinonOrdre && r.tacheSinonOrdre > 0) || (r.cibleType === 'subprocess' && (r.subprocessSinonTaches?.length ?? 0) > 0)); }
+  hasOuiBranch(tache: Tache): boolean { return this.getRegles(tache).some(r => this.getOuiOrdres(r).length > 0); }
+  hasNonBranch(tache: Tache): boolean { return this.getRegles(tache).some(r => r.tacheSinonOrdre && r.tacheSinonOrdre > 0); }
   getTacheOui(tache: Tache): Tache | null {
     const regles = this.getRegles(tache);
     if (!regles.length) return null;
@@ -1777,13 +1740,10 @@ ${edgesXml}
   }
   getAllEdges(): BpmnEdge[] { return this.bpmnDiagram.edges; }
   getTachesWithGateways(): Tache[] { return this.tachesSorted().filter(t => this.getRegles(t).length > 0); }
-  countOuiBranches(): number { return this.bpmnDiagram.edges.filter(e => e.branchType === 'oui' && (e.routing === 'oui-jump' || e.routing === 'subprocess-oui')).length; }
-  countNonBranches(): number { return this.bpmnDiagram.edges.filter(e => e.branchType === 'non' && (e.routing === 'down-loop' || e.routing === 'subprocess-non')).length; }
+  countOuiBranches(): number { return this.bpmnDiagram.edges.filter(e => e.branchType === 'oui' && e.routing === 'oui-jump').length; }
+  countNonBranches(): number { return this.bpmnDiagram.edges.filter(e => e.branchType === 'non' && e.routing === 'down-loop').length; }
   hasBoucles(): boolean { return this.bpmnDiagram.edges.some(e => e.isLoopBack === true); }
   getElementBpmnById(id: string): BpmnElement | undefined { return this.bpmnDiagram.elements.find(e => e.id === id); }
   getEdgeBpmnById(id: string): BpmnEdge | undefined { return this.bpmnDiagram.edges.find(e => e.id === id); }
 
-  getSubprocessColor(el: BpmnElement): string {
-    return el.subprocessColor || '#6366f1';
-  }
 }

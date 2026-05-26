@@ -1,20 +1,17 @@
 <div class="container">
 
-  <!-- HEADER -->
+  <!-- ══ HEADER ══ -->
   <div class="page-header">
-
     <div>
       <h2 class="page-title">👥 Utilisateurs</h2>
       <p class="page-subtitle">Gestion des comptes utilisateurs</p>
     </div>
-
-    <button class="btn-primary-custom" (click)="addUser()">
+    <button class="btn-primary-custom" (click)="openCreateModal()">
       ➕ Ajouter
     </button>
-
   </div>
 
-  <!-- STATS -->
+  <!-- ══ STATS ══ -->
   <div class="stats-row">
     <div class="stat-card">
       <div class="stat-emoji">👥</div>
@@ -23,48 +20,33 @@
         <div class="stat-label">Utilisateurs</div>
       </div>
     </div>
-
     <div class="stat-card">
       <div class="stat-emoji">✅</div>
       <div>
-        <div class="stat-value">
-          {{ users.filter(u => u.active).length }}
-        </div>
+        <div class="stat-value">{{ users.filter(u => u.active).length }}</div>
         <div class="stat-label">Actifs</div>
       </div>
     </div>
   </div>
 
-  <!-- ERROR -->
-  <div *ngIf="error" class="custom-alert">
-    {{ error }}
-  </div>
+  <!-- ══ ERREUR ══ -->
+  <div *ngIf="error" class="custom-alert">{{ error }}</div>
 
-  <!-- FILTERS (isolés) -->
+  <!-- ══ FILTRES ══ -->
   <div class="header-right">
-
-    <!-- SEARCH -->
     <div class="search-container">
       <span class="search-icon">🔍</span>
-      <input 
-        type="text"
-        placeholder="Rechercher..."
-        [(ngModel)]="searchTerm"
-        (input)="filterUsers()"
-      />
+      <input type="text" placeholder="Rechercher..."
+             [(ngModel)]="searchTerm" (input)="filterUsers()" />
     </div>
-
-    <!-- ROLE FILTER -->
     <div class="role-filter">
       <select [(ngModel)]="selectedRole" (change)="filterUsers()">
         <option value="">Tous les rôles</option>
         <option value="SuperAdmin">SuperAdmin</option>
-        <option value="Gestionnaire des processus metier">Gestionnaire des processus metier</option>
-        <option value="Gestionnaire des règles métier">Gestionnaire des règles métier</option>
+        <option value="Gestionnaire des processus metier">Gestionnaire des processus</option>
+        <option value="Gestionnaire des règles métier">Gestionnaire des règles</option>
       </select>
     </div>
-
-    <!-- STATUS FILTER -->
     <div class="status-filter">
       <select [(ngModel)]="selectedStatus" (change)="filterUsers()">
         <option value="">Tous les statuts</option>
@@ -72,14 +54,11 @@
         <option value="inactive">Inactif</option>
       </select>
     </div>
-
   </div>
 
-  <!-- TABLE -->
+  <!-- ══ TABLEAU ══ -->
   <div class="table-card" *ngIf="filteredUsers.length > 0">
-
     <table class="custom-table">
-
       <thead>
         <tr>
           <th>Utilisateur</th>
@@ -90,16 +69,12 @@
           <th class="text-center">Actions</th>
         </tr>
       </thead>
-
       <tbody>
-
         <tr *ngFor="let user of paginatedUsers; trackBy: trackByUsername">
 
           <td>
             <div class="user-info">
-              <div class="avatar">
-                {{ user.username.charAt(0) | uppercase }}
-              </div>
+              <div class="avatar">{{ user.username.charAt(0) | uppercase }}</div>
               <span class="user-name">{{ user.username }}</span>
             </div>
           </td>
@@ -108,92 +83,63 @@
           <td>{{ user.firstName }} {{ user.lastName }}</td>
 
           <td>
-          <ng-container *ngIf="user.roles && user.roles.length > 0; else noRole">
-              <span class="badge-role"
-                    *ngFor="let role of user.roles"
-                    [ngClass]="role.toLowerCase()">
-                {{ role }}
-              </span>
+            <ng-container *ngIf="user.roles && user.roles.length > 0; else noRole">
+              <span class="badge-role" *ngFor="let role of user.roles"
+                    [ngClass]="role.toLowerCase()">{{ role }}</span>
             </ng-container>
-
             <ng-template #noRole>
               <span class="badge-role empty">Aucun rôle</span>
             </ng-template>
           </td>
 
           <td>
-            <span class="badge-status"
-                  [ngClass]="user.active ? 'active' : 'inactive'">
+            <span class="badge-status" [ngClass]="user.active ? 'active' : 'inactive'">
               {{ user.active ? 'Actif' : 'Inactif' }}
             </span>
           </td>
 
           <td class="text-center">
             <div class="actions">
-
               <button (click)="openDetails(user)">Voir</button>
-
-              <button class="icon-btn edit"
-                      (click)="editUser(user.username)">✏️</button>
-
-              <button class="icon-btn delete"
-                      (click)="deleteUser(user)">🗑</button>
-
-              <!-- 🔥 ISOLATION TOGGLE -->
-              <div class="switch"
-                   [class.on]="user.active"
+              <button class="icon-btn edit" (click)="openEditModal(user)">✏️</button>
+              <button class="icon-btn delete" (click)="deleteUser(user)">🗑</button>
+              <div class="switch" [class.on]="user.active"
                    (click)="toggleUserActive(user); $event.stopPropagation()">
                 <div class="switch-circle"></div>
               </div>
-
             </div>
           </td>
 
         </tr>
-
       </tbody>
-
     </table>
-
   </div>
 
-  <!-- EMPTY -->
+  <!-- ══ VIDE ══ -->
   <div *ngIf="filteredUsers.length === 0" class="empty-state">
     Aucun utilisateur trouvé
   </div>
 
-  <!-- PAGINATION (isolée) -->
+  <!-- ══ PAGINATION ══ -->
   <div class="pagination-wrapper">
-
     <div class="pagination" *ngIf="totalPages > 1">
-
-      <button class="page-btn"
-              (click)="goToPage(currentPage - 1)"
-              [disabled]="currentPage === 1">
-        ‹
-      </button>
-
-      <button class="page-btn"
-              *ngFor="let page of pages"
-              [class.active]="page === currentPage"
-              (click)="goToPage(page)">
-        {{ page }}
-      </button>
-
-      <button class="page-btn"
-              (click)="goToPage(currentPage + 1)"
-              [disabled]="currentPage === totalPages">
-        ›
-      </button>
-
+      <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+      <button class="page-btn" *ngFor="let page of pages"
+              [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
+      <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
     </div>
-
   </div>
 
-  <!-- MODAL -->
-  <div *ngIf="showModal && selectedUser" class="modal-backdrop">
+  <!-- ══ TOAST GLOBAL ══ -->
+  <div class="global-toast" [class.show]="toastVisible" [class.error]="toastError">
+    <span>{{ toastMsg }}</span>
+  </div>
 
-    <div class="modal">
+  <!-- ══════════════════════════════════════════
+       MODAL : DÉTAIL UTILISATEUR (Voir)
+       ══════════════════════════════════════════ -->
+  <div *ngIf="showModal && selectedUser" class="modal-backdrop" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
 
       <div class="modal-header">
         <h2>Détails utilisateur</h2>
@@ -201,43 +147,149 @@
       </div>
 
       <div class="modal-body">
-
         <div class="user-info">
           <div class="avatar">
             {{ selectedUser.firstName.charAt(0) }}{{ selectedUser.lastName.charAt(0) }}
           </div>
-
-          <h3>
-            {{ selectedUser.firstName }} {{ selectedUser.lastName }}
-          </h3>
-
+          <h3>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</h3>
           <p class="username">@{{ selectedUser.username }}</p>
         </div>
-
         <div class="info">
-          <p><b>Email :</b> {{ selectedUser.email }}</p>
-
+          <p><b>Email</b> {{ selectedUser.email }}</p>
           <p>
-            <b>Statut :</b>
+            <b>Statut</b>
             <span [ngClass]="selectedUser.active ? 'active' : 'inactive'">
               {{ selectedUser.active ? 'Actif' : 'Inactif' }}
             </span>
           </p>
-
-          <p>
-            <b>Rôles :</b>
-            {{ selectedUser.roles?.join(', ') || 'Aucun rôle' }}
-          </p>
+          <p><b>Rôles</b> {{ selectedUser.roles?.join(', ') || 'Aucun rôle' }}</p>
         </div>
-
       </div>
 
       <div class="modal-footer">
         <button class="btn-close" (click)="closeModal()">Fermer</button>
+        <button class="btn-primary-custom" (click)="openEditModal(selectedUser); closeModal()">
+          ✏️ Modifier
+        </button>
       </div>
 
     </div>
+  </div>
 
+  <!-- ══════════════════════════════════════════
+       MODAL : FORMULAIRE AJOUTER / MODIFIER
+       ══════════════════════════════════════════ -->
+  <div *ngIf="showFormModal" class="modal-backdrop" (click)="closeFormModal()">
+    <div class="modal modal-form-wide" (click)="$event.stopPropagation()">
+
+      <!-- En-tête -->
+      <div class="modal-header">
+        <div class="modal-head-left">
+          <div class="modal-form-avatar">
+            {{ formUser.firstName ? formUser.firstName.charAt(0).toUpperCase() : '?' }}{{ formUser.lastName ? formUser.lastName.charAt(0).toUpperCase() : '' }}
+          </div>
+          <div>
+            <h2>{{ formMode === 'create' ? 'Nouvel utilisateur' : 'Modifier l\'utilisateur' }}</h2>
+            <p class="modal-head-sub">
+              {{ formMode === 'create' ? 'Remplissez les informations du nouveau compte' : 'Modifiez les informations de ' + formUser.username }}
+            </p>
+          </div>
+        </div>
+        <button class="close-btn" (click)="closeFormModal()">✖</button>
+      </div>
+
+      <!-- Corps -->
+      <div class="modal-body modal-body-form">
+
+        <!-- Erreur globale -->
+        <div class="form-global-error" *ngIf="formErrors['global']">
+          ⚠️ {{ formErrors['global'] }}
+        </div>
+
+        <div class="modal-form">
+
+          <!-- Username -->
+          <div class="form-group" [class.has-error]="formErrors['username']">
+            <label>Username <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="formUser.username"
+                   [readonly]="formMode === 'edit'"
+                   [class.readonly-field]="formMode === 'edit'"
+                   placeholder="identifiant unique" />
+            <span class="error-message" *ngIf="formErrors['username']">{{ formErrors['username'] }}</span>
+          </div>
+
+          <!-- Email -->
+          <div class="form-group" [class.has-error]="formErrors['email']">
+            <label>Email <span class="required">*</span></label>
+            <input type="email" [(ngModel)]="formUser.email" placeholder="email@exemple.com" />
+            <span class="error-message" *ngIf="formErrors['email']">{{ formErrors['email'] }}</span>
+          </div>
+
+          <!-- Prénom -->
+          <div class="form-group" [class.has-error]="formErrors['firstName']">
+            <label>Prénom <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="formUser.firstName" placeholder="Prénom" />
+            <span class="error-message" *ngIf="formErrors['firstName']">{{ formErrors['firstName'] }}</span>
+          </div>
+
+          <!-- Nom -->
+          <div class="form-group" [class.has-error]="formErrors['lastName']">
+            <label>Nom <span class="required">*</span></label>
+            <input type="text" [(ngModel)]="formUser.lastName" placeholder="Nom de famille" />
+            <span class="error-message" *ngIf="formErrors['lastName']">{{ formErrors['lastName'] }}</span>
+          </div>
+
+          <!-- Mot de passe (création uniquement) -->
+          <div class="form-group full-width" *ngIf="formMode === 'create'"
+               [class.has-error]="formErrors['password']">
+            <label>Mot de passe <span class="required">*</span></label>
+            <input type="password" [(ngModel)]="formUser.password" placeholder="Mot de passe" />
+            <span class="error-message" *ngIf="formErrors['password']">{{ formErrors['password'] }}</span>
+          </div>
+
+          <!-- Rôles -->
+          <div class="form-group full-width">
+            <label>Rôles</label>
+            <div class="roles-grid">
+              <label class="role-chip"
+                     *ngFor="let r of availableRoles"
+                     [class.active]="formUser.roles.includes(r.value)">
+                <input type="checkbox"
+                       [checked]="formUser.roles.includes(r.value)"
+                       (change)="toggleFormRole(r.value, $event)" />
+                <span class="role-chip-dot"></span>
+                {{ r.label }}
+              </label>
+            </div>
+          </div>
+
+          <!-- Statut -->
+          <div class="form-group full-width form-status-row">
+            <label>Compte actif</label>
+            <div class="switch" [class.on]="formUser.active"
+                 (click)="formUser.active = !formUser.active">
+              <div class="switch-circle"></div>
+            </div>
+            <span class="status-label" [class.active]="formUser.active">
+              {{ formUser.active ? 'Actif' : 'Inactif' }}
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Pied -->
+      <div class="modal-footer">
+        <button class="btn-close" (click)="closeFormModal()" [disabled]="savingForm">
+          Annuler
+        </button>
+        <button class="btn-primary-custom" (click)="submitForm()" [disabled]="savingForm">
+          <span class="btn-spinner" *ngIf="savingForm"></span>
+          {{ savingForm ? 'Enregistrement...' : (formMode === 'create' ? 'Créer l\'utilisateur' : 'Enregistrer') }}
+        </button>
+      </div>
+
+    </div>
   </div>
 
 </div>

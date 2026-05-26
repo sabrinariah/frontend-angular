@@ -88,7 +88,7 @@
                 <div class="nom-text">{{ p.nom }}</div>
               </div>
             </td>
-            <td class="col-type"><span class="type-badge">{{ p.typeProcessus }}</span></td>
+            <td class="col-type"><span class="type-badge" [class]="'type-badge type-' + (p.typeProcessus || '').toLowerCase()">{{ p.typeProcessus }}</span></td>
             <td class="col-statut">
               <span class="status-pill" [class.pill-active]="p.actif" [class.pill-inactive]="!p.actif">
                 <span class="status-dot"></span>{{ p.actif ? 'Actif' : 'Inactif' }}
@@ -101,6 +101,7 @@
             </td>
             <td class="col-actions">
               <div class="actions-row">
+                <button (click)="openTachesListPopup(p)" class="tbl-btn tbl-tasks" title="Consulter les tâches">📋 Tâches</button>
                 <button (click)="openTachesPopup(p)" class="tbl-btn tbl-workflow" title="Voir le workflow BPMN">👁️ Workflow</button>
                 <button (click)="openEditProcessusModal(p)" class="tbl-btn tbl-edit" title="Modifier">✏️</button>
                 <button (click)="toggle(p.id!)" class="tbl-btn tbl-toggle" title="{{ p.actif ? 'Désactiver' : 'Activer' }}">{{ p.actif ? '⏸️' : '▶️' }}</button>
@@ -261,27 +262,47 @@
               </g>
 
               <!-- ──── TÂCHE (rectangle blanc + accent gauche) ──── -->
-              <g *ngIf="el.type === 'task'" class="bpmn-task-group"
+              <!-- ──── SOUS-TÂCHE (sous-processus direct, lane=1) ──── -->
+              <g *ngIf="el.type === 'task' && el.lane === 1" class="bpmn-task-group"
+                 (click)="openSubprocessParent(el)" style="cursor:pointer">
+                <rect [attr.x]="el.x" [attr.y]="el.y"
+                      [attr.width]="el.width" [attr.height]="el.height"
+                      rx="8" fill="#f0f9ff"
+                      stroke="#0ea5e9" stroke-width="2" stroke-dasharray="5,3"/>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 - 6"
+                      text-anchor="middle" font-size="11" font-weight="600"
+                      font-family="'Inter', sans-serif" fill="#0369a1">
+                  {{ truncate(el.label, 16) }}
+                </text>
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 10"
+                      text-anchor="middle" font-size="9" fill="#0ea5e9"
+                      font-family="'Inter', sans-serif">
+                  {{ el.sublabel }}
+                </text>
+                <text [attr.x]="el.x + el.width - 8" [attr.y]="el.y + 14"
+                      text-anchor="end" font-size="10" fill="#0ea5e9">✏️</text>
+              </g>
+
+              <!-- ──── TÂCHE NORMALE ──── -->
+              <g *ngIf="el.type === 'task' && el.lane !== 1" class="bpmn-task-group"
                  (click)="el.tache && openTaskForm(el.tache)" style="cursor:pointer">
 
                 <!-- Carte blanche -->
                 <rect [attr.x]="el.x" [attr.y]="el.y"
                       [attr.width]="el.width" [attr.height]="el.height"
-                      rx="8"
-                      fill="white"
+                      rx="8" fill="white"
                       [attr.stroke]="getTaskStroke(el.tache)"
                       stroke-width="2"/>
 
-                <!-- Barre d'accent gauche (couleur statut) -->
+                <!-- Barre d'accent gauche -->
                 <rect [attr.x]="el.x" [attr.y]="el.y"
                       width="5" [attr.height]="el.height"
-                      [attr.fill]="getTaskStroke(el.tache)"
-                      rx="8"/>
+                      [attr.fill]="getTaskStroke(el.tache)" rx="8"/>
                 <rect [attr.x]="el.x + 3" [attr.y]="el.y"
                       width="2" [attr.height]="el.height"
                       [attr.fill]="getTaskStroke(el.tache)"/>
 
-                <!-- Numéro d'ordre (badge rond en haut à gauche) -->
+                <!-- Numéro d'ordre -->
                 <circle [attr.cx]="el.x + 22" [attr.cy]="el.y + 20" r="11"
                         [attr.fill]="getTaskStroke(el.tache)"/>
                 <text [attr.x]="el.x + 22" [attr.y]="el.y + 24"
@@ -299,16 +320,15 @@
                   {{ el.tache?.type }}
                 </text>
 
-                <!-- Nom de la tâche (centré) -->
+                <!-- Nom de la tâche -->
                 <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 4"
                       text-anchor="middle"
                       font-size="13" font-weight="600"
-                      font-family="'Inter', sans-serif"
-                      fill="#0a1929">
+                      font-family="'Inter', sans-serif" fill="#0a1929">
                   {{ truncate(el.label, 20) }}
                 </text>
 
-                <!-- Assignee si présent -->
+                <!-- Assignee -->
                 <text *ngIf="el.tache?.assignee"
                       [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 20"
                       text-anchor="middle"
@@ -317,7 +337,7 @@
                   👤 {{ truncate(el.tache!.assignee!, 18) }}
                 </text>
 
-                <!-- Indicateur en bas : champs + statut -->
+                <!-- Champs -->
                 <g *ngIf="el.tache && getChamps(el.tache).length > 0">
                   <rect [attr.x]="el.x + 10" [attr.y]="el.y + el.height - 22"
                         width="36" height="16" rx="8"
@@ -326,10 +346,11 @@
                         text-anchor="middle"
                         font-size="9" fill="#c2410c" font-weight="700"
                         font-family="'Inter', sans-serif">
-                    📝 {{ el.tache && getChamps(el.tache).length }}
+                    📝 {{ getChamps(el.tache).length }}
                   </text>
                 </g>
 
+                <!-- Données -->
                 <g *ngIf="el.tache && hasFormData(el.tache)">
                   <rect [attr.x]="el.x + 52" [attr.y]="el.y + el.height - 22"
                         width="32" height="16" rx="8"
@@ -342,64 +363,11 @@
                   </text>
                 </g>
 
-                <!-- Icône statut en bas à droite -->
+                <!-- Icône statut -->
                 <text [attr.x]="el.x + el.width - 12" [attr.y]="el.y + el.height - 10"
-                      text-anchor="end"
-                      font-size="14">
+                      text-anchor="end" font-size="14">
                   {{ el.tache?.statut === 'TERMINE' ? '✅' : el.tache?.statut === 'EN_COURS' ? '⏳' : '⚪' }}
                 </text>
-              </g>
-
-              <!-- ──── SUBPROCESS (rectangle pointillé) ──── -->
-              <g *ngIf="el.type === 'subprocess'" class="bpmn-subprocess-group"
-                 (click)="onSubprocessClick(el)" style="cursor:pointer">
-
-                <rect [attr.x]="el.x" [attr.y]="el.y"
-                      [attr.width]="el.width" [attr.height]="el.height"
-                      rx="8"
-                      fill="white"
-                      [attr.stroke]="getSubprocessColor(el)"
-                      stroke-width="2"
-                      stroke-dasharray="6,3"/>
-
-                <!-- Badge SP en haut -->
-                <rect [attr.x]="el.x + 8" [attr.y]="el.y + 8"
-                      width="26" height="16" rx="8"
-                      [attr.fill]="getSubprocessColor(el)"/>
-                <text [attr.x]="el.x + 21" [attr.y]="el.y + 20"
-                      text-anchor="middle"
-                      font-size="9" fill="white" font-weight="800"
-                      font-family="'Inter', sans-serif">SP</text>
-
-                <!-- Label type à droite -->
-                <text [attr.x]="el.x + el.width - 10" [attr.y]="el.y + 20"
-                      text-anchor="end"
-                      font-size="9"
-                      [attr.fill]="getSubprocessColor(el)"
-                      font-weight="700"
-                      font-family="'Inter', sans-serif">
-                  {{ el.sublabel }}
-                </text>
-
-                <!-- Nom du subprocess -->
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 6"
-                      text-anchor="middle"
-                      font-size="12" font-weight="600"
-                      font-family="'Inter', sans-serif"
-                      [attr.fill]="getSubprocessColor(el)">
-                  {{ truncate(el.label, 18) }}
-                </text>
-
-                <!-- Petit signe "+" en bas pour montrer qu'on peut développer -->
-                <rect [attr.x]="el.x + el.width/2 - 9" [attr.y]="el.y + el.height - 16"
-                      width="18" height="11" rx="3"
-                      fill="white"
-                      [attr.stroke]="getSubprocessColor(el)" stroke-width="1.5"/>
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height - 8"
-                      text-anchor="middle"
-                      font-size="10"
-                      [attr.fill]="getSubprocessColor(el)"
-                      font-weight="800">+</text>
               </g>
 
               <!-- ──── GATEWAY (losange simple avec ?) ──── -->
@@ -410,16 +378,16 @@
                          fill="white"
                          stroke="#0a1929" stroke-width="2"/>
 
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 5"
+                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 6"
                       text-anchor="middle"
                       font-size="20" fill="#0a1929" font-weight="700"
-                      font-family="'Inter', sans-serif">?</text>
+                      font-family="'Inter', sans-serif">{{ el.question ? '?' : '+' }}</text>
 
-                <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 20"
+                <text *ngIf="el.question" [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 20"
                       text-anchor="middle"
                       font-size="11" fill="#0a1929"
                       font-family="'Inter', sans-serif" font-weight="600">
-                  {{ truncate(el.question || 'Condition ?', 26) }}
+                  {{ truncate(el.question, 26) }}
                 </text>
               </g>
 
@@ -452,8 +420,9 @@
 
   <!-- ====================== POPUP ÉDITEUR TÂCHE ====================== -->
   <div *ngIf="formTaskOpen" class="popup-overlay popup-overlay-2" (click)="closeTaskForm()">
-    <div class="popup-content popup-form-content" (click)="$event.stopPropagation()">
+    <div class="popup-content popup-form-content popup-form-scroll" (click)="$event.stopPropagation()">
 
+      <!-- En-tête fixe -->
       <div class="simple-task-header">
         <div class="simple-task-title">
           <span class="simple-task-nom">{{ isNewTask ? 'Nouvelle tâche' : formTaskOpen.nom }}</span>
@@ -465,382 +434,293 @@
         </div>
       </div>
 
-      <div *ngIf="formError" class="alert-danger">{{ formError }}</div>
+      <div *ngIf="formError" class="alert-danger" style="margin: 0 20px;">{{ formError }}</div>
 
-      <div class="simple-editor-tabs">
-        <button (click)="editorTab = 'info'"    [class.active]="editorTab === 'info'">Informations</button>
-        <button (click)="editorTab = 'champs'"  [class.active]="editorTab === 'champs'">Champs ({{ currentChamps.length }})</button>
-        <button (click)="editorTab = 'regles'"  [class.active]="editorTab === 'regles'">Règles ({{ currentRegles.length }})</button>
-        <button (click)="editorTab = 'donnees'" [class.active]="editorTab === 'donnees'" *ngIf="!isNewTask && currentChamps.length > 0">Données</button>
-      </div>
+      <!-- Corps scrollable avec toutes les sections -->
+      <div class="task-form-body">
 
-      <!-- ONGLET INFO -->
-      <div *ngIf="editorTab === 'info'" class="dynamic-form">
-        <div class="form-section">
-          <h4>Informations générales</h4>
-          <label>Nom de la tâche *</label>
-          <input [(ngModel)]="formTaskOpen.nom" class="form-control" placeholder="Ex: Vérification documents"/>
-          <label>Description</label>
-          <textarea [(ngModel)]="formTaskOpen.description" rows="2" class="form-control"></textarea>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Type</label>
-              <select [(ngModel)]="formTaskOpen.type" class="form-control">
-                <option value="HUMAINE">HUMAINE</option>
-                <option value="SYSTEME">SYSTÈME</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Statut</label>
-              <select [(ngModel)]="formTaskOpen.statut" class="form-control">
-                <option value="EN_ATTENTE">EN_ATTENTE</option>
-                <option value="EN_COURS">EN_COURS</option>
-                <option value="TERMINE">TERMINE</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Ordre *</label>
-              <input type="number" [(ngModel)]="formTaskOpen.ordre" class="form-control" min="1"/>
-            </div>
-            <div class="form-group">
-              <label>Assigné à</label>
-              <input [(ngModel)]="formTaskOpen.assignee" class="form-control" placeholder="Personne / service"/>
-            </div>
+        <!-- ── SECTION 1 : INFORMATIONS ── -->
+        <div class="task-section">
+          <div class="task-section-header">
+            <span class="task-section-icon">📋</span>
+            <span class="task-section-title">Informations générales</span>
           </div>
-        </div>
-      </div>
-
-      <!-- ONGLET CHAMPS -->
-      <div *ngIf="editorTab === 'champs'" class="dynamic-form">
-        <div class="info-box">📝 Définissez les champs à remplir pour cette tâche.</div>
-        <button (click)="addChamp()" class="btn btn-secondary btn-sm">+ Ajouter un champ</button>
-        <div *ngFor="let c of currentChamps; let i = index" class="param-card">
-          <div class="param-head">
-            <strong>Champ #{{ i + 1 }}</strong>
-            <button (click)="removeChamp(i)" class="mini-btn mini-danger">🗑️</button>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Libellé *</label><input [(ngModel)]="c.label" class="form-control"/></div>
-            <div class="form-group"><label>Identifiant *</label><input [(ngModel)]="c.id" class="form-control"/></div>
-            <div class="form-group">
-              <label>Type</label>
-              <select [(ngModel)]="c.type" class="form-control">
-                <option value="string">Texte court</option>
-                <option value="textarea">Texte long</option>
-                <option value="number">Nombre</option>
-                <option value="date">Date</option>
-                <option value="boolean">Oui/Non</option>
-                <option value="enum">Liste de choix</option>
-              </select>
+          <div class="task-section-body">
+            <div class="form-group-full">
+              <label class="field-label">Nom de la tâche <span class="req">*</span></label>
+              <input [(ngModel)]="formTaskOpen.nom" class="form-control" placeholder="Ex: Vérification documents"/>
             </div>
-            <div class="form-group form-check">
-              <label><input type="checkbox" [(ngModel)]="c.required"/> Obligatoire</label>
+            <div class="form-group-full">
+              <label class="field-label">Description</label>
+              <textarea [(ngModel)]="formTaskOpen.description" rows="2" class="form-control"></textarea>
             </div>
-          </div>
-          <div *ngIf="c.type === 'enum'" class="sub-section">
-            <label>Options (séparées par virgule)</label>
-            <input [ngModel]="enumOptionsToString(c)" (ngModelChange)="stringToEnumOptions(c, $event)" class="form-control"/>
-          </div>
-        </div>
-        <div *ngIf="currentChamps.length === 0" class="empty-mini">Aucun champ défini.</div>
-      </div>
-
-      <!-- ONGLET RÈGLES -->
-      <div *ngIf="editorTab === 'regles'" class="dynamic-form">
-        <div class="info-box">
-          ⚙️ <strong>Logique SI / SINON</strong> ou lancer un <strong>SubProcess</strong>
-        </div>
-
-        <div class="actions-bar">
-          <button (click)="addRegle()" class="btn btn-secondary btn-sm">+ Ajouter une règle</button>
-        </div>
-
-        <div *ngFor="let r of currentRegles; let ri = index" class="rule-card">
-
-          <div class="rule-head">
-            <input [(ngModel)]="r.nom" class="form-control rule-name" placeholder="Nom de la règle (ex: Dossier conforme)"/>
-            <label class="switch-label"><input type="checkbox" [(ngModel)]="r.actif"/> Active</label>
-            <button (click)="removeRegle(ri)" class="mini-btn mini-danger">🗑️</button>
-          </div>
-
-          <div class="mode-toggle">
-            <button type="button" (click)="toggleModeRegle(r, 'simple')"
-                    [class.mode-active]="r.modeRegle === 'simple'" class="mode-btn">
-              ⚙️ Règle simple (champ/opérateur)
-            </button>
-            <button type="button" (click)="toggleModeRegle(r, 'metier')"
-                    [class.mode-active]="r.modeRegle === 'metier'" class="mode-btn"
-                    [disabled]="reglesMetierDisponibles.length === 0">
-              📜 Règle métier ({{ reglesMetierDisponibles.length }} dispo)
-            </button>
-          </div>
-
-          <div class="rule-body">
-
-            <!-- MODE SIMPLE -->
-            <div *ngIf="r.modeRegle === 'simple'">
-              <div class="rule-line-builder">
-                <span class="tag tag-if">SI</span>
-                <select [(ngModel)]="r.champId" class="form-control inline">
-                  <option value="">-- Choisir un champ --</option>
-                  <option *ngFor="let ch of currentChamps" [value]="ch.id">{{ ch.label }}</option>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="field-label">Type</label>
+                <select [(ngModel)]="formTaskOpen.type" class="form-control">
+                  <option value="HUMAINE">HUMAINE</option>
+                  <option value="SYSTEME">SYSTÈME</option>
                 </select>
-                <select [(ngModel)]="r.operateur" class="form-control inline">
-                  <option value="==">est égal à</option>
-                  <option value="!=">est différent de</option>
-                  <option value=">">supérieur à</option>
-                  <option value="<">inférieur à</option>
-                  <option value=">=">sup. ou égal</option>
-                  <option value="<=">inf. ou égal</option>
-                  <option value="contains">contient</option>
-                  <option value="isEmpty">est vide</option>
-                  <option value="isNotEmpty">n'est pas vide</option>
-                </select>
-                <input *ngIf="r.operateur !== 'isEmpty' && r.operateur !== 'isNotEmpty'"
-                       [(ngModel)]="r.valeur" class="form-control inline" placeholder="Valeur"/>
               </div>
-              <div *ngIf="currentChamps.length === 0" class="warning-box-mini">
-                ⚠️ Ajoutez d'abord un champ pour utiliser une règle simple.
+              <div class="form-group">
+                <label class="field-label">Statut</label>
+                <select [(ngModel)]="formTaskOpen.statut" class="form-control">
+                  <option value="EN_ATTENTE">EN_ATTENTE</option>
+                  <option value="EN_COURS">EN_COURS</option>
+                  <option value="TERMINE">TERMINE</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="field-label">Ordre <span class="req">*</span></label>
+                <input type="number" [(ngModel)]="formTaskOpen.ordre" class="form-control" min="1"/>
+              </div>
+              <div class="form-group">
+                <label class="field-label">Assigné à</label>
+                <input [(ngModel)]="formTaskOpen.assignee" class="form-control" placeholder="Personne / service"/>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- MODE MÉTIER -->
-            <div *ngIf="r.modeRegle === 'metier'" class="metier-section">
-              <div class="metier-header">
-                <span class="tag tag-if">SI</span>
-                <span class="metier-text">{{ (r.regleMetierIds?.length || 0) }} règle(s) métier sélectionnée(s)</span>
-                <div *ngIf="(r.regleMetierIds?.length || 0) > 1" class="logique-toggle">
-                  <button type="button" (click)="r.logiqueCombinaison = 'ET'" [class.logique-active]="r.logiqueCombinaison === 'ET'" class="logique-btn">ET (toutes vraies)</button>
-                  <button type="button" (click)="r.logiqueCombinaison = 'OU'" [class.logique-active]="r.logiqueCombinaison === 'OU'" class="logique-btn">OU (au moins une)</button>
+        <!-- ── SECTION 2 : CHAMPS ── -->
+        <div class="task-section">
+          <div class="task-section-header">
+            <span class="task-section-icon">📝</span>
+            <span class="task-section-title">Champs <span class="task-section-count">{{ currentChamps.length }}</span></span>
+            <button (click)="addChamp()" class="btn btn-secondary btn-sm task-section-btn">+ Ajouter</button>
+          </div>
+          <div class="task-section-body">
+            <div *ngFor="let c of currentChamps; let i = index" class="param-card">
+              <div class="param-head">
+                <strong>Champ #{{ i + 1 }}</strong>
+                <button (click)="removeChamp(i)" class="mini-btn mini-danger">🗑️</button>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Libellé *</label><input [(ngModel)]="c.label" class="form-control"/></div>
+                <div class="form-group"><label>Identifiant *</label><input [(ngModel)]="c.id" class="form-control"/></div>
+                <div class="form-group">
+                  <label>Type</label>
+                  <select [(ngModel)]="c.type" class="form-control">
+                    <option value="string">Texte court</option>
+                    <option value="textarea">Texte long</option>
+                    <option value="number">Nombre</option>
+                    <option value="date">Date</option>
+                    <option value="boolean">Oui/Non</option>
+                    <option value="enum">Liste de choix</option>
+                  </select>
+                </div>
+                <div class="form-group form-check">
+                  <label><input type="checkbox" [(ngModel)]="c.required"/> Obligatoire</label>
                 </div>
               </div>
-              <div class="filter-categorie">
-                <label>Filtrer par catégorie :</label>
-                <select [(ngModel)]="filtreCategorieRegle" class="form-control inline">
-                  <option value="TOUS">Toutes</option>
-                  <option *ngFor="let cat of getCategoriesDistinctes()" [value]="cat">{{ iconCategorie(cat) }} {{ cat }}</option>
-                </select>
+              <div *ngIf="c.type === 'enum'" class="sub-section">
+                <label>Options (séparées par virgule)</label>
+                <input [ngModel]="enumOptionsToString(c)" (ngModelChange)="stringToEnumOptions(c, $event)" class="form-control"/>
               </div>
-              <div class="regle-metier-list">
-                <div *ngFor="let rm of getReglesMetierFiltrees()"
-                     class="regle-metier-item" [class.regle-selected]="isRegleMetierSelected(r, rm.id)"
-                     (click)="rm.id && toggleRegleMetier(r, rm.id)">
-                  <div class="regle-metier-check">
-                    <input type="checkbox" [checked]="isRegleMetierSelected(r, rm.id)"
-                           (click)="$event.stopPropagation()" (change)="rm.id && toggleRegleMetier(r, rm.id)"/>
+            </div>
+            <div *ngIf="currentChamps.length === 0" class="empty-mini">Aucun champ défini. Cliquez sur "+ Ajouter" pour en créer.</div>
+          </div>
+        </div>
+
+        <!-- ── SECTION 3 : RÈGLES ── -->
+        <div class="task-section">
+          <div class="task-section-header">
+            <span class="task-section-icon">⚙️</span>
+            <span class="task-section-title">Règles <span class="task-section-count">{{ currentRegles.length }}</span></span>
+            <button (click)="addRegle()" class="btn btn-secondary btn-sm task-section-btn">+ Ajouter</button>
+          </div>
+          <div class="task-section-body">
+            <div *ngFor="let r of currentRegles; let ri = index" class="rule-card">
+              <div class="rule-head">
+                <input [(ngModel)]="r.nom" class="form-control rule-name" placeholder="Nom de la règle (ex: Dossier conforme)"/>
+                <label class="switch-label"><input type="checkbox" [(ngModel)]="r.actif"/> Active</label>
+                <button (click)="removeRegle(ri)" class="mini-btn mini-danger">🗑️</button>
+              </div>
+              <div class="mode-toggle">
+                <button type="button" (click)="toggleModeRegle(r, 'simple')" [class.mode-active]="r.modeRegle === 'simple'" class="mode-btn">⚙️ Règle simple</button>
+                <button type="button" (click)="toggleModeRegle(r, 'metier')" [class.mode-active]="r.modeRegle === 'metier'" class="mode-btn" [disabled]="reglesMetierDisponibles.length === 0">📜 Règle métier ({{ reglesMetierDisponibles.length }})</button>
+              </div>
+              <div class="rule-body">
+                <!-- MODE SIMPLE -->
+                <div *ngIf="r.modeRegle === 'simple'">
+                  <div class="rule-line-builder">
+                    <span class="tag tag-if">SI</span>
+                    <select [(ngModel)]="r.champId" class="form-control inline">
+                      <option value="">-- Choisir un champ --</option>
+                      <option *ngFor="let ch of currentChamps" [value]="ch.id">{{ ch.label }}</option>
+                    </select>
+                    <select [(ngModel)]="r.operateur" class="form-control inline">
+                      <option value="==">est égal à</option>
+                      <option value="!=">est différent de</option>
+                      <option value=">">supérieur à</option>
+                      <option value="<">inférieur à</option>
+                      <option value=">=">sup. ou égal</option>
+                      <option value="<=">inf. ou égal</option>
+                      <option value="contains">contient</option>
+                      <option value="isEmpty">est vide</option>
+                      <option value="isNotEmpty">n'est pas vide</option>
+                    </select>
+                    <input *ngIf="r.operateur !== 'isEmpty' && r.operateur !== 'isNotEmpty'" [(ngModel)]="r.valeur" class="form-control inline" placeholder="Valeur"/>
                   </div>
-                  <div class="regle-metier-icon" [style.background]="couleurCategorie(rm.categorie?.type) + '22'" [style.color]="couleurCategorie(rm.categorie?.type)">{{ iconCategorie(rm.categorie?.type) }}</div>
-                  <div class="regle-metier-body">
-                    <div class="regle-metier-name"><strong>{{ rm.code }}</strong> — {{ rm.nom }}</div>
-                    <div class="regle-metier-meta">
-                      <span class="regle-cat-badge" [style.background]="couleurCategorie(rm.categorie?.type) + '22'" [style.color]="couleurCategorie(rm.categorie?.type)">{{ rm.categorie?.type || '—' }}</span>
-                      <span class="regle-cond-count">{{ rm.conditions?.length || 0 }} condition(s)</span>
-                      <span class="regle-action-badge">⚡ {{ rm.action }}</span>
+                  <div *ngIf="currentChamps.length === 0" class="warning-box-mini">⚠️ Ajoutez d'abord un champ pour utiliser une règle simple.</div>
+                </div>
+                <!-- MODE MÉTIER -->
+                <div *ngIf="r.modeRegle === 'metier'" class="metier-section">
+                  <div class="metier-header">
+                    <span class="tag tag-if">SI</span>
+                    <span class="metier-text">{{ (r.regleMetierIds?.length || 0) }} règle(s) métier sélectionnée(s)</span>
+                    <div *ngIf="(r.regleMetierIds?.length || 0) > 1" class="logique-toggle">
+                      <button type="button" (click)="r.logiqueCombinaison = 'ET'" [class.logique-active]="r.logiqueCombinaison === 'ET'" class="logique-btn">ET</button>
+                      <button type="button" (click)="r.logiqueCombinaison = 'OU'" [class.logique-active]="r.logiqueCombinaison === 'OU'" class="logique-btn">OU</button>
+                    </div>
+                  </div>
+                  <div class="filter-categorie">
+                    <label>Filtrer :</label>
+                    <select [(ngModel)]="filtreCategorieRegle" class="form-control inline">
+                      <option value="TOUS">Toutes</option>
+                      <option *ngFor="let cat of getCategoriesDistinctes()" [value]="cat">{{ iconCategorie(cat) }} {{ cat }}</option>
+                    </select>
+                  </div>
+                  <div class="regle-metier-list">
+                    <div *ngFor="let rm of getReglesMetierFiltrees()" class="regle-metier-item" [class.regle-selected]="isRegleMetierSelected(r, rm.id)" (click)="rm.id && toggleRegleMetier(r, rm.id)">
+                      <div class="regle-metier-check"><input type="checkbox" [checked]="isRegleMetierSelected(r, rm.id)" (click)="$event.stopPropagation()" (change)="rm.id && toggleRegleMetier(r, rm.id)"/></div>
+                      <div class="regle-metier-icon" [style.background]="couleurCategorie(rm.categorie?.type) + '22'" [style.color]="couleurCategorie(rm.categorie?.type)">{{ iconCategorie(rm.categorie?.type) }}</div>
+                      <div class="regle-metier-body">
+                        <div class="regle-metier-name"><strong>{{ rm.code }}</strong> — {{ rm.nom }}</div>
+                        <div class="regle-metier-meta">
+                          <span class="regle-cat-badge" [style.background]="couleurCategorie(rm.categorie?.type) + '22'" [style.color]="couleurCategorie(rm.categorie?.type)">{{ rm.categorie?.type || '—' }}</span>
+                          <span class="regle-cond-count">{{ rm.conditions?.length || 0 }} condition(s)</span>
+                          <span class="regle-action-badge">⚡ {{ rm.action }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div *ngIf="getReglesMetierFiltrees().length === 0" class="empty-mini">Aucune règle métier dans cette catégorie.</div>
+                  </div>
+                  <div *ngIf="getChampsManquantsRegleMetier(r).length > 0" class="alert-champs-manquants">
+                    ⚠️ Champs manquants : <strong>{{ getChampsManquantsRegleMetier(r).join(', ') }}</strong>
+                  </div>
+                  <div class="action-douaniere-section">
+                    <label>⚡ Action douanière :</label>
+                    <input [(ngModel)]="r.actionDouaniere" class="form-control" placeholder="Ex: CIRCUIT_VERT..."/>
+                    <div class="action-suggestions" *ngIf="getActionsSuggestionsForRegle(r).length > 0">
+                      <span class="hint-label">Suggestions :</span>
+                      <button *ngFor="let act of getActionsSuggestionsForRegle(r)" type="button" (click)="r.actionDouaniere = act" class="suggestion-chip">{{ act }}</button>
                     </div>
                   </div>
                 </div>
-                <div *ngIf="getReglesMetierFiltrees().length === 0" class="empty-mini">Aucune règle métier dans cette catégorie.</div>
-              </div>
-              <!-- AVERTISSEMENT champs manquants -->
-              <div *ngIf="getChampsManquantsRegleMetier(r).length > 0" class="alert-champs-manquants">
-                ⚠️ Les champs suivants de la règle métier n'existent pas dans cette tâche :
-                <strong>{{ getChampsManquantsRegleMetier(r).join(', ') }}</strong>.
-                Ajoutez-les dans l'onglet "Champs" avec les mêmes identifiants pour que la règle puisse s'évaluer.
-              </div>
-
-              <div class="action-douaniere-section">
-                <label>⚡ Action douanière :</label>
-                <input [(ngModel)]="r.actionDouaniere" class="form-control" placeholder="Ex: CIRCUIT_VERT..."/>
-                <div class="action-suggestions" *ngIf="getActionsSuggestionsForRegle(r).length > 0">
-                  <span class="hint-label">Suggestions :</span>
-                  <button *ngFor="let act of getActionsSuggestionsForRegle(r)" type="button" (click)="r.actionDouaniere = act" class="suggestion-chip">{{ act }}</button>
-                </div>
-              </div>
-            </div>
-
-            <!-- TYPE DE CIBLE -->
-            <div class="cible-type-selector">
-              <div class="cible-type-label">Type de cible :</div>
-              <div class="cible-type-buttons">
-                <button type="button" class="cible-type-btn" [class.active]="r.cibleType !== 'subprocess'" (click)="r.cibleType = 'suivante'">
-                  🎯 Tâches du flux
-                </button>
-                <button type="button" class="cible-type-btn cible-type-sp" [class.active]="r.cibleType === 'subprocess'" (click)="r.cibleType = 'subprocess'">
-                  🔲 SubProcess (tâches virtuelles)
-                </button>
-              </div>
-            </div>
-
-            <!-- SI/SINON TÂCHES DU FLUX -->
-            <div *ngIf="r.cibleType !== 'subprocess'" class="si-sinon-bloc">
-              <div class="branch-line branch-oui branch-oui-multi">
-                <div class="branch-line-header">
-                  <span class="tag tag-then-oui">✓ SI VRAI</span>
-                  <span class="branch-desc">→ Aller à <strong>une ou plusieurs</strong> tâches :</span>
-                </div>
-                <div class="multi-cible-list">
-                  <div *ngFor="let t of autresTaches()"
-                       class="multi-cible-item" [class.multi-cible-selected]="isOuiCibleSelected(r, t.ordre!)"
-                       (click)="toggleOuiCible(r, t.ordre!)">
-                    <input type="checkbox" [checked]="isOuiCibleSelected(r, t.ordre!)"
-                           (click)="$event.stopPropagation()" (change)="toggleOuiCible(r, t.ordre!)"/>
-                    <span class="multi-cible-order">#{{ t.ordre }}</span>
-                    <span class="multi-cible-name">{{ t.nom }}</span>
-                    <span class="multi-cible-type">{{ t.type }}</span>
+                <!-- SI / SINON -->
+                <div class="si-sinon-bloc">
+                  <div class="branch-line branch-oui branch-oui-multi">
+                    <div class="branch-line-header">
+                      <span class="tag tag-then-oui">✓ SI VRAI</span>
+                      <span class="branch-desc">→ Aller à :</span>
+                    </div>
+                    <div class="multi-cible-list">
+                      <div *ngFor="let t of autresTaches()" class="multi-cible-item" [class.multi-cible-selected]="isOuiCibleSelected(r, t.ordre!)" (click)="toggleOuiCible(r, t.ordre!)">
+                        <input type="checkbox" [checked]="isOuiCibleSelected(r, t.ordre!)" (click)="$event.stopPropagation()" (change)="toggleOuiCible(r, t.ordre!)"/>
+                        <span class="multi-cible-order">#{{ t.ordre }}</span>
+                        <span class="multi-cible-name">{{ t.nom }}</span>
+                        <span class="multi-cible-type">{{ t.type }}</span>
+                      </div>
+                      <div *ngIf="autresTaches().length === 0" class="empty-mini-cible">Aucune autre tâche disponible.</div>
+                    </div>
+                    <div class="branch-resolved"><span class="branch-resolved-label">Cible(s) :</span> <span class="branch-resolved-value">{{ getOuiCiblesLabel(r) }}</span></div>
+                    <div *ngIf="(r.tacheOuiOrdres?.length || 0) > 1" class="parallel-info">⚡ <strong>{{ r.tacheOuiOrdres?.length }} tâches en parallèle</strong></div>
                   </div>
-                  <div *ngIf="autresTaches().length === 0" class="empty-mini-cible">Aucune autre tâche disponible.</div>
-                </div>
-                <div class="branch-resolved">
-                  <span class="branch-resolved-label">Cible(s) :</span>
-                  <span class="branch-resolved-value">{{ getOuiCiblesLabel(r) }}</span>
-                </div>
-                <div *ngIf="(r.tacheOuiOrdres?.length || 0) > 1" class="parallel-info">
-                  ⚡ <strong>{{ r.tacheOuiOrdres?.length }} tâches en parallèle</strong> dans le diagramme.
+                  <div class="branch-line branch-non">
+                    <span class="tag tag-then-non">✗ SINON</span>
+                    <span class="branch-desc">→ Aller à :</span>
+                    <select [(ngModel)]="r.tacheSinonOrdre" class="form-control inline branch-select">
+                      <option [ngValue]="0">-- Fin du processus --</option>
+                      <option *ngFor="let t of autresTaches()" [ngValue]="t.ordre">#{{ t.ordre }} - {{ t.nom }}</option>
+                    </select>
+                    <span class="branch-cible-info branch-cible-non" *ngIf="r.tacheSinonOrdre && r.tacheSinonOrdre > 0">→ <strong>#{{ r.tacheSinonOrdre }} {{ getTacheNameByOrdre(r.tacheSinonOrdre) }}</strong></span>
+                    <span class="branch-cible-end" *ngIf="!r.tacheSinonOrdre || r.tacheSinonOrdre === 0">→ <em>Fin du processus</em></span>
+                  </div>
                 </div>
               </div>
+            </div>
+            <div *ngIf="currentRegles.length === 0" class="empty-mini">Aucune règle définie. Cliquez sur "+ Ajouter" pour en créer.</div>
+          </div>
+        </div>
 
-              <div class="branch-line branch-non">
-                <span class="tag tag-then-non">✗ SINON</span>
-                <span class="branch-desc">→ Aller à :</span>
-                <select [(ngModel)]="r.tacheSinonOrdre" class="form-control inline branch-select">
-                  <option [ngValue]="0">-- Fin du processus --</option>
-                  <option *ngFor="let t of autresTaches()" [ngValue]="t.ordre">#{{ t.ordre }} - {{ t.nom }}</option>
+        <!-- ── SECTION 4 : DONNÉES (uniquement si tâche existante avec champs) ── -->
+        <div class="task-section" *ngIf="!isNewTask && currentChamps.length > 0">
+          <div class="task-section-header">
+            <span class="task-section-icon">💾</span>
+            <span class="task-section-title">Données</span>
+          </div>
+          <div class="task-section-body">
+            <div class="info-box">💾 Remplissez les valeurs. La règle déterminera la tâche suivante.</div>
+            <div *ngFor="let field of currentChamps" class="dyn-field">
+              <label [class.required]="field.required">{{ field.label }}<span *ngIf="field.required" class="req-star">*</span></label>
+              <input *ngIf="field.type === 'string'"   [(ngModel)]="formValues[field.id]" class="form-control"/>
+              <textarea *ngIf="field.type === 'textarea'" [(ngModel)]="formValues[field.id]" rows="3" class="form-control"></textarea>
+              <input *ngIf="field.type === 'date'"    type="date"   [(ngModel)]="formValues[field.id]" class="form-control"/>
+              <input *ngIf="field.type === 'number'"  type="number" [(ngModel)]="formValues[field.id]" class="form-control"/>
+              <select *ngIf="field.type === 'boolean'" [(ngModel)]="formValues[field.id]" class="form-control">
+                <option [ngValue]="true">Oui</option><option [ngValue]="false">Non</option>
+              </select>
+              <select *ngIf="field.type === 'enum'" [(ngModel)]="formValues[field.id]" class="form-control">
+                <option *ngFor="let opt of field.options" [ngValue]="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div *ngIf="getEvaluationResult() as ev" class="match-box-active" [class.match-box-non]="!ev.match">
+              <div class="match-header">🎯 {{ ev.match ? 'Règle VALIDÉE — branche SI VRAI' : 'Règle NON validée — branche SINON' }}</div>
+              <div class="match-rule-name">{{ ev.regle.nom || 'Règle sans nom' }}</div>
+              <div class="match-arrow">↓</div>
+              <div class="match-target" *ngIf="ev.match">
+                ✓ Passage à :
+                <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) > 1"><strong>{{ ev.regle.tacheOuiOrdres?.length }} tâches en parallèle</strong><div class="match-multi-list"><div *ngFor="let ord of ev.regle.tacheOuiOrdres" class="match-multi-item">• #{{ ord }} {{ getTacheNameByOrdre(ord) }}</div></div></ng-container>
+                <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) === 1"><strong>#{{ ev.regle.tacheOuiOrdres![0] }} - {{ getTacheNameByOrdre(ev.regle.tacheOuiOrdres![0]) }}</strong></ng-container>
+                <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) === 0"><span *ngIf="getTacheSuivante() as ts"><strong>#{{ ts.ordre }} - {{ ts.nom }}</strong></span><em *ngIf="!getTacheSuivante()">Fin du processus</em></ng-container>
+              </div>
+              <div class="match-target" *ngIf="!ev.match">✗ Passage à : <ng-container *ngIf="ev.regle.tacheSinonOrdre && ev.regle.tacheSinonOrdre > 0"><strong>#{{ ev.regle.tacheSinonOrdre }} - {{ getTacheNameByOrdre(ev.regle.tacheSinonOrdre) }}</strong></ng-container><em *ngIf="!ev.regle.tacheSinonOrdre || ev.regle.tacheSinonOrdre === 0">Fin du processus</em></div>
+            </div>
+            <div *ngIf="currentRegles.length === 0" class="no-match-box">ℹ️ Aucune règle — tâche suivante dans l'ordre.</div>
+          </div>
+        </div>
+
+        <!-- ── SECTION 5 : SOUS-PROCESSUS ── -->
+        <div class="task-section">
+          <div class="task-section-header">
+            <span class="task-section-icon">🔀</span>
+            <span class="task-section-title">Sous-processus <span class="task-section-count">{{ currentSubprocess.taches?.length || 0 }}</span></span>
+            <label class="sp-toggle-inline">
+              <input type="checkbox" [(ngModel)]="currentSubprocess.actif"/>
+              Activer
+            </label>
+          </div>
+          <div class="task-section-body">
+            <div class="form-group">
+              <label>Nom du sous-processus</label>
+              <input [(ngModel)]="currentSubprocess.nom" class="form-control" placeholder="Ex: Contrôle documentaire"/>
+            </div>
+            <div class="sp-direct-list">
+              <div *ngFor="let st of currentSubprocess.taches; let i = index; trackBy: trackByIndex" class="sp-task-row">
+                <span class="sp-task-idx">{{ i + 1 }}</span>
+                <input [(ngModel)]="st.nom" class="form-control sp-task-input" placeholder="Nom de la sous-tâche"/>
+                <select [(ngModel)]="st.type" class="form-control sp-task-type">
+                  <option value="HUMAINE">HUMAINE</option>
+                  <option value="SYSTEME">SYSTEME</option>
                 </select>
-                <span class="branch-cible-info branch-cible-non" *ngIf="r.tacheSinonOrdre && r.tacheSinonOrdre > 0">
-                  → <strong>#{{ r.tacheSinonOrdre }} {{ getTacheNameByOrdre(r.tacheSinonOrdre) }}</strong>
-                </span>
-                <span class="branch-cible-end" *ngIf="!r.tacheSinonOrdre || r.tacheSinonOrdre === 0">→ <em>Fin du processus</em></span>
+                <select *ngIf="currentRegles.length > 0" [(ngModel)]="st.branche" class="form-control sp-task-branche">
+                  <option value="">Parallèle</option>
+                  <option value="OUI">Branche OUI</option>
+                  <option value="NON">Branche NON</option>
+                </select>
+                <input [(ngModel)]="st.assignee" class="form-control sp-task-assignee" placeholder="Assigné à"/>
+                <button type="button" class="mini-btn mini-danger" (click)="removeSubprocessDirectTache(i)">🗑️</button>
               </div>
+              <div *ngIf="!currentSubprocess.taches || currentSubprocess.taches.length === 0" class="empty-mini-cible">Aucune sous-tâche. Cliquez sur "+ Ajouter" pour en créer.</div>
             </div>
-
-            <!-- SI/SINON SUBPROCESS -->
-            <div *ngIf="r.cibleType === 'subprocess'" class="subprocess-bloc">
-
-              <div class="subprocess-section subprocess-oui-section">
-                <div class="subprocess-section-header">
-                  <span class="tag tag-then-oui">✓ SI VRAI → SubProcess</span>
-                  <div class="subprocess-nom-row">
-                    <label class="sp-label">Nom du SubProcess OUI :</label>
-                    <input [(ngModel)]="r.subprocessOuiNom" class="form-control sp-nom-input" placeholder="Ex: Contrôle renforcé"/>
-                  </div>
-                </div>
-                <div class="subprocess-tasks-list">
-                  <div *ngFor="let vt of r.subprocessOuiTaches || []; let vi = index" class="sp-task-row">
-                    <span class="sp-task-idx">{{ vi + 1 }}</span>
-                    <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
-                    <select [(ngModel)]="vt.type" class="form-control sp-task-type">
-                      <option value="HUMAINE">HUMAINE</option>
-                      <option value="SYSTEME">SYSTEME</option>
-                    </select>
-                    <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Assigné à"/>
-                    <button type="button" class="mini-btn mini-danger" (click)="removeSubprocessOuiTache(r, vi)" title="Supprimer">🗑️</button>
-                  </div>
-                  <div *ngIf="!r.subprocessOuiTaches || r.subprocessOuiTaches.length === 0" class="empty-mini-cible">
-                    Aucune tâche dans ce SubProcess.
-                  </div>
-                </div>
-                <button type="button" class="btn-add-sp-task" (click)="addSubprocessOuiTache(r)">
-                  <span>+</span> Ajouter une tâche au SubProcess OUI
-                </button>
-              </div>
-
-              <div class="subprocess-section subprocess-non-section">
-                <div class="subprocess-section-header">
-                  <span class="tag tag-then-non">✗ SINON → SubProcess (optionnel)</span>
-                  <div class="subprocess-nom-row">
-                    <label class="sp-label">Nom du SubProcess SINON :</label>
-                    <input [(ngModel)]="r.subprocessSinonNom" class="form-control sp-nom-input" placeholder="Ex: Procédure de rejet"/>
-                  </div>
-                </div>
-                <div class="subprocess-tasks-list">
-                  <div *ngFor="let vt of r.subprocessSinonTaches || []; let vi = index" class="sp-task-row">
-                    <span class="sp-task-idx sp-non-idx">{{ vi + 1 }}</span>
-                    <input [(ngModel)]="vt.nom" class="form-control sp-task-input" placeholder="Nom"/>
-                    <select [(ngModel)]="vt.type" class="form-control sp-task-type">
-                      <option value="HUMAINE">HUMAINE</option>
-                      <option value="SYSTEME">SYSTEME</option>
-                    </select>
-                    <input [(ngModel)]="vt.assignee" class="form-control sp-task-assignee" placeholder="Assigné à"/>
-                    <button type="button" class="mini-btn mini-danger" (click)="removeSubprocessSinonTache(r, vi)" title="Supprimer">🗑️</button>
-                  </div>
-                  <div *ngIf="!r.subprocessSinonTaches || r.subprocessSinonTaches.length === 0" class="empty-mini-cible">
-                    Aucune tâche (le processus continuera après le gateway).
-                  </div>
-                </div>
-                <button type="button" class="btn-add-sp-task btn-add-sp-non" (click)="addSubprocessSinonTache(r)">
-                  <span>+</span> Ajouter une tâche au SubProcess SINON
-                </button>
-              </div>
-
-            </div>
-
+            <button type="button" class="btn btn-secondary btn-sm" style="margin-top:8px" (click)="addSubprocessDirectTache()">+ Ajouter une sous-tâche</button>
           </div>
         </div>
 
-        <div *ngIf="currentRegles.length === 0" class="empty-mini">Aucune règle définie.</div>
-      </div>
+      </div><!-- fin task-form-body -->
 
-      <!-- ONGLET DONNÉES -->
-      <div *ngIf="editorTab === 'donnees'" class="dynamic-form">
-        <div class="info-box">💾 Remplissez les valeurs. La règle déterminera la tâche suivante.</div>
-        <div class="form-section">
-          <h4>📋 Données de la tâche</h4>
-          <div *ngFor="let field of currentChamps" class="dyn-field">
-            <label [class.required]="field.required">{{ field.label }}<span *ngIf="field.required" class="req-star">*</span></label>
-            <input *ngIf="field.type === 'string'"  [(ngModel)]="formValues[field.id]" class="form-control"/>
-            <textarea *ngIf="field.type === 'textarea'" [(ngModel)]="formValues[field.id]" rows="3" class="form-control"></textarea>
-            <input *ngIf="field.type === 'date'"   type="date"   [(ngModel)]="formValues[field.id]" class="form-control"/>
-            <input *ngIf="field.type === 'number'" type="number" [(ngModel)]="formValues[field.id]" class="form-control"/>
-            <select *ngIf="field.type === 'boolean'" [(ngModel)]="formValues[field.id]" class="form-control">
-              <option [ngValue]="true">Oui</option><option [ngValue]="false">Non</option>
-            </select>
-            <select *ngIf="field.type === 'enum'" [(ngModel)]="formValues[field.id]" class="form-control">
-              <option *ngFor="let opt of field.options" [ngValue]="opt.value">{{ opt.label }}</option>
-            </select>
-          </div>
-        </div>
-
-        <div *ngIf="getEvaluationResult() as ev" class="match-box-active" [class.match-box-non]="!ev.match">
-          <div class="match-header">🎯 {{ ev.match ? 'Règle VALIDÉE — branche SI VRAI' : 'Règle NON validée — branche SINON' }}</div>
-          <div class="match-rule-name">{{ ev.regle.nom || 'Règle sans nom' }}</div>
-          <div class="match-arrow">↓</div>
-          <div class="match-target" *ngIf="ev.match">
-            ✓ Passage à :
-            <ng-container *ngIf="ev.regle.cibleType === 'subprocess'">
-              <strong>SubProcess OUI : {{ ev.regle.subprocessOuiNom || 'SubProcess' }}</strong>
-            </ng-container>
-            <ng-container *ngIf="ev.regle.cibleType !== 'subprocess'">
-              <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) > 1">
-                <strong>{{ ev.regle.tacheOuiOrdres?.length }} tâches en parallèle</strong>
-                <div class="match-multi-list">
-                  <div *ngFor="let ord of ev.regle.tacheOuiOrdres" class="match-multi-item">• #{{ ord }} {{ getTacheNameByOrdre(ord) }}</div>
-                </div>
-              </ng-container>
-              <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) === 1">
-                <strong>#{{ ev.regle.tacheOuiOrdres![0] }} - {{ getTacheNameByOrdre(ev.regle.tacheOuiOrdres![0]) }}</strong>
-              </ng-container>
-              <ng-container *ngIf="(ev.regle.tacheOuiOrdres?.length || 0) === 0">
-                <span *ngIf="getTacheSuivante() as ts"><strong>#{{ ts.ordre }} - {{ ts.nom }}</strong></span>
-                <em *ngIf="!getTacheSuivante()">Fin du processus</em>
-              </ng-container>
-            </ng-container>
-          </div>
-          <div class="match-target" *ngIf="!ev.match">
-            ✗ Passage à :
-            <ng-container *ngIf="ev.regle.cibleType === 'subprocess'">
-              <strong>{{ ev.regle.subprocessSinonNom ? 'SubProcess SINON : ' + ev.regle.subprocessSinonNom : 'Fin du processus' }}</strong>
-            </ng-container>
-            <ng-container *ngIf="ev.regle.cibleType !== 'subprocess'">
-              <ng-container *ngIf="ev.regle.tacheSinonOrdre && ev.regle.tacheSinonOrdre > 0">
-                <strong>#{{ ev.regle.tacheSinonOrdre }} - {{ getTacheNameByOrdre(ev.regle.tacheSinonOrdre) }}</strong>
-              </ng-container>
-              <em *ngIf="!ev.regle.tacheSinonOrdre || ev.regle.tacheSinonOrdre === 0">Fin du processus</em>
-            </ng-container>
-          </div>
-        </div>
-        <div *ngIf="currentRegles.length === 0" class="no-match-box">ℹ️ Aucune règle — tâche suivante dans l'ordre.</div>
-      </div>
-
+      <!-- Pied fixe -->
       <div class="simple-task-footer">
         <button (click)="closeTaskForm()" class="btn btn-secondary">Annuler</button>
         <button (click)="saveTaskForm()" class="btn btn-primary">{{ isNewTask ? 'Créer' : 'Enregistrer' }}</button>
@@ -881,14 +761,19 @@
         <!-- Type -->
         <div class="np-group">
           <label class="np-label">🏷️ Type de processus <span class="np-required">*</span></label>
-          <select class="np-input" [(ngModel)]="newProcessus.typeProcessus">
+          <select class="np-input" [(ngModel)]="newTypeSelect">
             <option value="">-- Sélectionner --</option>
             <option value="import">📥 Import</option>
             <option value="export">📤 Export</option>
             <option value="transit">🚚 Transit</option>
             <option value="dedouanement">🛃 Dédouanement</option>
             <option value="entreposage">📦 Entreposage</option>
+            <option value="autre">✏️ Autre (saisie libre)</option>
           </select>
+          <input *ngIf="newTypeSelect === 'autre'"
+                 class="np-input np-input-libre"
+                 [(ngModel)]="newTypeLibre"
+                 placeholder="Saisissez le type de processus..." />
         </div>
 
         <!-- Statut -->
@@ -973,14 +858,19 @@
         <!-- Type -->
         <div class="np-group">
           <label class="np-label">🏷️ Type de processus <span class="np-required">*</span></label>
-          <select class="np-input" [(ngModel)]="editProcessus.typeProcessus">
+          <select class="np-input" [(ngModel)]="editTypeSelect">
             <option value="">-- Sélectionner --</option>
             <option value="import">📥 Import</option>
             <option value="export">📤 Export</option>
             <option value="transit">🚚 Transit</option>
             <option value="dedouanement">🛃 Dédouanement</option>
             <option value="entreposage">📦 Entreposage</option>
+            <option value="autre">✏️ Autre (saisie libre)</option>
           </select>
+          <input *ngIf="editTypeSelect === 'autre'"
+                 class="np-input np-input-libre"
+                 [(ngModel)]="editTypeLibre"
+                 placeholder="Saisissez le type de processus..." />
         </div>
 
         <!-- Statut -->
@@ -1029,6 +919,169 @@
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ====================== POPUP LISTE DES TÂCHES ====================== -->
+  <div *ngIf="showTachesListPopup && tachesListProcessus" class="popup-overlay popup-overlay-tl" (click)="closeTachesListPopup()">
+    <div class="popup-content popup-tasks-list" (click)="$event.stopPropagation()">
+
+      <div class="tl-header">
+        <div class="tl-title">
+          <span class="tl-header-icon">📋</span>
+          <div>
+            <h3>Liste des tâches</h3>
+            <p class="tl-subtitle">{{ tachesListProcessus.nom }} — <span class="tl-type-label">{{ tachesListProcessus.typeProcessus }}</span></p>
+          </div>
+        </div>
+        <button (click)="closeTachesListPopup()" class="btn-close">✕</button>
+      </div>
+
+      <div *ngIf="tachesListLoading" class="tl-loading">
+        ⏳ Chargement des tâches...
+      </div>
+
+      <div *ngIf="!tachesListLoading" class="tl-body">
+        <div class="tl-table-wrapper" *ngIf="tachesList.length > 0">
+          <table class="tl-table">
+            <thead>
+              <tr>
+                <th class="tl-col-ordre">Ordre</th>
+                <th class="tl-col-nom">Nom de la tâche</th>
+                <th class="tl-col-type">Type</th>
+                <th class="tl-col-desc">Description</th>
+                <th class="tl-col-statut">Statut</th>
+                <th class="tl-col-assign">Assigné</th>
+                <th class="tl-col-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of tachesList" class="tl-row">
+                <td class="tl-col-ordre">
+                  <span class="tl-ordre-badge">{{ t.ordre }}</span>
+                </td>
+                <td class="tl-col-nom">
+                  <span class="tl-nom-text">{{ t.nom }}</span>
+                </td>
+                <td class="tl-col-type">
+                  <span class="tl-type-badge" [class.tl-type-humaine]="t.type === 'HUMAINE'" [class.tl-type-systeme]="t.type !== 'HUMAINE'">
+                    {{ t.type === 'HUMAINE' ? '👤 Humaine' : '⚙️ Système' }}
+                  </span>
+                </td>
+                <td class="tl-col-desc">
+                  <span class="tl-desc-text" [title]="t.description || ''">{{ t.description ? (t.description.length > 40 ? (t.description | slice:0:40) + '…' : t.description) : '—' }}</span>
+                </td>
+                <td class="tl-col-statut">
+                  <span class="tl-statut-badge"
+                        [class.tl-s-termine]="t.statut === 'TERMINE'"
+                        [class.tl-s-encours]="t.statut === 'EN_COURS'"
+                        [class.tl-s-attente]="t.statut === 'EN_ATTENTE'">
+                    {{ t.statut === 'TERMINE' ? '✅ Terminé' : t.statut === 'EN_COURS' ? '⏳ En cours' : '⚪ En attente' }}
+                  </span>
+                </td>
+                <td class="tl-col-assign">
+                  <span class="tl-assign-text">{{ t.assignee || '—' }}</span>
+                </td>
+                <td class="tl-col-actions">
+                  <div class="tl-actions-row">
+                    <button (click)="openTacheDetail(t)" class="tl-btn tl-btn-detail" title="Voir le détail">👁️</button>
+                    <button (click)="editTacheFromList(t)" class="tl-btn tl-btn-edit" title="Modifier la tâche">✏️</button>
+                    <button (click)="confirmDeleteTache(t)" class="tl-btn tl-btn-del" title="Supprimer la tâche">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="tachesList.length === 0" class="tl-empty">
+          <span class="tl-empty-icon">📭</span>
+          <p>Aucune tâche dans ce processus.</p>
+        </div>
+      </div>
+
+      <div class="tl-footer">
+        <span class="tl-count">{{ tachesList.length }} tâche{{ tachesList.length > 1 ? 's' : '' }}</span>
+        <button (click)="closeTachesListPopup()" class="btn btn-secondary btn-sm">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== POPUP DÉTAIL TÂCHE ====================== -->
+  <div *ngIf="selectedTacheDetail" class="popup-overlay popup-overlay-4" (click)="closeTacheDetail()">
+    <div class="popup-content popup-detail-tache" (click)="$event.stopPropagation()">
+
+      <div class="dt-header">
+        <div class="dt-title">
+          <span class="dt-ordre-badge">{{ selectedTacheDetail.ordre }}</span>
+          <div>
+            <h3 class="dt-nom">{{ selectedTacheDetail.nom }}</h3>
+            <span class="dt-type-chip" [class.dt-type-humaine]="selectedTacheDetail.type === 'HUMAINE'" [class.dt-type-systeme]="selectedTacheDetail.type !== 'HUMAINE'">
+              {{ selectedTacheDetail.type === 'HUMAINE' ? '👤 Humaine' : '⚙️ Système' }}
+            </span>
+          </div>
+        </div>
+        <button (click)="closeTacheDetail()" class="btn-close">✕</button>
+      </div>
+
+      <div class="dt-body">
+
+        <div class="dt-grid">
+          <div class="dt-field dt-field-full">
+            <span class="dt-label">Description</span>
+            <span class="dt-value">{{ selectedTacheDetail.description || '—' }}</span>
+          </div>
+          <div class="dt-field">
+            <span class="dt-label">Type</span>
+            <span class="dt-value">{{ selectedTacheDetail.type }}</span>
+          </div>
+          <div class="dt-field">
+            <span class="dt-label">Ordre</span>
+            <span class="dt-value"># {{ selectedTacheDetail.ordre }}</span>
+          </div>
+          <div class="dt-field">
+            <span class="dt-label">Statut</span>
+            <span class="dt-value dt-statut-val"
+                  [class.dt-s-termine]="selectedTacheDetail.statut === 'TERMINE'"
+                  [class.dt-s-encours]="selectedTacheDetail.statut === 'EN_COURS'"
+                  [class.dt-s-attente]="selectedTacheDetail.statut === 'EN_ATTENTE'">
+              {{ selectedTacheDetail.statut === 'TERMINE' ? '✅ Terminé' : selectedTacheDetail.statut === 'EN_COURS' ? '⏳ En cours' : '⚪ En attente' }}
+            </span>
+          </div>
+          <div class="dt-field">
+            <span class="dt-label">Assigné à</span>
+            <span class="dt-value">{{ selectedTacheDetail.assignee || '—' }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="getChamps(selectedTacheDetail).length > 0" class="dt-section">
+          <h4 class="dt-section-title">📝 Champs ({{ getChamps(selectedTacheDetail).length }})</h4>
+          <div class="dt-champs-grid">
+            <div *ngFor="let c of getChamps(selectedTacheDetail)" class="dt-champ-item">
+              <span class="dt-champ-label">{{ c.label }}</span>
+              <span class="dt-champ-type">{{ c.type }}</span>
+              <span *ngIf="c.required" class="dt-champ-req">requis</span>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="getRegles(selectedTacheDetail).length > 0" class="dt-section">
+          <h4 class="dt-section-title">⚙️ Règles ({{ getRegles(selectedTacheDetail).length }})</h4>
+          <div class="dt-regles-list">
+            <div *ngFor="let r of getRegles(selectedTacheDetail)" class="dt-regle-item">
+              <span class="dt-regle-dot"></span>
+              <span class="dt-regle-nom">{{ r.nom || 'Règle sans nom' }}</span>
+              <span class="dt-regle-mode">{{ r.modeRegle === 'metier' ? '📜 Métier' : '⚙️ Simple' }}</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="dt-footer">
+        <button (click)="closeTacheDetail()" class="btn btn-secondary btn-sm">Fermer</button>
+        <button (click)="editTacheFromList(selectedTacheDetail)" class="btn btn-primary btn-sm">✏️ Modifier</button>
+      </div>
     </div>
   </div>
 
