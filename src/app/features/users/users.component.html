@@ -1,255 +1,281 @@
-<div class="container">
+<div class="page-wrapper">
+
+  <!-- ══ TOASTS ══ -->
+  <div class="toast-container" *ngIf="toastVisible">
+    <div class="toast" [class.toast-success]="!toastError" [class.toast-error]="toastError">
+      <span class="toast-icon">{{ toastError ? '⚠️' : '✅' }}</span>
+      <div class="toast-body">
+        <span class="toast-msg">{{ toastMsg }}</span>
+      </div>
+      <button class="toast-close" (click)="toastVisible = false">✕</button>
+    </div>
+  </div>
 
   <!-- ══ HEADER ══ -->
   <div class="page-header">
-    <div>
-      <h2 class="page-title">👥 Utilisateurs</h2>
-      <p class="page-subtitle">Gestion des comptes utilisateurs</p>
+    <div class="header-left">
+      <div class="header-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <circle cx="9" cy="7" r="3.5" stroke="white" stroke-width="1.8" fill="none"/>
+          <path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="white" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          <circle cx="17" cy="9" r="2.5" stroke="white" stroke-width="1.8" fill="none"/>
+          <path d="M15 14C18 14 22 16 22 19" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Gestion des Utilisateurs</h1>
+        <p class="header-subtitle">{{ totalUsers }} utilisateurs · {{ activeUsers }} actifs</p>
+      </div>
     </div>
-    <button class="btn-primary-custom" (click)="openCreateModal()">
-      ➕ Ajouter
+    <button class="btn btn-primary btn-add" (click)="openCreateModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+      Ajouter un utilisateur
     </button>
   </div>
 
-  <!-- ══ STATS ══ -->
-  <div class="stats-row">
-    <div class="stat-card">
-      <div class="stat-emoji">👥</div>
-      <div>
-        <div class="stat-value">{{ users.length }}</div>
-        <div class="stat-label">Utilisateurs</div>
+  <!-- ══ KPI ══ -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-blue">
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="9" cy="7" r="3.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M2 20C2 16.5 5 14 9 14C13 14 16 16.5 16 20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="17" cy="9" r="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M15 14C18 14 22 16 22 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ totalUsers }}</span>
+        <span class="kpi-label">Total utilisateurs</span>
       </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-emoji">✅</div>
-      <div>
-        <div class="stat-value">{{ users.filter(u => u.active).length }}</div>
-        <div class="stat-label">Actifs</div>
+    <div class="kpi-card kpi-green">
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ activeUsers }}</span>
+        <span class="kpi-label">Actifs</span>
+      </div>
+    </div>
+    <div class="kpi-card kpi-red">
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M10 8V16M14 8V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ inactiveUsers }}</span>
+        <span class="kpi-label">Inactifs</span>
+      </div>
+    </div>
+    <div class="kpi-card kpi-purple">
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M12 3L4 7V12C4 16.4 7.4 20.5 12 21C16.6 20.5 20 16.4 20 12V7L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" fill="none"/>
+          <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="kpi-body">
+        <span class="kpi-value">{{ adminCount }}</span>
+        <span class="kpi-label">Super Admins</span>
       </div>
     </div>
   </div>
 
   <!-- ══ ERREUR ══ -->
-  <div *ngIf="error" class="custom-alert">{{ error }}</div>
+  <div *ngIf="error" class="alert-danger">{{ error }}</div>
 
-  <!-- ══ FILTRES ══ -->
-  <div class="header-right">
-    <div class="search-container">
-      <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Rechercher..."
-             [(ngModel)]="searchTerm" (input)="filterUsers()" />
+  <!-- ══ TOOLBAR ══ -->
+  <div class="toolbar">
+    <div class="search-box">
+      <span class="search-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <input class="search-input"
+             type="text"
+             placeholder="Rechercher un utilisateur..."
+             [(ngModel)]="searchTerm"
+             (input)="filterUsers()" />
     </div>
-    <div class="role-filter">
-      <select [(ngModel)]="selectedRole" (change)="filterUsers()">
-        <option value="">Tous les rôles</option>
-        <option value="SuperAdmin">SuperAdmin</option>
-        <option value="Gestionnaire des processus metier">Gestionnaire des processus</option>
-        <option value="Gestionnaire des règles métier">Gestionnaire des règles</option>
-      </select>
+    <div class="filter-group">
+      <button class="filter-btn" [class.active]="selectedStatus === ''"       (click)="setStatusFilter('')">Tous</button>
+      <button class="filter-btn" [class.active]="selectedStatus === 'active'" (click)="setStatusFilter('active')">Actifs</button>
+      <button class="filter-btn" [class.active]="selectedStatus === 'inactive'" (click)="setStatusFilter('inactive')">Inactifs</button>
     </div>
-    <div class="status-filter">
-      <select [(ngModel)]="selectedStatus" (change)="filterUsers()">
-        <option value="">Tous les statuts</option>
-        <option value="active">Actif</option>
-        <option value="inactive">Inactif</option>
-      </select>
+    <button class="btn btn-sm btn-secondary" (click)="exportCSV()">⬇ Export CSV</button>
+    <div class="entries-select">
+      <label>
+        Afficher
+        <select [(ngModel)]="pageSize" (change)="onPageSizeChange(pageSize)">
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+        </select>
+        entrées
+      </label>
     </div>
   </div>
 
   <!-- ══ TABLEAU ══ -->
-  <div class="table-card" *ngIf="filteredUsers.length > 0">
-    <table class="custom-table">
+  <div class="table-wrapper">
+    <table class="pro-table">
       <thead>
         <tr>
+          <th class="col-num">#</th>
           <th>Utilisateur</th>
           <th>Email</th>
           <th>Nom complet</th>
-          <th>Rôle</th>
+          <th>Rôles</th>
           <th>Statut</th>
-          <th class="text-center">Actions</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let user of paginatedUsers; trackBy: trackByUsername">
+        <tr *ngFor="let user of paginatedUsers; let i = index; trackBy: trackByUsername">
+
+          <td class="td-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
 
           <td>
-            <div class="user-info">
-              <div class="avatar">{{ user.username.charAt(0) | uppercase }}</div>
+            <div class="user-cell">
+              <div class="user-avatar">{{ user.username.charAt(0) | uppercase }}</div>
               <span class="user-name">{{ user.username }}</span>
             </div>
           </td>
 
-          <td>{{ user.email }}</td>
+          <td class="text-muted">{{ user.email }}</td>
           <td>{{ user.firstName }} {{ user.lastName }}</td>
 
           <td>
             <ng-container *ngIf="user.roles && user.roles.length > 0; else noRole">
-              <span class="badge-role" *ngFor="let role of user.roles"
-                    [ngClass]="role.toLowerCase()">{{ role }}</span>
+              <span class="role-badge" *ngFor="let role of user.roles">{{ role }}</span>
             </ng-container>
             <ng-template #noRole>
-              <span class="badge-role empty">Aucun rôle</span>
+              <span class="role-badge role-empty">Aucun rôle</span>
             </ng-template>
           </td>
 
           <td>
-            <span class="badge-status" [ngClass]="user.active ? 'active' : 'inactive'">
+            <span class="status-pill" [class.pill-active]="user.active" [class.pill-inactive]="!user.active">
+              <span class="status-dot"></span>
               {{ user.active ? 'Actif' : 'Inactif' }}
             </span>
           </td>
 
-          <td class="text-center">
-            <div class="actions">
-              <button (click)="openDetails(user)">Voir</button>
-              <button class="icon-btn edit" (click)="openEditModal(user)">✏️</button>
-              <button class="icon-btn delete" (click)="deleteUser(user)">🗑</button>
-              <div class="switch" [class.on]="user.active"
-                   (click)="toggleUserActive(user); $event.stopPropagation()">
-                <div class="switch-circle"></div>
-              </div>
+          <td class="td-actions">
+            <div class="actions-row">
+              <button class="tbl-btn tbl-view" (click)="openDetails(user)" title="Voir le détail">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M2 12C5 6 9 4 12 4s7 2 10 8c-3 6-7 8-10 8s-7-2-10-8z" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+              <button class="tbl-btn tbl-edit" (click)="openEditModal(user)" title="Modifier">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4C3.4 4 3 4.4 3 5V20C3 20.6 3.4 21 4 21H19C19.6 21 20 20.6 20 20V13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5L21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="tbl-btn tbl-del" (click)="deleteUser(user)" title="Supprimer">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 6H21M8 6V4H16V6M19 6V20C19 20.6 18.6 21 18 21H6C5.4 21 5 20.6 5 20V6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </button>
             </div>
           </td>
 
         </tr>
+
+        <tr *ngIf="filteredUsers.length === 0" class="empty-row">
+          <td colspan="7">
+            <div class="empty-state-inline">
+              <span class="empty-icon-big">👥</span>
+              <span>Aucun utilisateur trouvé</span>
+            </div>
+          </td>
+        </tr>
       </tbody>
     </table>
-  </div>
 
-  <!-- ══ VIDE ══ -->
-  <div *ngIf="filteredUsers.length === 0" class="empty-state">
-    Aucun utilisateur trouvé
-  </div>
-
-  <!-- ══ PAGINATION ══ -->
-  <div class="pagination-wrapper">
-    <div class="pagination" *ngIf="totalPages > 1">
-      <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
-      <button class="page-btn" *ngFor="let page of pages"
-              [class.active]="page === currentPage" (click)="goToPage(page)">{{ page }}</button>
-      <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+    <div class="table-footer">
+      <span>Affichage de {{ showingStart }} à {{ showingEnd }} sur {{ showingTotal }} entrée(s)</span>
+      <div class="pagination">
+        <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">‹</button>
+        <button class="page-btn"
+                *ngFor="let page of pages"
+                [class.active]="page === currentPage"
+                (click)="goToPage(page)">{{ page }}</button>
+        <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages">›</button>
+      </div>
     </div>
   </div>
 
-  <!-- ══ TOAST GLOBAL ══ -->
-  <div class="global-toast" [class.show]="toastVisible" [class.error]="toastError">
-    <span>{{ toastMsg }}</span>
-  </div>
+  <!-- ══ POPUP DÉTAIL UTILISATEUR ══ -->
+  <app-user-detail
+    *ngIf="showModal && selectedUser"
+    [user]="selectedUser!"
+    (close)="closeModal()"
+    (edit)="openEditModal(selectedUser!); closeModal()">
+  </app-user-detail>
 
-  <!-- ══════════════════════════════════════════
-       MODAL : DÉTAIL UTILISATEUR (Voir)
-       ══════════════════════════════════════════ -->
-  <div *ngIf="showModal && selectedUser" class="modal-backdrop" (click)="closeModal()">
-    <div class="modal" (click)="$event.stopPropagation()">
+  <!-- ══ MODAL : FORMULAIRE ══ -->
+  <div *ngIf="showFormModal" class="popup-overlay" (click)="closeFormModal()">
+    <div class="popup-content popup-form-user" (click)="$event.stopPropagation()">
 
-      <div class="modal-header">
-        <h2>Détails utilisateur</h2>
-        <button class="close-btn" (click)="closeModal()">✖</button>
-      </div>
-
-      <div class="modal-body">
-        <div class="user-info">
-          <div class="avatar">
-            {{ selectedUser.firstName.charAt(0) }}{{ selectedUser.lastName.charAt(0) }}
+      <div class="popup-header">
+        <div class="popup-header-info">
+          <span class="popup-header-icon">
+            <svg *ngIf="formMode === 'create'" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+            <svg *ngIf="formMode !== 'create'" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M11 4H4C3.4 4 3 4.4 3 5V20C3 20.6 3.4 21 4 21H19C19.6 21 20 20.6 20 20V13" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M18.5 2.5L21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          </span>
+          <div>
+            <h3>{{ formMode === 'create' ? 'Nouvel utilisateur' : 'Modifier l\'utilisateur' }}</h3>
+            <p>{{ formMode === 'create' ? 'Remplissez les informations du nouveau compte' : 'Modifiez les informations de ' + formUser.username }}</p>
           </div>
-          <h3>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</h3>
-          <p class="username">@{{ selectedUser.username }}</p>
         </div>
-        <div class="info">
-          <p><b>Email</b> {{ selectedUser.email }}</p>
-          <p>
-            <b>Statut</b>
-            <span [ngClass]="selectedUser.active ? 'active' : 'inactive'">
-              {{ selectedUser.active ? 'Actif' : 'Inactif' }}
-            </span>
-          </p>
-          <p><b>Rôles</b> {{ selectedUser.roles?.join(', ') || 'Aucun rôle' }}</p>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-close" (click)="closeModal()">Fermer</button>
-        <button class="btn-primary-custom" (click)="openEditModal(selectedUser); closeModal()">
-          ✏️ Modifier
+        <button class="btn-close" (click)="closeFormModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       </div>
 
-    </div>
-  </div>
+      <div class="popup-form-body">
+        <div class="alert-danger" *ngIf="formErrors['global']">⚠ {{ formErrors['global'] }}</div>
 
-  <!-- ══════════════════════════════════════════
-       MODAL : FORMULAIRE AJOUTER / MODIFIER
-       ══════════════════════════════════════════ -->
-  <div *ngIf="showFormModal" class="modal-backdrop" (click)="closeFormModal()">
-    <div class="modal modal-form-wide" (click)="$event.stopPropagation()">
+        <div class="form-grid">
 
-      <!-- En-tête -->
-      <div class="modal-header">
-        <div class="modal-head-left">
-          <div class="modal-form-avatar">
-            {{ formUser.firstName ? formUser.firstName.charAt(0).toUpperCase() : '?' }}{{ formUser.lastName ? formUser.lastName.charAt(0).toUpperCase() : '' }}
-          </div>
-          <div>
-            <h2>{{ formMode === 'create' ? 'Nouvel utilisateur' : 'Modifier l\'utilisateur' }}</h2>
-            <p class="modal-head-sub">
-              {{ formMode === 'create' ? 'Remplissez les informations du nouveau compte' : 'Modifiez les informations de ' + formUser.username }}
-            </p>
-          </div>
-        </div>
-        <button class="close-btn" (click)="closeFormModal()">✖</button>
-      </div>
-
-      <!-- Corps -->
-      <div class="modal-body modal-body-form">
-
-        <!-- Erreur globale -->
-        <div class="form-global-error" *ngIf="formErrors['global']">
-          ⚠️ {{ formErrors['global'] }}
-        </div>
-
-        <div class="modal-form">
-
-          <!-- Username -->
           <div class="form-group" [class.has-error]="formErrors['username']">
-            <label>Username <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="formUser.username"
-                   [readonly]="formMode === 'edit'"
-                   [class.readonly-field]="formMode === 'edit'"
-                   placeholder="identifiant unique" />
-            <span class="error-message" *ngIf="formErrors['username']">{{ formErrors['username'] }}</span>
+            <label class="form-label">Username <span class="required">*</span></label>
+            <input class="form-input" type="text" [(ngModel)]="formUser.username"
+                   [readonly]="formMode === 'edit'" placeholder="identifiant unique" />
+            <span class="form-error" *ngIf="formErrors['username']">{{ formErrors['username'] }}</span>
           </div>
 
-          <!-- Email -->
           <div class="form-group" [class.has-error]="formErrors['email']">
-            <label>Email <span class="required">*</span></label>
-            <input type="email" [(ngModel)]="formUser.email" placeholder="email@exemple.com" />
-            <span class="error-message" *ngIf="formErrors['email']">{{ formErrors['email'] }}</span>
+            <label class="form-label">Email <span class="required">*</span></label>
+            <input class="form-input" type="email" [(ngModel)]="formUser.email" placeholder="email@exemple.com" />
+            <span class="form-error" *ngIf="formErrors['email']">{{ formErrors['email'] }}</span>
           </div>
 
-          <!-- Prénom -->
           <div class="form-group" [class.has-error]="formErrors['firstName']">
-            <label>Prénom <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="formUser.firstName" placeholder="Prénom" />
-            <span class="error-message" *ngIf="formErrors['firstName']">{{ formErrors['firstName'] }}</span>
+            <label class="form-label">Prénom <span class="required">*</span></label>
+            <input class="form-input" type="text" [(ngModel)]="formUser.firstName" placeholder="Prénom" />
+            <span class="form-error" *ngIf="formErrors['firstName']">{{ formErrors['firstName'] }}</span>
           </div>
 
-          <!-- Nom -->
           <div class="form-group" [class.has-error]="formErrors['lastName']">
-            <label>Nom <span class="required">*</span></label>
-            <input type="text" [(ngModel)]="formUser.lastName" placeholder="Nom de famille" />
-            <span class="error-message" *ngIf="formErrors['lastName']">{{ formErrors['lastName'] }}</span>
+            <label class="form-label">Nom <span class="required">*</span></label>
+            <input class="form-input" type="text" [(ngModel)]="formUser.lastName" placeholder="Nom de famille" />
+            <span class="form-error" *ngIf="formErrors['lastName']">{{ formErrors['lastName'] }}</span>
           </div>
 
-          <!-- Mot de passe (création uniquement) -->
-          <div class="form-group full-width" *ngIf="formMode === 'create'"
-               [class.has-error]="formErrors['password']">
-            <label>Mot de passe <span class="required">*</span></label>
-            <input type="password" [(ngModel)]="formUser.password" placeholder="Mot de passe" />
-            <span class="error-message" *ngIf="formErrors['password']">{{ formErrors['password'] }}</span>
+          <div class="form-group full-width" *ngIf="formMode === 'create'" [class.has-error]="formErrors['password']">
+            <label class="form-label">Mot de passe <span class="required">*</span></label>
+            <input class="form-input" type="password" [(ngModel)]="formUser.password" placeholder="Mot de passe" />
+            <span class="form-error" *ngIf="formErrors['password']">{{ formErrors['password'] }}</span>
           </div>
 
-          <!-- Rôles -->
           <div class="form-group full-width">
-            <label>Rôles</label>
+            <label class="form-label">Rôles</label>
             <div class="roles-grid">
               <label class="role-chip"
                      *ngFor="let r of availableRoles"
@@ -263,28 +289,27 @@
             </div>
           </div>
 
-          <!-- Statut -->
-          <div class="form-group full-width form-status-row">
-            <label>Compte actif</label>
-            <div class="switch" [class.on]="formUser.active"
-                 (click)="formUser.active = !formUser.active">
-              <div class="switch-circle"></div>
+          <div class="form-group full-width">
+            <label class="form-label">Compte actif</label>
+            <div class="toggle-row">
+              <button type="button"
+                      class="tbl-toggle-switch"
+                      [class.switch-on]="formUser.active"
+                      [class.switch-off]="!formUser.active"
+                      (click)="formUser.active = !formUser.active">
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-label">{{ formUser.active ? 'ACTIF' : 'INACTIF' }}</span>
+              </button>
             </div>
-            <span class="status-label" [class.active]="formUser.active">
-              {{ formUser.active ? 'Actif' : 'Inactif' }}
-            </span>
           </div>
 
         </div>
       </div>
 
-      <!-- Pied -->
-      <div class="modal-footer">
-        <button class="btn-close" (click)="closeFormModal()" [disabled]="savingForm">
-          Annuler
-        </button>
-        <button class="btn-primary-custom" (click)="submitForm()" [disabled]="savingForm">
-          <span class="btn-spinner" *ngIf="savingForm"></span>
+      <div class="popup-form-footer">
+        <button class="btn btn-secondary" (click)="closeFormModal()" [disabled]="savingForm">Annuler</button>
+        <button class="btn btn-primary" (click)="submitForm()" [disabled]="savingForm">
+          <span *ngIf="savingForm">⏳</span>
           {{ savingForm ? 'Enregistrement...' : (formMode === 'create' ? 'Créer l\'utilisateur' : 'Enregistrer') }}
         </button>
       </div>

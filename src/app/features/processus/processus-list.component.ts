@@ -1,13 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { ProcessusService } from '../../core/services/processus.service';
 import { TacheService } from '../../core/services/tache.service';
 import { RegleMetierService } from '../../core/services/regle.service';
 import { Processus, Tache } from '../../models/processus.model';
 import { RegleMetier } from '../../models/regle.model';
 import { BpmnViewerComponent } from './bpmn-viewer.component';
+import { NotificationService } from '../../core/services/notification.service';
 
 export type ChampType = 'string' | 'number' | 'date' | 'boolean' | 'enum' | 'textarea';
 export type OperateurCondition =
@@ -111,7 +112,7 @@ export interface Toast {
 @Component({
   selector: 'app-processus-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BpmnViewerComponent],
+  imports: [CommonModule, FormsModule, RouterModule, BpmnViewerComponent],
   templateUrl: './processus-list.html',
   styleUrls: ['./processus-list.css']
 })
@@ -119,11 +120,16 @@ export class ProcessusListComponent implements OnInit {
   private processusService = inject(ProcessusService);
   private tacheService = inject(TacheService);
   private regleMetierService = inject(RegleMetierService);
+  private notifSvc = inject(NotificationService);
 
   processus: Processus[] = [];
   taskCounts: Record<number, number> = {};
   searchTerm = '';
   filterStatus: 'all' | 'active' | 'inactive' = 'all';
+
+  // ── Pagination ──
+  currentPage = 1;
+  pageSize = 8;
   selectedProcessus: Processus | null = null;
   taches: Tache[] = [];
   errorMessage = '';
@@ -132,6 +138,7 @@ export class ProcessusListComponent implements OnInit {
 
   formTaskOpen: Tache | null = null;
   isNewTask = false;
+  formStep = 1;
   editorTab: 'info' | 'champs' | 'regles' | 'donnees' | 'subprocess' = 'info';
   currentSubprocess: SubprocessDirect = { actif: false, nom: '', taches: [] };
   currentChamps: ChampDynamique[] = [];
@@ -142,6 +149,10 @@ export class ProcessusListComponent implements OnInit {
   toasts: Toast[] = [];
   tacheToDelete: Tache | null = null;
   deleting = false;
+
+  openMenuId: number | null = null;
+  toggleMenu(id: number): void { this.openMenuId = this.openMenuId === id ? null : id; }
+  closeMenu(): void { this.openMenuId = null; }
 
   viewMode: 'svg' | 'bpmn' = 'svg';
   generatedBpmnUrl: string | null = null;
@@ -154,6 +165,11 @@ export class ProcessusListComponent implements OnInit {
   newProcessus: Partial<Processus> = this.emptyProcessus();
   newTypeSelect = '';
   newTypeLibre = '';
+
+  // ── Modal BPMN seul ──
+  showBpmnModal = false;
+  bpmnModalXml = '';
+  bpmnModalProcessus: Processus | null = null;
 
   // ── Modal modifier processus ──
   showEditProcessusModal = false;
@@ -257,7 +273,7 @@ export class ProcessusListComponent implements OnInit {
     });
   }
 
-  filteredProcessus(): Processus[] {
+  allFiltered(): Processus[] {
     return this.processus.filter(p => {
       const matchSearch = !this.searchTerm ||
         p.nom?.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
@@ -269,6 +285,39 @@ export class ProcessusListComponent implements OnInit {
       return matchSearch && matchStatus;
     });
   }
+
+  filteredProcessus(): Processus[] {
+    const all = this.allFiltered();
+    const start = (this.currentPage - 1) * this.pageSize;
+    return all.slice(start, start + this.pageSize);
+  }
+
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.allFiltered().length / this.pageSize));
+  }
+
+  pages(): number[] {
+    const result: number[] = [];
+    const total = this.totalPages();
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) result.push(i);
+    } else {
+      const around = [this.currentPage - 1, this.currentPage, this.currentPage + 1]
+        .filter(p => p >= 1 && p <= total);
+      const all = Array.from(new Set([1, ...around, total])).sort((a, b) => a - b);
+      for (let i = 0; i < all.length; i++) {
+        if (i > 0 && all[i] - all[i - 1] > 1) result.push(-1);
+        result.push(all[i]);
+      }
+    }
+    return result;
+  }
+
+  goToPage(p: number) {
+    if (p >= 1 && p <= this.totalPages()) this.currentPage = p;
+  }
+
+  resetPage() { this.currentPage = 1; }
 
   countActifs(): number { return this.processus.filter(p => p.actif).length; }
   countInactifs(): number { return this.processus.filter(p => !p.actif).length; }
@@ -286,8 +335,13 @@ export class ProcessusListComponent implements OnInit {
     const old = p.actif;
     p.actif = !p.actif;
     this.processusService.toggle(id).subscribe({
-      next: (upd: any) => { if (upd && typeof upd.actif === 'boolean') p.actif = upd.actif; },
-      error: (err) => { p.actif = old; this.addToast('error', 'Erreur', err?.error?.message || err.message); }
+      next: (upd: any) => {
+        if (upd && typeof upd.actif === 'boolean') p.actif = upd.actif;
+        const etat = p.actif ? 'activé' : 'désactivé';
+        this.addToast('success', p.actif ? '✅ Processus activé' : '⏸️ Processus désactivé', p.nom || '');
+        this.notifSvc.notify({ type: 'info', category: 'processus', icon: p.actif ? '▶️' : '⏸️', title: `Processus ${etat}`, message: `Le processus « ${p.nom || id} » a été ${etat}.` });
+      },
+      error: (err) => { p.actif = old; this.addToast('error', 'Erreur lors du changement de statut', err?.error?.message || err.message); }
     });
   }
 
@@ -303,6 +357,78 @@ export class ProcessusListComponent implements OnInit {
     this.errorMessage = ''; this.successMessage = '';
     this.viewMode = 'svg';
     this.loadTaches();
+  }
+
+  ouvrirVueBpmn(p: Processus): void {
+    this.ouvrirBpmnSeul(p);
+  }
+
+  ouvrirBpmnSeul(p: Processus): void {
+    if (!p.id) return;
+    this.tacheService.getByProcessus(p.id).subscribe({
+      next: (taches) => {
+        if (taches.length === 0) {
+          this.addToast('warning', 'Aucune tâche', 'Ce processus ne contient pas de tâches.');
+          return;
+        }
+        const prevSelected = this.selectedProcessus;
+        const prevTaches = [...this.taches];
+        this.selectedProcessus = p;
+        this.taches = taches;
+        const xml = this.generateBpmnXml();
+        this.selectedProcessus = prevSelected;
+        this.taches = prevTaches;
+        if (!xml) return;
+        this.bpmnModalXml = xml;
+        this.bpmnModalProcessus = p;
+        this.showBpmnModal = true;
+      },
+      error: () => this.addToast('error', 'Erreur', 'Impossible de charger les tâches.')
+    });
+  }
+
+  fermerBpmnModal(): void {
+    this.showBpmnModal = false;
+    this.bpmnModalXml = '';
+    this.bpmnModalProcessus = null;
+  }
+
+  exporterBpmnDirect(p: Processus): void {
+    if (!p.id) return;
+    this.tacheService.getByProcessus(p.id).subscribe({
+      next: (taches) => {
+        if (taches.length === 0) { this.addToast('warning', 'Aucune tâche', 'Ce processus ne contient pas de tâches.'); return; }
+        const prevSelected = this.selectedProcessus;
+        const prevTaches = [...this.taches];
+        this.selectedProcessus = p;
+        this.taches = taches;
+        const xml = this.generateBpmnXml();
+        this.selectedProcessus = prevSelected;
+        this.taches = prevTaches;
+        if (!xml) return;
+        const nom = (p.nom || 'processus').replace(/\s+/g, '_').toLowerCase();
+        const filename = `${nom}_${p.id}.bpmn`;
+        const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url; link.download = filename; link.click();
+        URL.revokeObjectURL(url);
+        this.addToast('success', '✅ BPMN exporté', filename, 4000);
+      },
+      error: () => this.addToast('error', 'Erreur', 'Impossible de charger les tâches.')
+    });
+  }
+
+  exporterBpmnSeul(): void {
+    if (!this.bpmnModalXml || !this.bpmnModalProcessus) return;
+    const nom = (this.bpmnModalProcessus.nom || 'processus').replace(/\s+/g, '_').toLowerCase();
+    const filename = `${nom}_${this.bpmnModalProcessus.id}.bpmn`;
+    const blob = new Blob([this.bpmnModalXml], { type: 'application/xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = filename; link.click();
+    URL.revokeObjectURL(url);
+    this.addToast('success', '✅ BPMN exporté', filename, 4000);
   }
 
   closePopup() {
@@ -689,7 +815,7 @@ export class ProcessusListComponent implements OnInit {
   // - Toutes les flèches visibles (OUI, NON, retours subprocess)
   // - SubProcess en swimlanes séparées (au-dessus / en-dessous)
   // ════════════════════════════════════════════════════════════════
-  private generateBpmnXml(): string | null {
+  generateBpmnXml(): string | null {
     if (!this.selectedProcessus || this.taches.length === 0) return null;
     const sorted = this.tachesSorted();
     const processId = `Process_${this.selectedProcessus.id}`;
@@ -697,8 +823,6 @@ export class ProcessusListComponent implements OnInit {
 
     const TASK_W = 100, TASK_H = 80, GW_SIZE = 50, EVT_R = 18, H_GAP = 60;
     const Y_CENTER = 280;
-    const SP_INNER_W = 90, SP_INNER_H = 60, SP_INNER_GAP = 30;
-    const SP_PADDING = 20;
 
     interface LayoutNode {
       kind: 'start' | 'end' | 'task' | 'gateway' | 'subProcess';
@@ -1191,7 +1315,7 @@ ${edgesXml}
     };
     this.currentChamps = []; this.currentRegles = []; this.formValues = {};
     this.currentSubprocess = { actif: false, nom: '', taches: [] };
-    this.formError = ''; this.editorTab = 'info';
+    this.formError = ''; this.editorTab = 'info'; this.formStep = 1;
   }
 
   openTaskForm(tache: Tache) {
@@ -1223,7 +1347,7 @@ ${edgesXml}
       if (sp.taches) sp.taches.forEach((st: any) => { if (!st.branche) st.branche = ''; });
       this.currentSubprocess = sp;
     } catch { this.currentSubprocess = { actif: false, nom: '', taches: [] }; }
-    this.formError = ''; this.editorTab = 'info';
+    this.formError = ''; this.editorTab = 'info'; this.formStep = 1;
   }
 
   closeTaskForm() {
@@ -1231,7 +1355,12 @@ ${edgesXml}
     this.currentChamps = []; this.currentRegles = [];
     this.formValues = {}; this.formError = '';
     this.currentSubprocess = { actif: false, nom: '', taches: [] };
+    this.formStep = 1;
   }
+
+  nextFormStep(): void { if (this.formStep < 4) this.formStep++; }
+  prevFormStep(): void { if (this.formStep > 1) this.formStep--; }
+  goToStep(n: number): void { if (n <= this.formStep) this.formStep = n; }
 
   toggleOuiCible(regle: RegleTransition, ordre: number): void {
     if (!regle.tacheOuiOrdres) regle.tacheOuiOrdres = [];
@@ -1633,6 +1762,7 @@ ${edgesXml}
         this.closeNewProcessusModal();
         this.load();
         this.addToast('success', `Processus "${this.newProcessus.nom}" créé avec succès`);
+        this.notifSvc.notify({ type: 'success', category: 'processus', icon: '🔄', title: 'Processus créé', message: `Le processus « ${this.newProcessus.nom} » a été créé avec succès.` });
       },
       error: (err) => {
         this.newProcessusLoading = false;
@@ -1680,6 +1810,7 @@ ${edgesXml}
         this.closeEditProcessusModal();
         this.load();
         this.addToast('success', `Processus "${nom}" mis à jour avec succès`);
+        this.notifSvc.notify({ type: 'success', category: 'processus', icon: '✏️', title: 'Processus modifié', message: `Le processus « ${nom} » a été mis à jour.` });
       },
       error: (err) => {
         this.editProcessusLoading = false;

@@ -2,10 +2,11 @@
 
 import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, AsyncPipe } from '@angular/common';
 import { KeycloakService } from './core/services/keycloak.service';
+import { NotificationService, AppNotification } from './core/services/notification.service';
 import { filter, takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 
 interface MenuItem {
@@ -16,12 +17,13 @@ interface MenuItem {
   badge?: string;
   badgeType?: 'new' | 'count' | 'hot';
   description?: string;
+  children?: MenuItem[];
 }
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterModule, CommonModule, FormsModule],
+  imports: [RouterModule, CommonModule, FormsModule, AsyncPipe],
   template: `
 
   <!-- ════ SVG Icons (sprite) ════ -->
@@ -82,6 +84,14 @@ interface MenuItem {
       <symbol id="icon-search" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8" fill="none"/>
         <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </symbol>
+      <symbol id="icon-ai" viewBox="0 0 24 24">
+        <rect x="6" y="8" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/>
+        <circle cx="9.5" cy="12" r="1" fill="currentColor"/>
+        <circle cx="14.5" cy="12" r="1" fill="currentColor"/>
+        <path d="M9.5 15h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M9 8V6M12 8V5M15 8V6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M6 12H4M20 12H18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
       </symbol>
     </defs>
   </svg>
@@ -189,7 +199,9 @@ interface MenuItem {
             <div class="group-divider" *ngIf="isSidebarCollapsed"></div>
             <ul class="nav-list">
               <li *ngFor="let item of filteredProcessItems">
-                <a class="nav-link"
+                <!-- Item simple (sans enfants) -->
+                <a *ngIf="!item.children?.length; else parentItem"
+                   class="nav-link"
                    [routerLink]="item.path"
                    routerLinkActive="active"
                    [routerLinkActiveOptions]="{exact: true}"
@@ -213,6 +225,38 @@ interface MenuItem {
                         [class.badge-count]="item.badgeType === 'count'"
                         [class.badge-hot]="item.badgeType === 'hot'"></span>
                 </a>
+                <!-- Item parent (avec sous-menu) -->
+                <ng-template #parentItem>
+                  <a class="nav-link" [class.active]="isChildActive(item)"
+                     (click)="toggleExpand(item.path); onMenuItemClick()"
+                     [attr.data-tooltip]="isSidebarCollapsed ? item.label : null">
+                    <span class="icon-box">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <use [attr.href]="'#icon-' + item.icon"></use>
+                      </svg>
+                    </span>
+                    <span class="link-text" *ngIf="!isSidebarCollapsed">{{ item.label }}</span>
+                    <span class="nav-arrow" *ngIf="!isSidebarCollapsed"
+                          [class.nav-arrow-open]="isExpanded(item.path)">›</span>
+                  </a>
+                  <ul class="nav-sub-list" *ngIf="isExpanded(item.path) && !isSidebarCollapsed">
+                    <li *ngFor="let child of item.children">
+                      <a class="nav-link nav-sub-link"
+                         [routerLink]="child.path"
+                         routerLinkActive="active"
+                         [routerLinkActiveOptions]="{exact: true}"
+                         (click)="onMenuItemClick()">
+                        <span class="sub-indent"></span>
+                        <span class="icon-box">
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                            <use [attr.href]="'#icon-' + child.icon"></use>
+                          </svg>
+                        </span>
+                        <span class="link-text">{{ child.label }}</span>
+                      </a>
+                    </li>
+                  </ul>
+                </ng-template>
               </li>
             </ul>
           </div>
@@ -230,14 +274,7 @@ interface MenuItem {
         <!-- ── Footer ── -->
         <div class="sidebar-footer">
 
-          <!-- Image banner -->
-          <div class="sidebar-banner" *ngIf="!isSidebarCollapsed">
-            <img src="assets/images/import-export-illustration.png" alt="Logistique internationale" class="banner-img">
-            <div class="banner-overlay">
-              <span class="banner-label">Transit & Douane</span>
-            </div>
-          </div>
-          <!-- Bouton Déconnexion visible pour TOUS les rôles connectés -->
+          <!-- Bouton Déconnexion -->
           <button class="sidebar-logout-btn"
                   *ngIf="keycloakService.isLoggedIn()"
                   (click)="logout()"
@@ -254,11 +291,6 @@ interface MenuItem {
             </span>
             <span class="link-text" *ngIf="!isSidebarCollapsed">Déconnexion</span>
           </button>
-
-          <div class="version-tag" *ngIf="!isSidebarCollapsed">
-            <span class="version-dot"></span>
-            v2.4.1 · Stable
-          </div>
         </div>
 
       </nav>
@@ -282,8 +314,73 @@ interface MenuItem {
 
         <!-- E-FORCE / ProcessFlow logo badge -->
        
-        <!-- Right actions : uniquement le bouton Connexion si non connecté -->
+        <!-- Right actions -->
         <div class="topbar-actions">
+
+          <!-- 🔔 Cloche notifications (utilisateur connecté) -->
+          <div class="notif-wrap" *ngIf="keycloakService.isLoggedIn()">
+            <button class="topbar-btn notif-bell-btn"
+                    (click)="toggleNotifPanel()"
+                    title="Notifications"
+                    aria-label="Notifications">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+                      stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"
+                      stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="notif-badge" *ngIf="(unreadCount$ | async) as c">
+                {{ c > 9 ? '9+' : c }}
+              </span>
+            </button>
+
+            <!-- Panneau déroulant -->
+            <div class="notif-panel" *ngIf="notifPanelOpen">
+              <!-- En-tête -->
+              <div class="notif-panel-header">
+                <span class="notif-panel-title">Notifications</span>
+                <span class="notif-unread-chip" *ngIf="(unreadCount$ | async) as c">
+                  {{ c }} non lue{{ c > 1 ? 's' : '' }}
+                </span>
+                <button class="notif-mark-all" (click)="notifSvc.markAllRead()" title="Tout marquer comme lu">
+                  ✓ Tout lire
+                </button>
+              </div>
+
+              <!-- Liste -->
+              <div class="notif-list">
+                <ng-container *ngIf="(notifications$ | async) as notifs">
+                  <div *ngIf="notifs.length === 0" class="notif-empty">
+                    <span class="notif-empty-icon">🔔</span>
+                    <p>Aucune notification</p>
+                  </div>
+                  <div *ngFor="let n of notifs"
+                       class="notif-item"
+                       [class.notif-unread]="!n.read"
+                       (click)="notifSvc.markRead(n.id)">
+                    <div class="notif-item-icon" [class]="'notif-icon-' + n.type">
+                      {{ n.icon }}
+                    </div>
+                    <div class="notif-item-body">
+                      <p class="notif-item-title">{{ n.title }}</p>
+                      <p class="notif-item-msg">{{ n.message }}</p>
+                      <span class="notif-item-time">{{ n.time | date:'HH:mm · dd/MM' }}</span>
+                    </div>
+                    <span class="notif-dot" *ngIf="!n.read"></span>
+                  </div>
+                </ng-container>
+              </div>
+
+              <!-- Pied -->
+              <div class="notif-panel-footer">
+                <button class="notif-clear-btn" (click)="notifSvc.clear()">🗑 Tout effacer</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bouton Connexion si non connecté -->
           <ng-container *ngIf="keycloakService.ready && !keycloakService.isLoggedIn()">
             <button class="topbar-btn topbar-login"
                     (click)="goToLogin()"
@@ -315,46 +412,44 @@ interface MenuItem {
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     :host {
-      /* ══ Palette : Bleu marine + Blanc + Orange ══ */
-      --navy:             #eff2f6;
-      --navy-mid:         #1976d2;
-      --navy-light:       #1e88e5;
-      --orange:           #4262c8;
-      --orange-dark:      #ea580c;
-      --orange-glow:      rgba(249, 115, 22, 0.20);
+      /* ══ Palette Pro Blue ══ */
+      --primary:          #2b93fc;
+      --primary-dark:     #1f89f4;
+      --primary-light:    #E6F1FB;
+      --primary-glow:     rgba(37, 99, 235, 0.15);
 
       /* Sidebar */
-      --sb-bg:            #ffffff;
-      --sb-hover:         #f0f6ff;
-      --sb-active-bg:     rgba(249,115,22,0.10);
-      --sb-divider:       #e8eef8;
-      --sb-text:          #4b6080;
-      --sb-text-muted:    #9dafc8;
-      --sb-text-active:   #0d2952;
+      --sb-bg:            #FFFFFF;
+      --sb-hover:         #F0F6FF;
+      --sb-active-bg:     #E6F1FB;
+      --sb-divider:       #B5D4F4;
+      --sb-text:          #475569;
+      --sb-text-muted:    #94A3B8;
+      --sb-text-active:   #0F172A;
 
       /* Topbar + page */
-      --topbar-bg:        #ffffff;
-      --topbar-border:    #e8edf5;
-      --bg-page:          #f0f4fb;
-      --border:           #e2e8f2;
+      --topbar-bg:        #FFFFFF;
+      --topbar-border:    #B5D4F4;
+      --bg-page:          #F8FAFC;
+      --border:           #B5D4F4;
 
       /* Page text */
-      --text-1:           #0f172a;
+      --text-1:           #0F172A;
       --text-2:           #475569;
 
       /* Dimensions */
       --sidebar-w:        248px;
-      --sidebar-w-col:    66px;
-      --topbar-h:         54px;
+      --sidebar-w-col:    64px;
+      --topbar-h:         56px;
 
       /* Radius & shadow */
-      --radius-s:         7px;
+      --radius-s:         8px;
       --radius-m:         10px;
-      --shadow-sidebar:   4px 0 24px rgba(21,101,192,0.18);
-      --shadow-md:        0 4px 20px rgba(10,20,60,0.12);
+      --shadow-sidebar:   1px 0 0 #B5D4F4, 4px 0 16px rgba(15,23,42,0.06);
+      --shadow-md:        0 4px 16px rgba(15,23,42,0.10);
 
       /* Speed */
-      --speed:            0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      --speed:            0.25s cubic-bezier(0.4, 0, 0.2, 1);
       --speed-fast:       0.15s ease-out;
 
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -394,7 +489,7 @@ interface MenuItem {
     .sidebar {
       width: var(--sidebar-w);
       min-width: var(--sidebar-w);
-      background: var(--navy);
+      background: var(--sb-bg);
       color: var(--sb-text);
       display: flex;
       flex-direction: column;
@@ -433,21 +528,21 @@ interface MenuItem {
     .sidebar.collapsed .sidebar-brand { justify-content: center; padding: 0; }
 
     .brand-icon {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: var(--radius-s);
-      background: var(--orange);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 2px 10px var(--orange-glow);
+      box-shadow: 0 2px 8px var(--primary-glow);
     }
     .brand-name {
       font-size: 15px;
       font-weight: 700;
       color: var(--sb-text-active);
-      letter-spacing: -0.2px;
+      letter-spacing: -0.3px;
       white-space: nowrap;
     }
 
@@ -460,16 +555,16 @@ interface MenuItem {
       position: relative;
       display: flex;
       align-items: center;
-      background: #f4f8ff;
-      border: 1px solid #dde8f5;
+      background: #E6F1FB;
+      border: 1px solid #B5D4F4;
       border-radius: var(--radius-m);
       padding: 8px 12px;
       transition: all var(--speed-fast);
     }
     .search-box:focus-within {
       background: #fff;
-      border-color: var(--orange);
-      box-shadow: 0 0 0 3px var(--orange-glow);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-glow);
     }
     .search-icon { color: var(--sb-text-muted); flex-shrink: 0; margin-right: 8px; }
     .search-input {
@@ -488,8 +583,8 @@ interface MenuItem {
       font-family: inherit;
       font-weight: 600;
       color: var(--sb-text-muted);
-      background: #eaf1fb;
-      border: 1px solid #dde8f5;
+      background: #E6F1FB;
+      border: 1px solid #B5D4F4;
       border-radius: 4px;
       padding: 2px 5px;
       flex-shrink: 0;
@@ -502,8 +597,8 @@ interface MenuItem {
       gap: 12px;
       margin: 6px 12px 10px;
       padding: 10px 12px;
-      background: #f4f8ff;
-      border: 1px solid #dde8f5;
+      background: #E6F1FB;
+      border: 1px solid #B5D4F4;
       border-radius: var(--radius-m);
       flex-shrink: 0;
     }
@@ -518,14 +613,14 @@ interface MenuItem {
       width: 36px;
       height: 36px;
       border-radius: var(--radius-s);
-      background: var(--orange);
-      color: white;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
       font-size: 12px;
       font-weight: 700;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px var(--orange-glow);
+      box-shadow: 0 2px 8px var(--primary-glow);
       letter-spacing: 0.3px;
     }
     .online-dot {
@@ -551,20 +646,20 @@ interface MenuItem {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      margin-top: 3px;
+      margin-top: 4px;
       font-size: 10.5px;
       font-weight: 600;
-      color: var(--orange-dark);
-      background: rgba(249,115,22,0.10);
-      border: 1px solid rgba(249,115,22,0.22);
+      color: var(--primary-dark);
+      background: var(--primary-light);
+      border: 1px solid rgba(37, 99, 235, 0.2);
       padding: 2px 8px;
-      border-radius: 5px;
+      border-radius: 6px;
     }
     .role-dot {
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: var(--orange);
+      background: var(--primary);
     }
 
     /* ═══ Scrollable nav ═══ */
@@ -574,14 +669,14 @@ interface MenuItem {
       overflow-x: hidden;
       padding: 4px 10px 8px;
       scrollbar-width: thin;
-      scrollbar-color: #dde8f5 transparent;
+      scrollbar-color: #B5D4F4 transparent;
     }
     .nav-scroll::-webkit-scrollbar { width: 4px; }
     .nav-scroll::-webkit-scrollbar-thumb {
-      background: #dde8f5;
+      background: #B5D4F4;
       border-radius: 4px;
     }
-    .nav-scroll::-webkit-scrollbar-thumb:hover { background: #c5d8f0; }
+    .nav-scroll::-webkit-scrollbar-thumb:hover { background: #93BDE8; }
 
     /* ═══ Nav group ═══ */
     .nav-group { margin-bottom: 4px; }
@@ -636,7 +731,7 @@ interface MenuItem {
     }
     .nav-link.active {
       background: var(--sb-active-bg);
-      color: var(--sb-text-active);
+      color: var(--primary-dark);
       font-weight: 600;
     }
     .nav-link.active::before {
@@ -646,10 +741,10 @@ interface MenuItem {
       top: 50%;
       transform: translateY(-50%);
       width: 3px;
-      height: 22px;
-      background: var(--orange);
+      height: 20px;
+      background: var(--primary);
       border-radius: 0 3px 3px 0;
-      box-shadow: 0 0 10px var(--orange-glow);
+      box-shadow: 0 0 8px var(--primary-glow);
     }
     .icon-box {
       display: flex;
@@ -662,7 +757,7 @@ interface MenuItem {
       transition: color var(--speed-fast);
     }
     .nav-link:hover .icon-box,
-    .nav-link.active .icon-box { color: var(--orange); }
+    .nav-link.active .icon-box { color: var(--primary); }
     .link-text {
       flex: 1;
       overflow: hidden;
@@ -680,9 +775,9 @@ interface MenuItem {
       line-height: 1.4;
     }
     .badge-new {
-      background: rgba(249,115,22,0.18);
-      color: #fdba74;
-      border: 1px solid rgba(249,115,22,0.3);
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid rgba(37, 99, 235, 0.25);
     }
     .badge-count {
       background: rgba(34,197,94,0.15);
@@ -701,11 +796,49 @@ interface MenuItem {
       top: 6px; right: 6px;
       width: 8px; height: 8px;
       border-radius: 50%;
-      border: 2px solid var(--navy);
+      border: 2px solid var(--sb-bg);
     }
-    .badge-dot.badge-new   { background: var(--orange); }
+    .badge-dot.badge-new   { background: var(--primary); }
     .badge-dot.badge-count { background: #22c55e; }
     .badge-dot.badge-hot   { background: #ef4444; }
+
+    /* ═══ Flèche nav parent ═══ */
+    .nav-arrow {
+      margin-left: auto;
+      font-size: 16px;
+      color: var(--sb-text-muted);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .nav-arrow-open {
+      transform: rotate(90deg);
+    }
+
+    /* ═══ Sous-menu ═══ */
+    .nav-sub-list {
+      list-style: none;
+      margin: 2px 0 4px 0;
+      padding: 0;
+    }
+    .nav-sub-link {
+      padding-left: 8px !important;
+      font-size: 12.5px !important;
+    }
+    .sub-indent {
+      width: 18px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sb-text-muted);
+      font-size: 11px;
+      padding-left: 4px;
+    }
+    .sub-indent::before {
+      content: '└';
+      color: var(--sb-divider);
+    }
 
     /* ═══ No results ═══ */
     .no-results { text-align: center; padding: 32px 16px; color: var(--sb-text-muted); }
@@ -718,12 +851,12 @@ interface MenuItem {
     .sidebar.collapsed [data-tooltip]:hover::after {
       content: attr(data-tooltip);
       position: absolute;
-      left: calc(100% + 14px);
+      left: calc(100% + 12px);
       top: 50%;
       transform: translateY(-50%);
-      background: var(--navy);
-      color: white;
-      padding: 6px 11px;
+      background: #0F172A;
+      color: #fff;
+      padding: 6px 10px;
       border-radius: 7px;
       font-size: 12px;
       font-weight: 500;
@@ -732,16 +865,15 @@ interface MenuItem {
       box-shadow: var(--shadow-md);
       animation: tooltipIn 0.15s ease-out;
       pointer-events: none;
-      border: 1px solid rgba(255,255,255,0.10);
     }
     .sidebar.collapsed [data-tooltip]:hover::before {
       content: '';
       position: absolute;
-      left: calc(100% + 8px);
+      left: calc(100% + 6px);
       top: 50%;
       transform: translateY(-50%);
       border: 5px solid transparent;
-      border-right-color: var(--navy);
+      border-right-color: #0F172A;
       z-index: 1000;
       pointer-events: none;
     }
@@ -750,41 +882,57 @@ interface MenuItem {
       to   { opacity: 1; transform: translateY(-50%) translateX(0); }
     }
 
-    /* ═══ Sidebar banner ═══ */
-    .sidebar-banner {
-      margin: 0 0 12px;
-      border-radius: var(--radius-m);
-      overflow: hidden;
-      position: relative;
-      flex-shrink: 0;
-      height: 155px;
-      border: 1px solid rgba(0,0,0,0.08);
-      cursor: pointer;
-    }
-    .banner-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center 30%;
-      display: block;
-      transition: transform 0.4s ease;
-    }
-    .sidebar-banner:hover .banner-img { transform: scale(1.04); }
-    .banner-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.05) 60%);
+    /* ═══ Carte info app ═══ */
+    .app-info-card {
       display: flex;
-      align-items: flex-end;
+      align-items: center;
+      gap: 10px;
       padding: 10px 12px;
+      margin-bottom: 8px;
+      background: var(--primary-light);
+      border: 1px solid rgba(37, 99, 235, 0.15);
+      border-radius: var(--radius-s);
+      flex-shrink: 0;
     }
-    .banner-label {
-      font-size: 10px;
-      font-weight: 700;
+    .app-info-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--primary);
       color: #fff;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .app-info-text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .app-info-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .app-info-sub {
+      font-size: 10px;
+      color: var(--primary);
+      font-weight: 500;
+    }
+    .app-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+      animation: pulse 2s ease-in-out infinite;
+      flex-shrink: 0;
     }
 
     /* ═══ Footer ═══ */
@@ -823,24 +971,7 @@ interface MenuItem {
     .sidebar-logout-btn .icon-box { color: inherit; }
     .sidebar.collapsed .sidebar-logout-btn { justify-content: center; padding: 9px 0; }
 
-    /* Version tag */
-    .version-tag {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-size: 10.5px;
-      font-weight: 500;
-      color: var(--sb-text-muted);
-    }
-    .version-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 6px rgba(34,197,94,0.5);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
     /* ═══ TOPBAR ═══ */
     .topbar {
@@ -870,15 +1001,15 @@ interface MenuItem {
       flex-shrink: 0;
     }
     .topbar-toggle:hover {
-      background: var(--orange);
-      color: white;
-      border-color: var(--orange);
-      box-shadow: 0 2px 8px var(--orange-glow);
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px var(--primary-glow);
     }
 
     .topbar-logo {
-      background: var(--navy);
-      color: white;
+      background: var(--primary);
+      color: #fff;
       padding: 6px 14px;
       border-radius: var(--radius-s);
       font-size: 12px;
@@ -911,15 +1042,15 @@ interface MenuItem {
     }
     .topbar-btn:hover { background: #eef2f8; color: var(--text-1); }
     .topbar-login {
-      background: var(--orange);
-      color: white;
-      border-color: var(--orange);
-      box-shadow: 0 2px 8px var(--orange-glow);
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px var(--primary-glow);
     }
     .topbar-login:hover {
-      background: var(--orange-dark);
-      border-color: var(--orange-dark);
-      color: white;
+      background: var(--primary-dark);
+      border-color: var(--primary-dark);
+      color: #fff;
     }
     .btn-text { line-height: 1; }
 
@@ -937,7 +1068,7 @@ interface MenuItem {
     .topbar-btn:focus-visible,
     .topbar-toggle:focus-visible,
     .search-input:focus-visible {
-      outline: 2px solid var(--orange);
+      outline: 2px solid var(--primary);
       outline-offset: 2px;
     }
 
@@ -961,13 +1092,236 @@ interface MenuItem {
     @media (prefers-reduced-motion: reduce) {
       .sidebar, .nav-link, .topbar-btn, .version-dot { transition: none; animation: none; }
     }
+
+    /* ══════════════════════════════════════════════
+       NOTIFICATION BELL + PANEL
+    ══════════════════════════════════════════════ */
+    .notif-wrap {
+      position: relative;
+    }
+
+    .notif-bell-btn {
+      width: 36px; height: 36px;
+      padding: 0;
+      border-radius: var(--radius-s);
+      border: 1px solid #e2e8f0;
+      background: #f8fafd;
+      color: #475569;
+      cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all var(--speed-fast);
+      position: relative;
+    }
+    .notif-bell-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border-color: #B5D4F4;
+    }
+
+    /* Badge rouge compteur */
+    .notif-badge {
+      position: absolute;
+      top: -5px; right: -5px;
+      min-width: 17px; height: 17px;
+      border-radius: 9px;
+      background: #ef4444;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid #fff;
+      padding: 0 3px;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    /* Panneau déroulant */
+    .notif-panel {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: 0;
+      width: 360px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(15, 23, 42, 0.14);
+      z-index: 999;
+      display: flex; flex-direction: column;
+      max-height: 480px;
+      overflow: hidden;
+      animation: notifSlide 0.18s ease-out;
+    }
+    @keyframes notifSlide {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Flèche pointer */
+    .notif-panel::before {
+      content: '';
+      position: absolute;
+      top: -7px; right: 10px;
+      width: 14px; height: 14px;
+      background: #fff;
+      border-left: 1px solid #e2e8f0;
+      border-top: 1px solid #e2e8f0;
+      transform: rotate(45deg);
+      border-radius: 3px 0 0 0;
+    }
+
+    /* En-tête du panneau */
+    .notif-panel-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      flex-shrink: 0;
+    }
+    .notif-panel-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .notif-unread-chip {
+      font-size: 10.5px;
+      font-weight: 700;
+      background: #dbeafe;
+      color: #1d4ed8;
+      padding: 2px 8px;
+      border-radius: 8px;
+      border: 1px solid #bfdbfe;
+    }
+    .notif-mark-all {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background var(--speed-fast);
+      font-family: inherit;
+    }
+    .notif-mark-all:hover { background: var(--primary-light); }
+
+    /* Liste scrollable */
+    .notif-list {
+      flex: 1;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #e2e8f0 transparent;
+    }
+    .notif-list::-webkit-scrollbar { width: 4px; }
+    .notif-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+    /* Vide */
+    .notif-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 36px 16px;
+      color: #94a3b8;
+    }
+    .notif-empty-icon { font-size: 28px; opacity: 0.5; }
+    .notif-empty p { font-size: 13px; font-weight: 500; }
+
+    /* Item notification */
+    .notif-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f8fafc;
+      cursor: pointer;
+      transition: background var(--speed-fast);
+      position: relative;
+    }
+    .notif-item:hover { background: #f8fafc; }
+    .notif-item.notif-unread { background: #f0f6ff; }
+    .notif-item.notif-unread:hover { background: #e6f0ff; }
+
+    /* Icône colorée selon type */
+    .notif-item-icon {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .notif-icon-success { background: #f0fdf4; }
+    .notif-icon-info    { background: #eff6ff; }
+    .notif-icon-warning { background: #fffbeb; }
+    .notif-icon-danger  { background: #fef2f2; }
+
+    /* Corps texte */
+    .notif-item-body { flex: 1; min-width: 0; }
+    .notif-item-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 2px;
+    }
+    .notif-item-msg {
+      font-size: 11.5px;
+      color: #64748b;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    .notif-item-time {
+      font-size: 10.5px;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+
+    /* Point bleu non-lu */
+    .notif-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--primary);
+      flex-shrink: 0;
+      align-self: center;
+    }
+
+    /* Pied du panneau */
+    .notif-panel-footer {
+      border-top: 1px solid #f1f5f9;
+      padding: 10px 16px;
+      flex-shrink: 0;
+    }
+    .notif-clear-btn {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ef4444;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background var(--speed-fast);
+      font-family: inherit;
+    }
+    .notif-clear-btn:hover { background: #fef2f2; }
+
+    @media (max-width: 768px) {
+      .notif-panel { width: calc(100vw - 32px); right: -8px; }
+    }
   `]
 })
 export class AppComponent implements OnInit, OnDestroy {
   isSidebarCollapsed = false;
   isMobile = false;
   searchTerm = '';
+  private expandedPaths = new Set<string>();
   private destroy$ = new Subject<void>();
+
+  /* ── Notifications ── */
+  notifPanelOpen = false;
+  notifications$!: Observable<AppNotification[]>;
+  unreadCount$!: Observable<number>;
 
   private allItems: MenuItem[] = [
     {
@@ -988,23 +1342,24 @@ export class AppComponent implements OnInit, OnDestroy {
       path: '/processus',
       label: 'Gestion Processus',
       icon: 'processes',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier', 'Gestionnaire des régles metier'],
+      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier'],
       description: 'Gérer les processus BPMN'
     },
     {
       path: '/regles',
       label: 'Règles Métier',
       icon: 'rules',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des régles metier', 'Gestionnaire des processus metier']
+      requiresRoles: ['SuperAdmin', 'Gestionnaire des règles métier', 'Gestionnaire des processus metier'],
+      children: [
+        {
+          path: '/nlp-ia',
+          label: 'Créer avec l\'IA',
+          icon: 'ai',
+          requiresRoles: ['SuperAdmin', 'Gestionnaire des règles métier', 'Gestionnaire des processus metier']
+        }
+      ]
     },
-    {
-      path: '/import-export',
-      label: 'Import / Export',
-      icon: 'transfer',
-      requiresRoles: ['SuperAdmin', 'Gestionnaire des processus metier', 'Gestionnaire des régles metier'],
-      badge: 'Nouveau',
-      badgeType: 'new'
-    }
+    
   ];
 
   /** Dashboard only — section "Général" */
@@ -1036,8 +1391,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
   constructor(
     public keycloakService: KeycloakService,
-    private router: Router
-  ) {}
+    private router: Router,
+    public notifSvc: NotificationService
+  ) {
+    this.notifications$ = this.notifSvc.notifications$;
+    this.unreadCount$   = this.notifSvc.unreadCount$;
+  }
 
   ngOnInit(): void {
     this.checkMobile();
@@ -1047,14 +1406,25 @@ export class AppComponent implements OnInit, OnDestroy {
       this.isSidebarCollapsed = saved === 'true';
     }
 
+    this.autoExpandParent(this.router.url);
+
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       takeUntil(this.destroy$)
-    ).subscribe(() => {
+    ).subscribe((e: any) => {
+      this.autoExpandParent(e.url);
       if (this.isMobile && !this.isSidebarCollapsed) {
         this.isSidebarCollapsed = true;
       }
     });
+  }
+
+  private autoExpandParent(url: string): void {
+    for (const item of this.allItems) {
+      if (item.children?.some(c => url === c.path || url.startsWith(c.path + '/'))) {
+        this.expandedPaths.add(item.path);
+      }
+    }
   }
 
   ngOnDestroy(): void {
@@ -1065,6 +1435,19 @@ export class AppComponent implements OnInit, OnDestroy {
   @HostListener('window:resize')
   checkMobile(): void {
     this.isMobile = window.innerWidth <= 768;
+  }
+
+  toggleNotifPanel(): void {
+    this.notifPanelOpen = !this.notifPanelOpen;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.notifPanelOpen) return;
+    const target = event.target as HTMLElement;
+    if (!target.closest('.notif-wrap')) {
+      this.notifPanelOpen = false;
+    }
   }
 
   /** Raccourci clavier Cmd+K / Ctrl+K pour focus la recherche */
@@ -1094,14 +1477,14 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   getUserName(): string {
-    return 'Admin User';
+    return this.keycloakService.getUsername() || 'Utilisateur';
   }
 
   getPrimaryRole(): string {
     const r = this.userRoles;
     if (r.includes('SuperAdmin')) return 'Super Admin';
     if (r.includes('Gestionnaire des processus metier')) return 'Process Manager';
-    if (r.includes('Gestionnaire des régles metier')) return 'Rules Manager';
+    if (r.includes('Gestionnaire des règles métier')) return 'Rules Manager';
     return 'Utilisateur';
   }
 
@@ -1117,6 +1500,22 @@ export class AppComponent implements OnInit, OnDestroy {
   goToLogin(): void { this.router.navigate(['/login']); }
   navigateToDashboard(): void { this.router.navigate(['/dashboard']); }
   isLoginPage(): boolean { return this.router.url.includes('login'); }
+
+  toggleExpand(path: string): void {
+    if (this.expandedPaths.has(path)) {
+      this.expandedPaths.delete(path);
+    } else {
+      this.expandedPaths.add(path);
+    }
+  }
+
+  isExpanded(path: string): boolean {
+    return this.expandedPaths.has(path);
+  }
+
+  isChildActive(item: MenuItem): boolean {
+    return item.children?.some(c => this.router.url === c.path || this.router.url.startsWith(c.path + '/')) ?? false;
+  }
 
   toggleSidebar(): void {
     this.isSidebarCollapsed = !this.isSidebarCollapsed;

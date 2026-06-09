@@ -31,8 +31,9 @@ export class EditUserComponent implements OnInit {
 
   // ✅ Rôles disponibles
   availableRoles = [
-    { value: 'SuperAdmin', label: 'Super Admin', color: '#534AB7' },
-    { value: 'Gestionnaire des processus metier', label: 'Gestionnaire Processus', color: '#1D9E75' }
+    { value: 'SuperAdmin',                         label: 'Super Admin',              color: '#534AB7' },
+    { value: 'Gestionnaire des processus metier',  label: 'Gestionnaire Processus',   color: '#1D9E75' },
+    { value: 'Gestionnaire des règles métier',     label: 'Gestionnaire Règles',      color: '#2563EB' }
   ];
 
   constructor(

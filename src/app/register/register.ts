@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { KeycloakService } from '../core/services/keycloak.service';
@@ -7,7 +7,7 @@ import { KeycloakService } from '../core/services/keycloak.service';
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [FormsModule, CommonModule],
+  imports: [FormsModule, CommonModule, RouterModule],
   templateUrl: './register.html',
   styleUrls: ['./register.css']
 })
@@ -25,8 +25,9 @@ export class RegisterComponent {
   success = '';
 
   availableRoles = [
+    { value: 'SuperAdmin',                        label: 'Super Admin' },
     { value: 'Gestionnaire des processus metier', label: 'Gestionnaire des processus métier' },
-    { value: 'Gestionnaire des règles metier',    label: 'Gestionnaire des règles métier' }
+    { value: 'Gestionnaire des règles métier',    label: 'Gestionnaire des règles métier' }
   ];
 
   constructor(

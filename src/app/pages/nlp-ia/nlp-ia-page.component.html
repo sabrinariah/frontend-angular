@@ -1,0 +1,292 @@
+<div class="ia-page">
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="ia-header">
+    <div class="ia-header-inner">
+      <div class="ia-header-left">
+        <div class="ia-header-icon">🤖</div>
+        <div class="ia-header-text">
+          <h1 class="ia-header-title">Assistant IA — Règles Métier</h1>
+          <p class="ia-header-sub">Décrivez votre règle en langage naturel, l'IA la convertit automatiquement en DRL</p>
+        </div>
+      </div>
+      <button class="ia-back-btn" (click)="retour()">← Retour aux règles</button>
+    </div>
+  </header>
+
+  <!-- ═══ STEPS ═══ -->
+  <div class="ia-steps" *ngIf="result">
+    <div class="ia-step ia-step-done">
+      <div class="ia-step-circle">✓</div>
+      <span>Saisie</span>
+    </div>
+    <div class="ia-step-line ia-step-line-done"></div>
+    <div class="ia-step ia-step-done">
+      <div class="ia-step-circle">✓</div>
+      <span>Analyse IA</span>
+    </div>
+    <div class="ia-step-line ia-step-line-done"></div>
+    <div class="ia-step ia-step-active">
+      <div class="ia-step-circle">3</div>
+      <span>Révision</span>
+    </div>
+    <div class="ia-step-line"></div>
+    <div class="ia-step">
+      <div class="ia-step-circle">4</div>
+      <span>Création</span>
+    </div>
+  </div>
+
+  <!-- ═══ CONTENU ═══ -->
+  <div class="ia-content">
+
+    <!-- ── CARTE SAISIE ── -->
+    <div class="ia-input-card">
+      <div class="ia-input-card-header">
+        <span class="ia-input-card-badge">💬 Votre phrase métier</span>
+      </div>
+      <div class="ia-input-card-body">
+        <textarea
+          class="ia-textarea"
+          [(ngModel)]="phrase"
+          name="phrase"
+          rows="4"
+          placeholder="Exemple : Si le score de risque est supérieur à 60, déclencher une inspection physique obligatoire..."
+          [disabled]="loading"
+        ></textarea>
+        <div class="ia-textarea-meta">
+          <span class="ia-char-count" [class.ia-char-warn]="phrase.length > 400">
+            {{ phrase.length }} / 500
+          </span>
+          <span class="ia-hint">Plus la phrase est précise, meilleure est la conversion</span>
+        </div>
+
+        <!-- Exemples (avant conversion, champ vide) -->
+        <div class="ia-examples" *ngIf="!result && !phrase.trim()">
+          <p class="ia-examples-label">Exemples rapides :</p>
+          <div class="ia-examples-chips">
+            <button class="ia-example-chip" type="button"
+              (click)="phrase = 'Si le score de risque est supérieur à 60, déclencher une inspection physique obligatoire.'">
+              Score de risque &gt; 60
+            </button>
+            <button class="ia-example-chip" type="button"
+              (click)="phrase = 'Appliquer un taux de TVA de 20% sur les marchandises de luxe importées.'">
+              TVA 20 % marchandises luxe
+            </button>
+            <button class="ia-example-chip" type="button"
+              (click)="phrase = 'Bloquer la déclaration si la valeur CIF dépasse 10 000 euros.'">
+              Bloquer CIF &gt; 10 000 €
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ia-input-card-footer">
+        <button class="ia-btn-restart" *ngIf="result" (click)="recommencer()" type="button">
+          ↩ Recommencer
+        </button>
+        <button class="ia-btn-convert" (click)="convertir()" [disabled]="!phrase.trim() || loading" type="button">
+          <span *ngIf="!loading">🤖 Convertir avec l'IA</span>
+          <span *ngIf="loading">⏳ Analyse en cours...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── CARTE RÉSULTAT ── -->
+    <div class="ia-result-card" *ngIf="result">
+
+      <!-- Bande confiance + phrase source -->
+      <div class="ia-confidence-band">
+        <div class="ia-confidence-score-wrap">
+          <div class="ia-confidence-score" [style.color]="couleurConfiance()">
+            {{ pourcentageConfiance() }}%
+          </div>
+          <div class="ia-confidence-info">
+            <span class="ia-confidence-title">Confiance IA</span>
+            <span class="ia-confidence-label" [style.color]="couleurConfiance()">{{ labelConfiance() }}</span>
+          </div>
+        </div>
+        <div class="ia-confidence-bar-wrap">
+          <div class="ia-confidence-bar-bg">
+            <div class="ia-confidence-bar-fill"
+              [style.width]="pourcentageConfiance() + '%'"
+              [style.background]="couleurConfiance()">
+            </div>
+          </div>
+        </div>
+        <div class="ia-phrase-quote">
+          <span class="ia-phrase-icon">💬</span>
+          <em>« {{ result.phraseOriginale }} »</em>
+        </div>
+      </div>
+
+      <!-- Ambiguïtés -->
+      <div class="ia-ambiguites" *ngIf="result.ambiguites && result.ambiguites.length > 0">
+        <div class="ia-ambiguites-title">
+          ⚠️ Points à clarifier ({{ result.ambiguites.length }})
+        </div>
+        <ul>
+          <li *ngFor="let a of result.ambiguites">{{ a }}</li>
+        </ul>
+      </div>
+
+      <!-- Corps édition -->
+      <div class="ia-result-body">
+        <form>
+
+          <!-- Section : Identité de la règle -->
+          <div class="ia-section">
+            <div class="ia-section-header">
+              <h3 class="ia-section-title">Identité de la règle</h3>
+            </div>
+            <div class="ia-edit-grid">
+
+              <div class="ia-edit-group">
+                <label class="ia-label">Code <span class="ia-req">*</span></label>
+                <input type="text" class="ia-input" [(ngModel)]="editCode" name="editCode"
+                  placeholder="ex: RISK_CIRCUIT_ROUGE">
+              </div>
+
+              <div class="ia-edit-group">
+                <label class="ia-label">Action <span class="ia-req">*</span></label>
+                <input list="ia-actions-list" class="ia-input" [(ngModel)]="editAction" name="editAction"
+                  placeholder="ex: INSPECTER_PHYSIQUE">
+                <datalist id="ia-actions-list">
+                  <option *ngFor="let a of getActionsDisponibles()" [value]="a"></option>
+                </datalist>
+              </div>
+
+              <div class="ia-edit-group ia-edit-group-full">
+                <label class="ia-label">Nom <span class="ia-req">*</span></label>
+                <input type="text" class="ia-input" [(ngModel)]="editNom" name="editNom"
+                  placeholder="Description courte de la règle">
+              </div>
+
+              <div class="ia-edit-group">
+                <label class="ia-label">Catégorie <span class="ia-req">*</span></label>
+                <input list="ia-categories-list" class="ia-input" [(ngModel)]="editCategorieNom" name="editCategorieNom"
+                  placeholder="ex: CONTROLE, TAXE, QUOTA...">
+                <datalist id="ia-categories-list">
+                  <option *ngFor="let cat of categories" [value]="cat.nom">{{ cat.nom }}</option>
+                </datalist>
+              </div>
+
+              <div class="ia-edit-group">
+                <label class="ia-label">Statut</label>
+                <label class="ia-toggle-row">
+                  <input type="checkbox" [(ngModel)]="editActive" name="editActive">
+                  <span class="ia-toggle-label">Activer immédiatement</span>
+                </label>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Section : Conditions -->
+          <div class="ia-section">
+            <div class="ia-section-header">
+              <h3 class="ia-section-title">
+                Conditions
+                <span *ngIf="editConditions.length > 0" style="color:#2563EB;font-weight:700;">
+                  ({{ editConditions.length }})
+                </span>
+              </h3>
+              <button type="button" class="ia-btn-add-cond" (click)="ajouterCondition()">
+                + Ajouter
+              </button>
+            </div>
+            <div class="ia-cond-list">
+              <div *ngIf="editConditions.length === 0" class="ia-empty-cond">
+                Aucune condition — cliquez sur « + Ajouter » pour en créer une.
+              </div>
+              <div *ngFor="let c of editConditions; let i = index" class="ia-cond-card">
+                <div class="ia-cond-idx">{{ i + 1 }}</div>
+                <input list="ia-champs-list" class="ia-input" [(ngModel)]="c.champ"
+                  [ngModelOptions]="{standalone: true}" placeholder="Champ...">
+                <datalist id="ia-champs-list">
+                  <option *ngFor="let ch of getChampsDisponibles()" [value]="ch"></option>
+                </datalist>
+                <select class="ia-input" [(ngModel)]="c.operateur" [ngModelOptions]="{standalone: true}">
+                  <option value="==">== égal</option>
+                  <option value="!=">!= différent</option>
+                  <option value=">">&gt; supérieur</option>
+                  <option value="<">&lt; inférieur</option>
+                  <option value=">=">&gt;= ≥</option>
+                  <option value="<=">&lt;= ≤</option>
+                </select>
+                <input type="text" class="ia-input" [(ngModel)]="c.valeur"
+                  [ngModelOptions]="{standalone: true}" placeholder="Valeur">
+                <button type="button" class="ia-btn-remove-cond"
+                  (click)="supprimerCondition(i)" title="Supprimer">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section : Aperçu DRL -->
+          <div class="ia-section">
+            <div class="ia-section-header">
+              <h3 class="ia-section-title">Code Drools généré</h3>
+            </div>
+            <button class="ia-drl-toggle" type="button" (click)="showDrl = !showDrl">
+              <span class="ia-drl-badge">DRL</span>
+              {{ showDrl ? 'Masquer' : 'Afficher' }} le code
+              <span class="ia-drl-chevron">{{ showDrl ? '▲' : '▼' }}</span>
+            </button>
+            <div *ngIf="showDrl" class="ia-drl-content">
+              <app-drl-preview [drl]="result.drl" [phraseOriginale]="result.phraseOriginale">
+              </app-drl-preview>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- Footer : sauvegarder -->
+      <div class="ia-footer-actions">
+        <button class="ia-btn-save" (click)="sauvegarder()" [disabled]="!isFormValid() || saving" type="button">
+          <span *ngIf="!saving">✓ Créer la règle</span>
+          <span *ngIf="saving">⏳ Création en cours...</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ LOADING OVERLAY ═══ -->
+  <div *ngIf="loading" class="ia-loading-overlay">
+    <div class="ia-loading-box">
+      <div class="ia-spinner-wrap">
+        <span class="ia-loading-icon">🤖</span>
+        <div class="ia-spinner"></div>
+      </div>
+      <p class="ia-loading-title">L'IA analyse votre phrase...</p>
+      <div class="ia-loading-steps">
+        <span class="ia-loading-step">Extraction des entités métier</span>
+        <span class="ia-loading-step">Normalisation et classification</span>
+        <span class="ia-loading-step">Génération du code DRL</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TOASTS ═══ -->
+  <div class="ia-toasts">
+    <div *ngFor="let t of toasts" class="ia-toast" [class]="'ia-toast-' + t.type">
+      <div class="ia-toast-content">
+        <span class="ia-toast-icon">
+          <ng-container [ngSwitch]="t.type">
+            <span *ngSwitchCase="'success'">✅</span>
+            <span *ngSwitchCase="'error'">❌</span>
+            <span *ngSwitchCase="'warning'">⚠️</span>
+            <span *ngSwitchCase="'info'">ℹ️</span>
+          </ng-container>
+        </span>
+        <div class="ia-toast-body">
+          <strong>{{ t.message }}</strong>
+          <span class="ia-toast-detail" *ngIf="t.detail">{{ t.detail }}</span>
+        </div>
+      </div>
+      <button class="ia-toast-close" (click)="dismissToast(t.id)">✕</button>
+    </div>
+  </div>
+
+</div>

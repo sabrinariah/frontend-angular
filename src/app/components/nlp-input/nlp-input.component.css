@@ -5,25 +5,26 @@
 
 /* ---------- VARIABLES LOCALES (miroir de regle.css) ---------- */
 :host {
-  --nlp-navy:        #0a1929;
-  --nlp-navy-700:    #1e3a5f;
-  --nlp-orange:      #f97316;
-  --nlp-orange-dark: #ea580c;
-  --nlp-orange-light:#fff7ed;
+  /* ── Palette Pro Blue (grille 8px) ── */
+  --nlp-navy:        #1E40AF;
+  --nlp-navy-700:    #2563EB;
+  --nlp-orange:      #2563EB;
+  --nlp-orange-dark: #1E40AF;
+  --nlp-orange-light:#DBEAFE;
   --nlp-success:     #16a34a;
-  --nlp-success-bg:  #f0fdf4;
+  --nlp-success-bg:  #DCFCE7;
   --nlp-danger:      #dc2626;
   --nlp-danger-bg:   #fef2f2;
-  --nlp-warning:     #d97706;
-  --nlp-warning-bg:  #fffbeb;
-  --nlp-border:      #e2e8f0;
-  --nlp-text:        #0f172a;
-  --nlp-text-muted:  #64748b;
-  --nlp-bg:          #f8fafc;
-  --nlp-white:       #ffffff;
+  --nlp-warning:     #D97706;
+  --nlp-warning-bg:  #FEF9C3;
+  --nlp-border:      #E2E8F0;
+  --nlp-text:        #0F172A;
+  --nlp-text-muted:  #64748B;
+  --nlp-bg:          #F8FAFC;
+  --nlp-white:       #FFFFFF;
   --nlp-radius:      8px;
   --nlp-radius-lg:   12px;
-  --nlp-shadow-xl:   0 25px 60px rgba(15,23,42,.25);
+  --nlp-shadow-xl:   0 25px 60px rgba(15,23,42,.2);
   --nlp-trans:       0.18s ease;
   --nlp-mono:        'JetBrains Mono', 'Courier New', monospace;
 }
@@ -34,7 +35,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 20px;
-  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  background: linear-gradient(135deg, var(--nlp-orange) 0%, var(--nlp-orange-dark) 100%);
   color: #fff;
   border: none;
   border-radius: var(--nlp-radius);
@@ -43,13 +44,13 @@
   cursor: pointer;
   font-family: inherit;
   transition: all var(--nlp-trans);
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
   letter-spacing: 0.2px;
 }
 .nlp-trigger-btn:hover {
-  background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+  background: linear-gradient(135deg, var(--nlp-orange-dark) 0%, #1D4ED8 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(124, 58, 237, 0.5);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.3);
 }
 .nlp-trigger-icon { font-size: 16px; }
 
@@ -57,7 +58,7 @@
 .nlp-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(10, 25, 41, 0.75);
+  background: rgba(15, 23, 42, 0.55);
   backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
@@ -83,7 +84,7 @@
   display: flex;
   flex-direction: column;
   animation: nlpSlideIn 0.22s ease;
-  border-top: 4px solid #7c3aed;
+  border-top: 4px solid var(--nlp-orange);
   position: relative;
   overflow: hidden;
 }
@@ -102,7 +103,7 @@
   gap: 16px;
   padding: 20px 24px;
   background: linear-gradient(135deg, var(--nlp-navy) 0%, var(--nlp-navy-700) 100%);
-  border-bottom: 3px solid #7c3aed;
+  border-bottom: 3px solid var(--nlp-orange);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -169,7 +170,7 @@
   justify-content: center;
 }
 .nlp-step.active .nlp-step-num {
-  background: #7c3aed;
+  background: var(--nlp-orange);
 }
 .nlp-step.done .nlp-step-num {
   background: var(--nlp-success);
@@ -249,8 +250,8 @@
   transition: border-color var(--nlp-trans), box-shadow var(--nlp-trans);
 }
 .nlp-input:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  border-color: var(--nlp-orange);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 .nlp-input::placeholder { color: #94a3b8; font-style: italic; }
 select.nlp-input { cursor: pointer; }
@@ -288,8 +289,8 @@ select.nlp-input { cursor: pointer; }
   line-height: 1.6;
 }
 .nlp-textarea:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  border-color: var(--nlp-orange);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 .nlp-textarea::placeholder { color: #94a3b8; }
 
@@ -340,15 +341,42 @@ select.nlp-input { cursor: pointer; }
 }
 .nlp-exemple-item:hover,
 .nlp-exemple-item.selected {
-  border-color: #7c3aed;
-  background: #faf5ff;
-  color: #5b21b6;
+  border-color: var(--nlp-orange);
+  background: var(--nlp-orange-light);
+  color: var(--nlp-orange-dark);
 }
 
 /* ============================================================
    MODE APERÇU
    ============================================================ */
-.nlp-mode-apercu { display: flex; flex-direction: column; gap: 16px; }
+
+/* Séparateur résultat IA */
+.nlp-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 4px;
+  color: var(--nlp-navy-700);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+.nlp-divider::before,
+.nlp-divider::after {
+  content: '';
+  flex: 1;
+  height: 1.5px;
+  background: linear-gradient(90deg, var(--nlp-navy), var(--nlp-orange));
+  opacity: 0.3;
+}
+
+.nlp-result-top {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 4px;
+}
 
 /* Phrase source */
 .nlp-phrase-card {
@@ -357,10 +385,10 @@ select.nlp-input { cursor: pointer; }
   gap: 10px;
   padding: 14px 16px;
   background: var(--nlp-orange-light);
-  border: 1px solid #fed7aa;
+  border: 1px solid #bfdbfe;
   border-radius: var(--nlp-radius);
   font-size: 13px;
-  color: #92400e;
+  color: #1e40af;
   line-height: 1.5;
 }
 
@@ -437,9 +465,9 @@ select.nlp-input { cursor: pointer; }
   text-transform: uppercase;
   letter-spacing: 0.8px;
   padding: 3px 10px;
-  background: #faf5ff;
-  color: #5b21b6;
-  border: 1px solid #ddd6fe;
+  background: var(--nlp-orange-light);
+  color: var(--nlp-orange-dark);
+  border: 1px solid #bfdbfe;
   border-radius: 20px;
 }
 
@@ -493,7 +521,7 @@ select.nlp-input { cursor: pointer; }
   font-size: 11px;
   font-weight: 700;
   border-radius: 4px;
-  border: 1px solid #fed7aa;
+  border: 1px solid #bfdbfe;
 }
 
 .nlp-warning { color: var(--nlp-warning) !important; font-size: 12px; }
@@ -552,7 +580,7 @@ select.nlp-input { cursor: pointer; }
 }
 
 .nlp-cond-champ { font-family: var(--nlp-mono); color: var(--nlp-navy); font-weight: 600; }
-.nlp-cond-op    { color: #7c3aed; font-weight: 700; font-size: 11px; }
+.nlp-cond-op    { color: var(--nlp-orange); font-weight: 700; font-size: 11px; }
 .nlp-cond-val   { font-family: var(--nlp-mono); color: var(--nlp-orange-dark); font-weight: 600; }
 
 .nlp-cond-result-row {
@@ -669,10 +697,10 @@ select.nlp-input { cursor: pointer; }
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #92400e;
+  color: #1e40af;
   padding: 10px 14px;
   background: var(--nlp-orange-light);
-  border: 1px solid #fed7aa;
+  border: 1px solid #bfdbfe;
   border-radius: var(--nlp-radius);
   font-style: italic;
 }
@@ -746,8 +774,8 @@ select.nlp-input { cursor: pointer; }
 .nlp-btn-add-cond {
   padding: 6px 12px;
   background: #fff;
-  border: 1.5px solid #7c3aed;
-  color: #7c3aed;
+  border: 1.5px solid var(--nlp-orange);
+  color: var(--nlp-orange-dark);
   border-radius: var(--nlp-radius);
   font-size: 12px;
   font-weight: 700;
@@ -755,7 +783,7 @@ select.nlp-input { cursor: pointer; }
   font-family: inherit;
   transition: all var(--nlp-trans);
 }
-.nlp-btn-add-cond:hover { background: #faf5ff; }
+.nlp-btn-add-cond:hover { background: var(--nlp-orange-light); }
 
 .nlp-empty-cond-msg {
   padding: 18px 14px;
@@ -827,7 +855,7 @@ select.nlp-input { cursor: pointer; }
 
 .nlp-btn-primary {
   padding: 10px 22px;
-  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  background: linear-gradient(135deg, var(--nlp-orange) 0%, var(--nlp-orange-dark) 100%);
   color: #fff;
   border: none;
   border-radius: var(--nlp-radius);
@@ -836,11 +864,11 @@ select.nlp-input { cursor: pointer; }
   cursor: pointer;
   font-family: inherit;
   transition: all var(--nlp-trans);
-  box-shadow: 0 4px 14px rgba(124,58,237,.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
   letter-spacing: 0.2px;
 }
 .nlp-btn-primary:not(:disabled):hover {
-  background: linear-gradient(135deg, #6d28d9 0%, #4c1d95 100%);
+  background: linear-gradient(135deg, var(--nlp-orange-dark) 0%, #1D4ED8 100%);
   transform: translateY(-1px);
 }
 .nlp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
@@ -879,7 +907,7 @@ select.nlp-input { cursor: pointer; }
 .nlp-loading-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(10, 25, 41, 0.75);
+  background: rgba(21, 101, 192, 0.75);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -897,7 +925,7 @@ select.nlp-input { cursor: pointer; }
   width: 44px;
   height: 44px;
   border: 4px solid rgba(255,255,255,.2);
-  border-top-color: #a78bfa;
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: nlpSpin 0.8s linear infinite;
   margin: 0 auto 16px;

@@ -5,11 +5,13 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { KeycloakService } from '../../core/services/keycloak.service';
 import { UserService, User } from '../../core/services/user.service';
+import { UserDetailComponent } from './user-detail/user-detail';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, HttpClientModule, UserDetailComponent],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss']
 })
@@ -27,9 +29,18 @@ export class UsersComponent implements OnInit {
   isAdminUser = false;
 
   currentPage = 1;
-  pageSize = 3;
+  pageSize = 10;
   totalPages = 1;
   pages: number[] = [];
+
+  get showingStart(): number { return this.filteredUsers.length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1; }
+  get showingEnd(): number   { return Math.min(this.currentPage * this.pageSize, this.filteredUsers.length); }
+  get showingTotal(): number { return this.filteredUsers.length; }
+
+  get totalUsers(): number    { return this.users.length; }
+  get activeUsers(): number   { return this.users.filter(u => u.active).length; }
+  get inactiveUsers(): number { return this.users.filter(u => !u.active).length; }
+  get adminCount(): number    { return this.users.filter(u => u.roles?.includes('SuperAdmin')).length; }
 
   // ── Modal détail (Voir)
   selectedUser: User | null = null;
@@ -64,7 +75,8 @@ export class UsersComponent implements OnInit {
 
   constructor(
     private keycloakService: KeycloakService,
-    private userService: UserService
+    private userService: UserService,
+    private notifSvc: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -224,6 +236,7 @@ export class UsersComponent implements OnInit {
           this.closeFormModal();
           this.showToast('Utilisateur créé avec succès !');
           this.loadUsers();
+          this.notifSvc.notify({ type: 'success', category: 'user', icon: '👤', title: 'Utilisateur ajouté', message: `L'utilisateur « ${this.formUser.username} » a été créé.` });
         },
         error: (err: any) => {
           this.savingForm = false;
@@ -257,6 +270,7 @@ export class UsersComponent implements OnInit {
         this.filteredUsers = this.filteredUsers.filter(u => u.username !== user.username);
         this.updatePagination();
         this.showToast('Utilisateur supprimé.');
+        this.notifSvc.notify({ type: 'warning', category: 'user', icon: '🗑️', title: 'Utilisateur supprimé', message: `L'utilisateur « ${user.username} » a été supprimé.` });
       },
       error: () => this.loadUsers()
     });
@@ -275,6 +289,36 @@ export class UsersComponent implements OnInit {
       error: () => console.error('Erreur toggle actif')
     });
   }
+
+  setStatusFilter(status: string): void {
+    this.selectedStatus = status;
+    this.filterUsers();
+  }
+
+  // ── Changement taille page ──────────────────────────────────
+  onPageSizeChange(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 1;
+    this.updatePagination();
+  }
+
+  // ── Export CSV ──────────────────────────────────────────────
+  exportCSV(): void {
+    const headers = ['No.', 'Utilisateur', 'Email', 'Prénom', 'Nom', 'Rôle', 'Statut'];
+    const rows = this.filteredUsers.map((u, i) => [
+      i + 1, u.username, u.email || '', u.firstName || '', u.lastName || '',
+      (u.roles || []).join('; '), u.active ? 'Actif' : 'Inactif'
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'utilisateurs.csv';
+    a.click();
+  }
+
+  // ── Print ────────────────────────────────────────────────────
+  printTable(): void { window.print(); }
 
   // ── Toast global ────────────────────────────────────────────
   showToast(msg: string, isError = false): void {

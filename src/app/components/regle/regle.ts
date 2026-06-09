@@ -5,12 +5,12 @@ import { FormsModule } from '@angular/forms';
 import { RegleMetierService } from '../../core/services/regle.service';
 import { ProcessusService } from '../../core/services/processus.service';
 import { TacheService } from '../../core/services/tache.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { RegleMetier } from '../../models/regle.model';
 import { Categorie } from '../../models/categorie.model';
 import { Condition } from '../../models/condition.model';
 import { Processus, Tache } from '../../models/processus.model';
 import { Version } from '../../models/version.model'; // ✅ AJOUT
-import { NlpInputComponent } from '../nlp-input/nlp-input.component';
 import { DrlPreviewComponent } from '../drl-preview/drl-preview.component';
 
 export interface Toast {
@@ -23,7 +23,7 @@ export interface Toast {
 @Component({
   selector: 'app-regle-metier',
   standalone: true,
-  imports: [CommonModule, FormsModule, NlpInputComponent, DrlPreviewComponent],
+  imports: [CommonModule, FormsModule, DrlPreviewComponent],
   templateUrl: './regle.html',
   styleUrls: ['./regle.css']
 })
@@ -45,6 +45,7 @@ export class RegleMetierComponent implements OnInit {
 
   showFormPopup = false;
   showDrlPreview = false;
+  showDrlDetailPreview = false;
 
   selectedDetail: RegleMetier | null = null;
   // ✅ MODIFICATION : ajout de 'historique' comme onglet possible
@@ -85,7 +86,8 @@ export class RegleMetierComponent implements OnInit {
   constructor(
     private regleService: RegleMetierService,
     private processusService: ProcessusService,
-    private tacheService: TacheService
+    private tacheService: TacheService,
+    private notifSvc: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -274,14 +276,22 @@ export class RegleMetierComponent implements OnInit {
   openDetail(r: RegleMetier): void {
     this.selectedDetail = r;
     this.detailTab = 'info';
-    // ✅ On réinitialise l'historique à chaque ouverture
     this.historique = [];
+    this.showDrlDetailPreview = false;
   }
 
   closeDetail(): void {
     this.selectedDetail = null;
     this.detailTab = 'info';
     this.historique = [];
+    this.showDrlDetailPreview = false;
+  }
+
+  switchDetailTab(tab: 'info' | 'conditions' | 'utilisations' | 'historique'): void {
+    this.detailTab = tab;
+    if (tab === 'historique' && this.selectedDetail?.id) {
+      this.chargerHistorique(this.selectedDetail.id);
+    }
   }
 
   editFromDetail(): void {
@@ -363,6 +373,7 @@ export class RegleMetierComponent implements OnInit {
         next: () => {
           this.afterSave();
           this.addToast('success', '✅ Règle mise à jour', payload.code);
+          this.notifSvc.notify({ type: 'success', category: 'regle', icon: '✏️', title: 'Règle modifiée', message: `La règle « ${payload.code} » a été mise à jour.` });
         },
         error: (err) => {
           console.error('Erreur update:', err);
@@ -375,6 +386,7 @@ export class RegleMetierComponent implements OnInit {
         next: () => {
           this.afterSave();
           this.addToast('success', '✅ Règle créée', payload.code);
+          this.notifSvc.notify({ type: 'success', category: 'regle', icon: '📋', title: 'Règle créée', message: `La règle « ${payload.code} » a été créée avec succès.` });
         },
         error: (err) => {
           console.error('Erreur create:', err);
@@ -402,6 +414,58 @@ export class RegleMetierComponent implements OnInit {
 
   get drlGenere(): string {
     return this.genererDrl();
+  }
+
+  get drlGenereDetail(): string {
+    if (!this.selectedDetail) return '';
+    const code = this.selectedDetail.code?.trim() || 'REGLE_CODE';
+    const nom  = this.selectedDetail.nom?.trim()  || '';
+    const action = this.selectedDetail.action?.trim() || 'ACTION';
+    const categorie = this.selectedDetail.categorie?.type || '';
+
+    const mapOp = (op: string): string => {
+      const m: Record<string, string> = {
+        '==': '==', '!=': '!=', '>': '>', '<': '<',
+        '>=': '>=', '<=': '<=',
+        'IN': 'memberOf', 'NOT_IN': 'not memberOf',
+        'contains': 'contains'
+      };
+      return m[op] || op;
+    };
+
+    const formatValeur = (op: string, val: string): string => {
+      if (['IN', 'NOT_IN'].includes(op)) return `(${val})`;
+      const isNum = val.trim() !== '' && !isNaN(Number(val));
+      const isBool = val === 'true' || val === 'false';
+      return (isNum || isBool) ? val : `"${val}"`;
+    };
+
+    const conds = (this.selectedDetail.conditions || []).filter(c => c.champ?.trim());
+    let condBlock: string;
+    if (conds.length === 0) {
+      condBlock = '    $d : Declaration()';
+    } else {
+      const lines = conds.map((c, i, arr) => {
+        const champ = c.champ.trim();
+        const op  = mapOp(c.operateur || '==');
+        const val = formatValeur(c.operateur || '==', c.valeur || '');
+        return `        ${champ} ${op} ${val}${i < arr.length - 1 ? ',' : ''}`;
+      });
+      condBlock = `    $d : Declaration(\n${lines.join('\n')}\n    )`;
+    }
+
+    let drl = `package com.douane.rules;\n\n`;
+    drl += `import com.douane.domain.Declaration;\n`;
+    if (nom)       drl += `\n// Règle : ${code} — ${nom}`;
+    if (categorie) drl += `\n// Catégorie : ${categorie}`;
+    drl += `\n\nrule "${code}"\n`;
+    drl += `    salience 10\n`;
+    drl += `    dialect "java"\n`;
+    drl += `when\n${condBlock}\nthen\n`;
+    drl += `    $d.setDernierResultat("${action}");\n`;
+    drl += `    $d.setCodeRegle("${code}");\n`;
+    drl += `    update($d);\nend`;
+    return drl;
   }
 
   genererDrl(): string {
@@ -463,10 +527,15 @@ export class RegleMetierComponent implements OnInit {
     this.motifModification = ''; // ✅ réinitialiser le motif à chaque ouverture d'édition
   }
 
-  toggleActive(id?: number): void {
-    if (!id) return;
-    this.regleService.toggle(id).subscribe({
-      next: () => { this.loadRegles(); this.addToast('info', 'Statut modifié'); },
+  toggleActive(r: RegleMetier): void {
+    if (!r.id) return;
+    this.regleService.toggle(r.id).subscribe({
+      next: () => {
+        this.loadRegles();
+        const newState = r.active ? 'désactivée' : 'activée';
+        this.addToast('info', `Règle ${newState}`, r.code);
+        this.notifSvc.notify({ type: 'info', category: 'regle', icon: r.active ? '🔴' : '🟢', title: `Règle ${newState}`, message: `La règle « ${r.code} » a été ${newState}.` });
+      },
       error: (err) => { console.error(err); this.addToast('error', 'Erreur', err.message); }
     });
   }
@@ -485,6 +554,7 @@ export class RegleMetierComponent implements OnInit {
         this.regleToDelete = null;
         this.loadRegles();
         this.addToast('success', `✅ Règle « ${code} » supprimée`);
+        this.notifSvc.notify({ type: 'warning', category: 'regle', icon: '🗑️', title: 'Règle supprimée', message: `La règle « ${code} » a été supprimée.` });
       },
       error: (err) => {
         this.deleting = false;

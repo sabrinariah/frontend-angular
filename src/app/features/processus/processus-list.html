@@ -3,7 +3,7 @@
 
   <!-- ====================== TOASTS ====================== -->
   <div class="toast-container">
-    <div *ngFor="let t of toasts" class="toast" [class]="'toast-' + t.type">
+    <div *ngFor="let t of toasts" [class]="'toast toast-' + t.type">
       <div class="toast-icon">
         {{ t.type === 'success' ? '✅' : t.type === 'info' ? 'ℹ️' : t.type === 'warning' ? '⚠️' : '❌' }}
       </div>
@@ -18,7 +18,15 @@
   <!-- ====================== HEADER ====================== -->
   <div class="page-header">
     <div class="header-left">
-      <div class="header-icon">🚚</div>
+      <div class="header-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+          <rect x="15" y="2" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+          <rect x="8.5" y="15" width="7" height="7" rx="1.5" fill="white" opacity="0.9"/>
+          <path d="M5.5 9v1.5a3 3 0 0 0 3 3h7a3 3 0 0 0 3-3V9" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="12" y1="13.5" x2="12" y2="15" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
       <div>
         <h1>Gestion des Processus Métier</h1>
         <p class="header-subtitle">Suivez, gérez et orchestrez vos processus d'importation</p>
@@ -32,19 +40,42 @@
   <!-- ====================== KPIs ====================== -->
   <div class="kpi-grid">
     <div class="kpi-card kpi-blue">
-      <div class="kpi-icon">📋</div>
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="6" cy="6" r="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <circle cx="18" cy="6" r="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <circle cx="12" cy="18" r="2.5" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M8.5 6H15.5M6 8.5V11C6 12.5 7 13.5 8.5 13.5H15.5C17 13.5 18 12.5 18 11V8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+          <path d="M12 13.5V15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
       <div class="kpi-body"><div class="kpi-value">{{ processus.length }}</div><div class="kpi-label">Total Processus</div></div>
     </div>
     <div class="kpi-card kpi-green">
-      <div class="kpi-icon">✅</div>
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <div class="kpi-body"><div class="kpi-value">{{ countActifs() }}</div><div class="kpi-label">Actifs</div></div>
     </div>
     <div class="kpi-card kpi-red">
-      <div class="kpi-icon">⏸️</div>
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M10 8V16M14 8V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
       <div class="kpi-body"><div class="kpi-value">{{ countInactifs() }}</div><div class="kpi-label">Inactifs</div></div>
     </div>
     <div class="kpi-card kpi-purple">
-      <div class="kpi-icon">📌</div>
+      <div class="kpi-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <div class="kpi-body"><div class="kpi-value">{{ totalTaches() }}</div><div class="kpi-label">Total Tâches</div></div>
     </div>
   </div>
@@ -52,13 +83,18 @@
   <!-- ====================== TOOLBAR ====================== -->
   <div class="toolbar">
     <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input [(ngModel)]="searchTerm" placeholder="Rechercher un processus..." class="search-input" />
+      <span class="search-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <input [(ngModel)]="searchTerm" (input)="resetPage()" placeholder="Rechercher un processus..." class="search-input" />
     </div>
     <div class="filter-group">
-      <button (click)="filterStatus = 'all'"      [class.active]="filterStatus === 'all'"      class="filter-btn">Tous</button>
-      <button (click)="filterStatus = 'active'"   [class.active]="filterStatus === 'active'"   class="filter-btn">Actifs</button>
-      <button (click)="filterStatus = 'inactive'" [class.active]="filterStatus === 'inactive'" class="filter-btn">Inactifs</button>
+      <button (click)="filterStatus = 'all';      resetPage()" [class.active]="filterStatus === 'all'"      class="filter-btn">Tous</button>
+      <button (click)="filterStatus = 'active';   resetPage()" [class.active]="filterStatus === 'active'"   class="filter-btn">Actifs</button>
+      <button (click)="filterStatus = 'inactive'; resetPage()" [class.active]="filterStatus === 'inactive'" class="filter-btn">Inactifs</button>
     </div>
   </div>
 
@@ -80,7 +116,10 @@
       <tbody>
         <ng-container *ngIf="filteredProcessus().length > 0">
           <tr *ngFor="let p of filteredProcessus(); let i = index"
-              class="table-row" [class.row-inactive]="!p.actif" [class.row-even]="i % 2 === 0">
+              class="table-row"
+              [class.row-inactive]="!p.actif"
+              [class.row-even]="i % 2 === 0"
+              [class.row-menu-open]="openMenuId === p.id">
             <td class="col-id"><span class="row-id">#{{ p.id }}</span></td>
             <td class="col-nom">
               <div class="nom-cell">
@@ -99,15 +138,35 @@
             <td class="col-taches">
               <span class="tache-badge" [class.tache-zero]="!taskCounts[p.id!]">{{ taskCounts[p.id!] || 0 }}</span>
             </td>
-            <td class="col-actions">
-              <div class="actions-row">
-                <button (click)="openTachesListPopup(p)" class="tbl-btn tbl-tasks" title="Consulter les tâches">📋 Tâches</button>
-                <button (click)="openTachesPopup(p)" class="tbl-btn tbl-workflow" title="Voir le workflow BPMN">👁️ Workflow</button>
-                <button (click)="openEditProcessusModal(p)" class="tbl-btn tbl-edit" title="Modifier">✏️</button>
-                <button (click)="toggle(p.id!)" class="tbl-btn tbl-toggle" title="{{ p.actif ? 'Désactiver' : 'Activer' }}">{{ p.actif ? '⏸️' : '▶️' }}</button>
-                <button (click)="delete(p.id!)" class="tbl-btn tbl-del" title="Supprimer">🗑️</button>
-              </div>
-            </td>
+        <td class="col-actions">
+  <div class="actions-row">
+    <button [routerLink]="['/processus', p.id, 'workflow']" class="row-btn-workflow" title="Ouvrir le workflow plein écran">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/>
+        <path d="M8.5 6H15.5M6 8.5V11C6 12.5 7 13.5 8.5 13.5H15.5C17 13.5 18 12.5 18 11V8.5"/>
+        <path d="M12 13.5V15.5"/>
+      </svg>
+      Workflow
+    </button>
+
+    <div class="menu-wrap">
+      <button (click)="toggleMenu(p.id!); $event.stopPropagation()"
+              class="row-btn-kebab" title="Plus d'actions">⋮</button>
+
+      <div *ngIf="openMenuId === p.id" class="row-menu" (click)="$event.stopPropagation()">
+        <button (click)="openTachesListPopup(p); closeMenu()">Liste des tâches</button>
+        <button (click)="ouvrirVueBpmn(p); closeMenu()">Diagramme BPMN</button>
+        <button (click)="exporterBpmnDirect(p); closeMenu()">Exporter BPMN</button>
+        <button (click)="openEditProcessusModal(p); closeMenu()">Modifier</button>
+        <div class="row-menu-sep"></div>
+        <button (click)="toggle(p.id!); closeMenu()">
+          {{ p.actif ? 'Désactiver' : 'Activer' }}
+        </button>
+        <button (click)="delete(p.id!); closeMenu()" class="row-menu-danger">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</td>
           </tr>
         </ng-container>
         <tr *ngIf="filteredProcessus().length === 0">
@@ -122,10 +181,33 @@
         </tr>
       </tbody>
     </table>
-    <div class="table-footer" *ngIf="filteredProcessus().length > 0">
-      <span class="table-count">{{ filteredProcessus().length }} processus affiché{{ filteredProcessus().length > 1 ? 's' : '' }}
-        <span *ngIf="filteredProcessus().length !== processus.length" class="table-count-filter">(sur {{ processus.length }} au total)</span>
+    <!-- ── PIED : compteur + pagination ── -->
+    <div class="table-footer" *ngIf="allFiltered().length > 0">
+      <span class="table-count">
+        Affichage de {{ (currentPage - 1) * pageSize + 1 }}–{{ currentPage * pageSize > allFiltered().length ? allFiltered().length : currentPage * pageSize }}
+        sur {{ allFiltered().length }} processus
       </span>
+
+      <div class="pg-nav">
+        <!-- Précédent -->
+        <button class="pg-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+
+        <!-- Numéros -->
+        <ng-container *ngFor="let p of pages()">
+          <span *ngIf="p === -1" class="pg-dots">…</span>
+          <button *ngIf="p !== -1"
+            class="pg-btn pg-num"
+            [class.pg-active]="p === currentPage"
+            (click)="goToPage(p)">{{ p }}</button>
+        </ng-container>
+
+        <!-- Suivant -->
+        <button class="pg-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -140,8 +222,6 @@
           <span class="simple-wf-count">{{ taches.length }} tâche{{ taches.length > 1 ? 's' : '' }}</span>
         </div>
         <div class="simple-wf-actions">
-          <button (click)="exportBpmn()" class="btn btn-secondary btn-sm" [disabled]="taches.length === 0">Exporter BPMN</button>
-          <button (click)="openBpmnInViewer()" class="btn btn-secondary btn-sm" [disabled]="taches.length === 0">Voir BPMN</button>
           <button (click)="openNewTacheForm()" class="btn btn-primary btn-sm">+ Nouvelle tâche</button>
           <button (click)="closePopup()" class="btn-close">✕</button>
         </div>
@@ -191,7 +271,7 @@
             <text x="20" y="26" font-size="11" fill="#94a3b8"
                   font-family="'Inter', sans-serif"
                   font-weight="700" letter-spacing="1">
-              PROCESSUS : {{ selectedProcessus?.nom | uppercase }}
+              PROCESSUS : {{ selectedProcessus!.nom | uppercase }}
             </text>
 
             <!-- ═══ ARÊTES (CONNEXIONS) ═══ -->
@@ -398,7 +478,7 @@
 
       <!-- VIEWER BPMN -->
       <div *ngIf="viewMode === 'bpmn'" class="simple-bpmn-viewer-panel">
-        <div *ngIf="selectedProcessus?.fileBpmn; else noFileTpl">
+        <div *ngIf="selectedProcessus!.fileBpmn; else noFileTpl">
           <app-bpmn-viewer [fileUrl]="selectedProcessus!.fileBpmn!"></app-bpmn-viewer>
         </div>
         <ng-template #noFileTpl>
@@ -436,11 +516,34 @@
 
       <div *ngIf="formError" class="alert-danger" style="margin: 0 20px;">{{ formError }}</div>
 
+      <!-- STEPPER -->
+      <div class="task-stepper">
+        <div class="stepper-step" [class.stepper-active]="formStep === 1" [class.stepper-done]="formStep > 1" (click)="goToStep(1)">
+          <div class="stepper-circle">{{ formStep > 1 ? '✓' : '1' }}</div>
+          <span class="stepper-label">Informations</span>
+        </div>
+        <div class="stepper-line" [class.stepper-line-done]="formStep > 1"></div>
+        <div class="stepper-step" [class.stepper-active]="formStep === 2" [class.stepper-done]="formStep > 2" (click)="goToStep(2)">
+          <div class="stepper-circle">{{ formStep > 2 ? '✓' : '2' }}</div>
+          <span class="stepper-label">Champs</span>
+        </div>
+        <div class="stepper-line" [class.stepper-line-done]="formStep > 2"></div>
+        <div class="stepper-step" [class.stepper-active]="formStep === 3" [class.stepper-done]="formStep > 3" (click)="goToStep(3)">
+          <div class="stepper-circle">{{ formStep > 3 ? '✓' : '3' }}</div>
+          <span class="stepper-label">Règles</span>
+        </div>
+        <div class="stepper-line" [class.stepper-line-done]="formStep > 3"></div>
+        <div class="stepper-step" [class.stepper-active]="formStep === 4" (click)="goToStep(4)">
+          <div class="stepper-circle">4</div>
+          <span class="stepper-label">Sous-processus</span>
+        </div>
+      </div>
+
       <!-- Corps scrollable avec toutes les sections -->
       <div class="task-form-body">
 
         <!-- ── SECTION 1 : INFORMATIONS ── -->
-        <div class="task-section">
+        <div class="task-section" *ngIf="formStep === 1">
           <div class="task-section-header">
             <span class="task-section-icon">📋</span>
             <span class="task-section-title">Informations générales</span>
@@ -483,7 +586,7 @@
         </div>
 
         <!-- ── SECTION 2 : CHAMPS ── -->
-        <div class="task-section">
+        <div class="task-section" *ngIf="formStep === 2">
           <div class="task-section-header">
             <span class="task-section-icon">📝</span>
             <span class="task-section-title">Champs <span class="task-section-count">{{ currentChamps.length }}</span></span>
@@ -523,7 +626,7 @@
         </div>
 
         <!-- ── SECTION 3 : RÈGLES ── -->
-        <div class="task-section">
+        <div class="task-section" *ngIf="formStep === 3">
           <div class="task-section-header">
             <span class="task-section-icon">⚙️</span>
             <span class="task-section-title">Règles <span class="task-section-count">{{ currentRegles.length }}</span></span>
@@ -533,12 +636,12 @@
             <div *ngFor="let r of currentRegles; let ri = index" class="rule-card">
               <div class="rule-head">
                 <input [(ngModel)]="r.nom" class="form-control rule-name" placeholder="Nom de la règle (ex: Dossier conforme)"/>
-                <label class="switch-label"><input type="checkbox" [(ngModel)]="r.actif"/> Active</label>
+              
                 <button (click)="removeRegle(ri)" class="mini-btn mini-danger">🗑️</button>
               </div>
               <div class="mode-toggle">
-                <button type="button" (click)="toggleModeRegle(r, 'simple')" [class.mode-active]="r.modeRegle === 'simple'" class="mode-btn">⚙️ Règle simple</button>
-                <button type="button" (click)="toggleModeRegle(r, 'metier')" [class.mode-active]="r.modeRegle === 'metier'" class="mode-btn" [disabled]="reglesMetierDisponibles.length === 0">📜 Règle métier ({{ reglesMetierDisponibles.length }})</button>
+                <button type="button" (click)="toggleModeRegle(r, 'simple')" [class.mode-active]="r.modeRegle === 'simple'" class="mode-btn">⚙️ Créer une règle métier</button>
+                <button type="button" (click)="toggleModeRegle(r, 'metier')" [class.mode-active]="r.modeRegle === 'metier'" class="mode-btn" [disabled]="reglesMetierDisponibles.length === 0">📜 Sélectionner une règle métier ({{ reglesMetierDisponibles.length }})</button>
               </div>
               <div class="rule-body">
                 <!-- MODE SIMPLE -->
@@ -562,7 +665,7 @@
                     </select>
                     <input *ngIf="r.operateur !== 'isEmpty' && r.operateur !== 'isNotEmpty'" [(ngModel)]="r.valeur" class="form-control inline" placeholder="Valeur"/>
                   </div>
-                  <div *ngIf="currentChamps.length === 0" class="warning-box-mini">⚠️ Ajoutez d'abord un champ pour utiliser une règle simple.</div>
+                  
                 </div>
                 <!-- MODE MÉTIER -->
                 <div *ngIf="r.modeRegle === 'metier'" class="metier-section">
@@ -645,7 +748,7 @@
         </div>
 
         <!-- ── SECTION 4 : DONNÉES (uniquement si tâche existante avec champs) ── -->
-        <div class="task-section" *ngIf="!isNewTask && currentChamps.length > 0">
+        <div class="task-section" *ngIf="formStep === 2 && !isNewTask && currentChamps.length > 0">
           <div class="task-section-header">
             <span class="task-section-icon">💾</span>
             <span class="task-section-title">Données</span>
@@ -682,10 +785,10 @@
         </div>
 
         <!-- ── SECTION 5 : SOUS-PROCESSUS ── -->
-        <div class="task-section">
+        <div class="task-section" *ngIf="formStep === 4">
           <div class="task-section-header">
             <span class="task-section-icon">🔀</span>
-            <span class="task-section-title">Sous-processus <span class="task-section-count">{{ currentSubprocess.taches?.length || 0 }}</span></span>
+            <span class="task-section-title">Sous-processus <span class="task-section-count">{{ currentSubprocess.taches.length || 0 }}</span></span>
             <label class="sp-toggle-inline">
               <input type="checkbox" [(ngModel)]="currentSubprocess.actif"/>
               Activer
@@ -723,7 +826,15 @@
       <!-- Pied fixe -->
       <div class="simple-task-footer">
         <button (click)="closeTaskForm()" class="btn btn-secondary">Annuler</button>
-        <button (click)="saveTaskForm()" class="btn btn-primary">{{ isNewTask ? 'Créer' : 'Enregistrer' }}</button>
+        <button *ngIf="formStep > 1" (click)="prevFormStep()" class="btn btn-step-prev">← Précédent</button>
+        <div class="stepper-counter">Étape {{ formStep }} / 4</div>
+        <button *ngIf="formStep < 4" (click)="nextFormStep()" class="btn btn-step-next"
+          [disabled]="formStep === 1 && !formTaskOpen!.nom.trim()">
+          Suivant →
+        </button>
+        <button *ngIf="formStep === 4" (click)="saveTaskForm()" class="btn btn-primary">
+          {{ isNewTask ? '✓ Créer la tâche' : '💾 Enregistrer' }}
+        </button>
       </div>
     </div>
   </div>
@@ -734,12 +845,22 @@
 
       <!-- Header -->
       <div class="popup-header">
-        <div class="popup-header-icon">🚚</div>
+        <div class="popup-header-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <circle cx="6" cy="6" r="2.5" stroke="white" stroke-width="1.8" fill="none"/>
+            <circle cx="18" cy="6" r="2.5" stroke="white" stroke-width="1.8" fill="none"/>
+            <circle cx="12" cy="18" r="2.5" stroke="white" stroke-width="1.8" fill="none"/>
+            <path d="M8.5 6H15.5M6 8.5V11C6 12.5 7 13.5 8.5 13.5H15.5C17 13.5 18 12.5 18 11V8.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M12 13.5V15.5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
         <div>
           <h3>Nouveau processus métier</h3>
           <p>Créez un nouveau processus pour orchestrer vos tâches</p>
         </div>
-        <button class="popup-close-btn" (click)="closeNewProcessusModal()">✕</button>
+        <button class="popup-close-btn" (click)="closeNewProcessusModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       </div>
 
       <!-- Erreur -->
@@ -831,12 +952,19 @@
 
       <!-- Header -->
       <div class="popup-header">
-        <div class="popup-header-icon">✏️</div>
+        <div class="popup-header-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M11 4H4C3.4 4 3 4.4 3 5V20C3 20.6 3.4 21 4 21H19C19.6 21 20 20.6 20 20V13" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+            <path d="M18.5 2.5L21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <div>
           <h3>Modifier le processus</h3>
           <p>Mettez à jour les informations du processus</p>
         </div>
-        <button class="popup-close-btn" (click)="closeEditProcessusModal()">✕</button>
+        <button class="popup-close-btn" (click)="closeEditProcessusModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       </div>
 
       <!-- Erreur -->
@@ -1066,12 +1194,12 @@
         </div>
 
         <div *ngIf="getRegles(selectedTacheDetail).length > 0" class="dt-section">
-          <h4 class="dt-section-title">⚙️ Règles ({{ getRegles(selectedTacheDetail).length }})</h4>
+          <h4 class="dt-section-title">⚙️ Règles métier ({{ getRegles(selectedTacheDetail).length }})</h4>
           <div class="dt-regles-list">
             <div *ngFor="let r of getRegles(selectedTacheDetail)" class="dt-regle-item">
               <span class="dt-regle-dot"></span>
               <span class="dt-regle-nom">{{ r.nom || 'Règle sans nom' }}</span>
-              <span class="dt-regle-mode">{{ r.modeRegle === 'metier' ? '📜 Métier' : '⚙️ Simple' }}</span>
+              <span class="dt-regle-mode">{{ r.modeRegle === 'metier' ? '📜 Règle métier' : '⚙️ Simple' }}</span>
             </div>
           </div>
         </div>
@@ -1082,6 +1210,30 @@
         <button (click)="closeTacheDetail()" class="btn btn-secondary btn-sm">Fermer</button>
         <button (click)="editTacheFromList(selectedTacheDetail)" class="btn btn-primary btn-sm">✏️ Modifier</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ====================== POPUP BPMN SEUL ====================== -->
+  <div *ngIf="showBpmnModal" class="popup-overlay popup-overlay-bpmn" (click)="fermerBpmnModal()">
+    <div class="popup-bpmn-seul" (click)="$event.stopPropagation()">
+
+      <div class="bpmn-seul-header">
+        <div class="bpmn-seul-title">
+          <span class="bpmn-seul-nom">{{ bpmnModalProcessus?.nom }}</span>
+          <span class="type-badge type-{{ (bpmnModalProcessus?.typeProcessus || '').toLowerCase() }}">
+            {{ bpmnModalProcessus?.typeProcessus }}
+          </span>
+        </div>
+        <div class="bpmn-seul-actions">
+          <button (click)="exporterBpmnSeul()" class="btn btn-secondary btn-sm">⬇️ Exporter BPMN</button>
+          <button (click)="fermerBpmnModal()" class="btn-close">✕</button>
+        </div>
+      </div>
+
+      <div class="bpmn-seul-body">
+        <app-bpmn-viewer *ngIf="bpmnModalXml" [xmlContent]="bpmnModalXml"></app-bpmn-viewer>
+      </div>
+
     </div>
   </div>
 

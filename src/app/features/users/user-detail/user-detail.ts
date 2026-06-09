@@ -11,10 +11,15 @@ import { User } from '../../../core/services/user.service';
 })
 export class UserDetailComponent {
 
-  @Input() user!: User;
+  @Input()  user!: User;
   @Output() close = new EventEmitter<void>();
+  @Output() edit  = new EventEmitter<void>();
 
-  closePopup() {
+  closePopup(): void {
     this.close.emit();
+  }
+
+  editUser(): void {
+    this.edit.emit();
   }
 }

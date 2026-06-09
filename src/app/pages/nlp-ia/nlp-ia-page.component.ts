@@ -1,13 +1,14 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { NlpRegleService } from '../../core/services/nlp-regle.service';
 import { RegleMetierService } from '../../core/services/regle.service';
-import { DrlPreviewComponent } from '../drl-preview/drl-preview.component';
+import { DrlPreviewComponent } from '../../components/drl-preview/drl-preview.component';
+import { NotificationService } from '../../core/services/notification.service';
 
 import { NlpConversionResult } from '../../models/nlp.model';
-import { RegleMetier } from '../../models/regle.model';
 import { Categorie } from '../../models/categorie.model';
 import { Condition } from '../../models/condition.model';
 
@@ -19,17 +20,14 @@ interface NlpToast {
 }
 
 @Component({
-  selector: 'app-nlp-input',
+  selector: 'app-nlp-ia-page',
   standalone: true,
   imports: [CommonModule, FormsModule, DrlPreviewComponent],
-  templateUrl: './nlp-input.component.html',
-  styleUrls: ['./nlp-input.component.css']
+  templateUrl: './nlp-ia-page.component.html',
+  styleUrls: ['./nlp-ia-page.component.css']
 })
-export class NlpInputComponent implements OnInit {
+export class NlpIaPageComponent implements OnInit {
 
-  @Output() regleCreee = new EventEmitter<RegleMetier>();
-
-  showModal = false;
   loading = false;
   saving = false;
   showDrl = false;
@@ -38,25 +36,16 @@ export class NlpInputComponent implements OnInit {
   result: NlpConversionResult | null = null;
   categories: Categorie[] = [];
 
-  // Champs du mode édition
   editCode = '';
   editNom = '';
   editAction = '';
-  editCategorieId: number | null = null;
+  editCategorieNom = '';
   editConditions: Condition[] = [];
   editActive = true;
   champsDepuisIA: string[] = [];
 
   toasts: NlpToast[] = [];
   private toastId = 0;
-
-  readonly exemplesPhrases = [
-    'Si le score de risque est supérieur à 60, déclencher une inspection physique obligatoire',
-    'Si le pays d\'origine est le Sénégal, appliquer un taux préférentiel UEMOA de 5%',
-    'Si la marchandise est dangereuse, forcer automatiquement le circuit rouge',
-    'Si la valeur CAF dépasse 5000000 FCFA, appliquer les droits de douane',
-    'Si le quota annuel est dépassé, bloquer l\'importation'
-  ];
 
   readonly ACTIONS_PAR_CATEGORIE: Record<string, string[]> = {
     'CONTROLE':      ['CIRCUIT_VERT', 'CIRCUIT_JAUNE', 'CIRCUIT_ROUGE', 'PRELEVER_ECHANTILLON'],
@@ -68,28 +57,19 @@ export class NlpInputComponent implements OnInit {
   };
 
   readonly CHAMPS_PAR_CATEGORIE: Record<string, string[]> = {
-    'CONTROLE':      ['scoreRisque', 'marchandiseDangereuse', 'type_marchandise', 'circuit_controle', 'antecedents_importateur'],
-    'TAXE':          ['valeurCAF', 'pays_origine', 'poids_net', 'code_sh', 'taux_droit', 'taux_tva', 'droitsDouane'],
-    'QUOTA':         ['quantite_importee', 'quota_annuel', 'categorie_produit', 'pays_origine', 'periode'],
+    'CONTROLE':      ['scoreRisque', 'marchandiseDangereuse', 'type_marchandise', 'circuit_controle'],
+    'TAXE':          ['valeurCAF', 'pays_origine', 'poids_net', 'code_sh', 'taux_droit', 'taux_tva'],
+    'QUOTA':         ['quantite_importee', 'quota_annuel', 'categorie_produit', 'pays_origine'],
     'DOUANE':        ['regime_douanier', 'bureau_douane', 'statut_declaration', 'droits_acquittes'],
     'CERTIFICATION': ['type_certificat', 'pays_origine', 'certificat_present', 'date_expiration'],
     'VERIFICATION':  ['montant_declaration', 'nb_documents', 'signature_valide', 'niveau_risque']
   };
 
-  getActionsDisponibles(): string[] {
-    const cat = this.categories.find(c => c.id === this.editCategorieId);
-    return this.ACTIONS_PAR_CATEGORIE[cat?.type?.toUpperCase() ?? ''] ?? [];
-  }
-
-  getChampsDisponibles(): string[] {
-    const cat = this.categories.find(c => c.id === this.editCategorieId);
-    const hardcoded = this.CHAMPS_PAR_CATEGORIE[cat?.type?.toUpperCase() ?? ''] ?? [];
-    return Array.from(new Set([...this.champsDepuisIA, ...hardcoded]));
-  }
-
   constructor(
     private nlpService: NlpRegleService,
-    private regleService: RegleMetierService
+    private regleService: RegleMetierService,
+    private router: Router,
+    private notifSvc: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -99,39 +79,20 @@ export class NlpInputComponent implements OnInit {
     });
   }
 
-  // =========== NAVIGATION MODALE ===========
-
-  ouvrir(): void {
-    this.reset();
-    this.showModal = true;
+  getActionsDisponibles(): string[] {
+    const key = this.editCategorieNom.trim().toUpperCase();
+    const cat = this.categories.find(c => c.nom?.toUpperCase() === key || c.type?.toUpperCase() === key);
+    const type = cat?.type?.toUpperCase() ?? key;
+    return this.ACTIONS_PAR_CATEGORIE[type] ?? [];
   }
 
-  fermer(): void {
-    this.showModal = false;
-    this.reset();
+  getChampsDisponibles(): string[] {
+    const key = this.editCategorieNom.trim().toUpperCase();
+    const cat = this.categories.find(c => c.nom?.toUpperCase() === key || c.type?.toUpperCase() === key);
+    const type = cat?.type?.toUpperCase() ?? key;
+    const hardcoded = this.CHAMPS_PAR_CATEGORIE[type] ?? [];
+    return Array.from(new Set([...this.champsDepuisIA, ...hardcoded]));
   }
-
-  reset(): void {
-    this.phrase = '';
-    this.result = null;
-    this.loading = false;
-    this.saving = false;
-    this.showDrl = false;
-    this.editCode = '';
-    this.editNom = '';
-    this.editAction = '';
-    this.editCategorieId = null;
-    this.editConditions = [];
-    this.editActive = true;
-    this.champsDepuisIA = [];
-  }
-
-  recommencer(): void {
-    this.result = null;
-    this.showDrl = false;
-  }
-
-  // =========== CONVERSION IA ===========
 
   convertir(): void {
     if (!this.phrase.trim()) return;
@@ -163,40 +124,36 @@ export class NlpInputComponent implements OnInit {
     const cat = this.categories.find(
       c => c.type?.toUpperCase() === res.regle.categorieType?.toUpperCase()
     );
-    this.editCategorieId = cat?.id ?? null;
+    this.editCategorieNom = cat?.nom ?? res.regle.categorieType ?? '';
   }
 
-  // =========== SAUVEGARDE ===========
-
-  sauvegarderEdition(): void {
-    if (!this.isEditFormValid()) {
+  sauvegarder(): void {
+    if (!this.isFormValid()) {
       this.addToast('warning', 'Champs manquants', 'Remplissez tous les champs obligatoires (*).');
       return;
     }
-    const motif = 'Générée par IA (modifiée) — phrase : ' + (this.result?.phraseOriginale ?? '');
-    this.sauvegarder(this.editCode, this.editNom, this.editAction,
-      this.editCategorieId!, this.editConditions, this.editActive, motif);
-  }
-
-  private sauvegarder(
-    code: string, nom: string, action: string,
-    categorieId: number, conditions: Condition[],
-    active: boolean, motif: string
-  ): void {
+    const catMatch = this.categories.find(
+      c => c.nom?.toUpperCase() === this.editCategorieNom.trim().toUpperCase()
+        || c.type?.toUpperCase() === this.editCategorieNom.trim().toUpperCase()
+    );
     const payload: any = {
-      code, nom, action, active, version: 1,
-      categorie: { id: categorieId },
-      conditions: conditions.map(c => ({ champ: c.champ, operateur: c.operateur, valeur: c.valeur })),
-      motifModification: motif
+      code: this.editCode,
+      nom: this.editNom,
+      action: this.editAction,
+      active: this.editActive,
+      version: 1,
+      categorie: catMatch ? { id: catMatch.id } : { nom: this.editCategorieNom.trim() },
+      conditions: this.editConditions.map(c => ({ champ: c.champ, operateur: c.operateur, valeur: c.valeur })),
+      motifModification: 'Générée par IA — phrase : ' + (this.result?.phraseOriginale ?? '')
     };
 
     this.saving = true;
     this.regleService.create(payload).subscribe({
-      next: (r) => {
+      next: () => {
         this.saving = false;
-        this.addToast('success', '✅ Règle créée avec succès', code);
-        this.regleCreee.emit(r);
-        setTimeout(() => this.fermer(), 1800);
+        this.addToast('success', '✅ Règle créée avec succès', this.editCode);
+        this.notifSvc.notify({ type: 'success', category: 'ia', icon: '🤖', title: 'Règle créée via IA', message: `La règle « ${this.editCode} » a été générée par l'assistant IA et créée avec succès.` });
+        setTimeout(() => this.router.navigate(['/regles']), 1800);
       },
       error: (err) => {
         this.saving = false;
@@ -205,7 +162,17 @@ export class NlpInputComponent implements OnInit {
     });
   }
 
-  // =========== CONDITIONS (MODE ÉDITION) ===========
+  recommencer(): void {
+    this.result = null;
+    this.showDrl = false;
+    this.editCode = '';
+    this.editNom = '';
+    this.editAction = '';
+    this.editCategorieNom = '';
+    this.editConditions = [];
+    this.editActive = true;
+    this.champsDepuisIA = [];
+  }
 
   ajouterCondition(): void {
     this.editConditions.push({ champ: '', operateur: '==', valeur: '' });
@@ -215,22 +182,8 @@ export class NlpInputComponent implements OnInit {
     this.editConditions.splice(i, 1);
   }
 
-  // =========== UTILITAIRES ===========
-
-  isEditFormValid(): boolean {
-    return !!(
-      this.editCode?.trim() &&
-      this.editNom?.trim() &&
-      this.editAction?.trim() &&
-      this.editCategorieId
-    );
-  }
-
-  getCategorieMatchee(): Categorie | undefined {
-    if (!this.result) return undefined;
-    return this.categories.find(
-      c => c.type?.toUpperCase() === this.result!.regle.categorieType?.toUpperCase()
-    );
+  isFormValid(): boolean {
+    return !!(this.editCode?.trim() && this.editNom?.trim() && this.editAction?.trim() && this.editCategorieNom?.trim());
   }
 
   pourcentageConfiance(): number {
@@ -251,10 +204,6 @@ export class NlpInputComponent implements OnInit {
     return 'Confiance faible — révision manuelle obligatoire';
   }
 
-  appliquerExemple(phrase: string): void {
-    this.phrase = phrase;
-  }
-
   iconCategorie(type?: string): string {
     const map: Record<string, string> = {
       'TAXE': '💰', 'QUOTA': '📊', 'CERTIFICATION': '📜',
@@ -263,13 +212,8 @@ export class NlpInputComponent implements OnInit {
     return map[(type ?? '').toUpperCase()] ?? '📋';
   }
 
-  operateurLabel(op?: string): string {
-    const map: Record<string, string> = {
-      '==': 'est égal à', '!=': 'est différent de',
-      '>': 'est supérieur à', '<': 'est inférieur à',
-      '>=': 'est ≥ à', '<=': 'est ≤ à'
-    };
-    return map[op ?? ''] ?? op ?? '?';
+  retour(): void {
+    this.router.navigate(['/regles']);
   }
 
   addToast(type: NlpToast['type'], message: string, detail?: string): void {

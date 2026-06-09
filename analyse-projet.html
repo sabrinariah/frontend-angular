@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analyse Complète – ProcessFlow Angular</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 13px;
+      color: #1e293b;
+      background: #f8fafc;
+    }
+
+    /* ── Print button ── */
+    #print-btn {
+      position: fixed;
+      top: 18px; right: 24px;
+      z-index: 999;
+      background: #0066cc;
+      color: #fff;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,102,204,.35);
+      transition: background .2s;
+    }
+    #print-btn:hover { background: #0052a3; }
+
+    /* ── Page wrapper ── */
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 40px 60px;
+      background: #fff;
+    }
+
+    /* ── Cover ── */
+    .cover {
+      text-align: center;
+      padding: 60px 0 48px;
+      border-bottom: 3px solid #0066cc;
+      margin-bottom: 48px;
+    }
+    .cover .logo-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .cover .logo-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg,#0066cc,#0ea5e9);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; color: #fff; font-weight: 800;
+    }
+    .cover h1 { font-size: 32px; font-weight: 800; color: #0066cc; margin-bottom: 6px; }
+    .cover .subtitle { font-size: 16px; color: #64748b; margin-bottom: 20px; }
+    .cover .meta {
+      display: inline-flex; gap: 32px;
+      background: #f1f5f9; border-radius: 10px;
+      padding: 14px 28px; font-size: 12px; color: #475569;
+    }
+    .cover .meta span strong { color: #1e293b; display: block; font-size: 13px; }
+
+    /* ── TOC ── */
+    .toc { background: #f8fafc; border-radius: 12px; padding: 24px 28px; margin-bottom: 40px; border: 1px solid #e2e8f0; }
+    .toc h2 { font-size: 16px; font-weight: 700; color: #0066cc; margin-bottom: 14px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin: 5px 0; }
+    .toc a { color: #0066cc; text-decoration: none; font-size: 13px; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ── Section headings ── */
+    h2.section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #0066cc;
+      border-left: 5px solid #0066cc;
+      padding-left: 14px;
+      margin: 40px 0 18px;
+    }
+    h3.sub-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 22px 0 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    h3.sub-title::before {
+      content: '';
+      display: inline-block; width: 8px; height: 8px;
+      background: #f97316; border-radius: 2px;
+    }
+    h4.mini-title {
+      font-size: 13px; font-weight: 700; color: #475569;
+      margin: 14px 0 6px; text-transform: uppercase; letter-spacing: .5px;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 20px 22px;
+      margin-bottom: 16px;
+    }
+    .card-accent { border-left: 4px solid #0066cc; }
+    .card-orange { border-left: 4px solid #f97316; }
+    .card-green  { border-left: 4px solid #16a34a; }
+    .card-red    { border-left: 4px solid #dc2626; }
+    .card-purple { border-left: 4px solid #7c3aed; }
+
+    /* ── Grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600; margin: 2px;
+    }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+    .badge-orange { background: #ffedd5; color: #c2410c; }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-gray   { background: #f1f5f9; color: #475569; }
+    .badge-purple { background: #ede9fe; color: #6d28d9; }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0; }
+    th { background: #0066cc; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+    td { padding: 7px 12px; border-bottom: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    /* ── Code blocks ── */
+    pre, code {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 12px;
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 8px;
+    }
+    pre { padding: 16px 18px; overflow-x: auto; margin: 10px 0; line-height: 1.6; }
+    code { padding: 2px 6px; border-radius: 4px; }
+
+    /* ── Lists ── */
+    ul.feature-list { list-style: none; padding: 0; }
+    ul.feature-list li { padding: 4px 0 4px 22px; position: relative; color: #374151; }
+    ul.feature-list li::before {
+      content: '✓';
+      position: absolute; left: 0;
+      color: #16a34a; font-weight: 700;
+    }
+    ul.bullet-list { padding-left: 20px; }
+    ul.bullet-list li { margin: 4px 0; color: #374151; }
+
+    /* ── Info box ── */
+    .info-box {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 8px; padding: 14px 16px; margin: 12px 0;
+      font-size: 12.5px; color: #1e40af;
+    }
+    .warn-box {
+      background: #fff7ed; border: 1px solid #fed7aa;
+      border-radius: 8px; padding: 14px 16px; margin: 12px 0;
+      font-size: 12.5px; color: #9a3412;
+    }
+
+    /* ── Separator ── */
+    hr { border: none; border-top: 1px solid #e2e8f0; margin: 32px 0; }
+
+    /* ── KPI strip ── */
+    .kpi-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin: 18px 0; }
+    .kpi-card {
+      background: linear-gradient(135deg,#0066cc,#0ea5e9);
+      color: #fff; border-radius: 10px; padding: 18px 16px; text-align: center;
+    }
+    .kpi-card .num { font-size: 26px; font-weight: 800; }
+    .kpi-card .lbl { font-size: 11px; opacity: .85; margin-top: 4px; }
+
+    /* ── Print overrides ── */
+    @media print {
+      #print-btn { display: none; }
+      body { background: #fff; font-size: 12px; }
+      .page { padding: 20px 30px; max-width: 100%; }
+      h2.section-title { page-break-before: auto; }
+      .card, table, pre { page-break-inside: avoid; }
+      .kpi-strip { grid-template-columns: repeat(4,1fr); }
+      .grid-2, .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<button id="print-btn" onclick="window.print()">⬇ Télécharger / Imprimer en PDF</button>
+
+<div class="page">
+
+  <!-- ══ COVER ══ -->
+  <div class="cover">
+    <div class="logo-box">
+      <div class="logo-icon">P</div>
+      <div style="text-align:left">
+        <div style="font-size:22px;font-weight:800;color:#0066cc">ProcessFlow</div>
+        <div style="font-size:12px;color:#64748b">Gestion des processus douaniers</div>
+      </div>
+    </div>
+    <h1>Analyse Complète du Projet</h1>
+    <p class="subtitle">Documentation technique et fonctionnelle — Application Angular 21</p>
+    <div class="meta">
+      <span><strong>Framework</strong>Angular 21.2.0</span>
+      <span><strong>Date</strong>Mai 2026</span>
+      <span><strong>Auteur</strong>Équipe ProcessFlow</span>
+      <span><strong>Version</strong>1.0</span>
+    </div>
+  </div>
+
+  <!-- ══ TABLE OF CONTENTS ══ -->
+  <div class="toc">
+    <h2>Table des Matières</h2>
+    <ol>
+      <li><a href="#s1">Vue d'ensemble du projet</a></li>
+      <li><a href="#s2">Architecture technique</a></li>
+      <li><a href="#s3">Fonctionnalité : Authentification &amp; Gestion des utilisateurs</a></li>
+      <li><a href="#s4">Fonctionnalité : Tableau de bord (Dashboard)</a></li>
+      <li><a href="#s5">Fonctionnalité : Gestion des processus</a></li>
+      <li><a href="#s6">Fonctionnalité : Gestion des tâches</a></li>
+      <li><a href="#s7">Fonctionnalité : Règles métier</a></li>
+      <li><a href="#s8">Fonctionnalité : NLP – Conversion en règles</a></li>
+      <li><a href="#s9">Fonctionnalité : Visualisation BPMN</a></li>
+      <li><a href="#s10">Fonctionnalité : Import / Export</a></li>
+      <li><a href="#s11">Services et communication API</a></li>
+      <li><a href="#s12">Modèles de données</a></li>
+      <li><a href="#s13">Sécurité et contrôle d'accès</a></li>
+      <li><a href="#s14">Catalogue de tâches et de règles prédéfinies</a></li>
+      <li><a href="#s15">Récapitulatif des endpoints API</a></li>
+    </ol>
+  </div>
+
+  <!-- ══ SECTION 1 – VUE D'ENSEMBLE ══ -->
+  <h2 class="section-title" id="s1">1. Vue d'ensemble du projet</h2>
+
+  <p style="line-height:1.8;margin-bottom:16px">
+    <strong>ProcessFlow</strong> est une application web Angular dédiée à la <strong>gestion digitale des processus douaniers</strong>
+    (import/export). Elle offre une interface centralisée permettant de modéliser des flux de travail BPMN,
+    de gérer des règles métier basées sur des conditions logiques, de les générer à partir de phrases en langage naturel
+    (NLP), et de piloter des dossiers d'import/export à travers des étapes structurées.
+  </p>
+
+  <div class="kpi-strip">
+    <div class="kpi-card"><div class="num">21</div><div class="lbl">Angular version</div></div>
+    <div class="kpi-card"><div class="num">14+</div><div class="lbl">Services Angular</div></div>
+    <div class="kpi-card"><div class="num">40+</div><div class="lbl">Règles prédéfinies</div></div>
+    <div class="kpi-card"><div class="num">3</div><div class="lbl">Rôles utilisateurs</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-top:16px">
+    <div class="card card-accent">
+      <h4 class="mini-title">Domaine métier</h4>
+      <ul class="bullet-list">
+        <li>Procédures douanières import / export</li>
+        <li>Gestion des déclarations (DAU, BESC, DI)</li>
+        <li>Circuits de contrôle vert / orange / rouge</li>
+        <li>Paiement électronique et BAE</li>
+        <li>Taxation (UEMOA, CEDEAO, standard)</li>
+      </ul>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Capacités techniques</h4>
+      <ul class="bullet-list">
+        <li>Génération BPMN 2.0 dynamique</li>
+        <li>Conversion NLP → règle structurée</li>
+        <li>Export DRL (Drools Rule Language)</li>
+        <li>Versionnage des règles</li>
+        <li>Authentification Keycloak OAuth2</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 2 – ARCHITECTURE ══ -->
+  <h2 class="section-title" id="s2">2. Architecture technique</h2>
+
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4 class="mini-title">Stack frontend</h4>
+      <table>
+        <tr><th>Technologie</th><th>Version</th></tr>
+        <tr><td>Angular</td><td>21.2.0</td></tr>
+        <tr><td>TypeScript</td><td>5.9.2</td></tr>
+        <tr><td>RxJS</td><td>7.8.0</td></tr>
+        <tr><td>TailwindCSS</td><td>4.2.1</td></tr>
+        <tr><td>bpmn-js</td><td>18.16.1</td></tr>
+        <tr><td>jsPDF</td><td>4.2.1</td></tr>
+        <tr><td>xlsx</td><td>0.18.5</td></tr>
+        <tr><td>keycloak-js</td><td>26.2.3</td></tr>
+      </table>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Serveurs backend (cibles)</h4>
+      <table>
+        <tr><th>Service</th><th>URL</th></tr>
+        <tr><td>API Backend</td><td>http://localhost:8081</td></tr>
+        <tr><td>Keycloak IAM</td><td>http://localhost:8080</td></tr>
+        <tr><td>Realm Keycloak</td><td>projet</td></tr>
+        <tr><td>Client ID</td><td>app-angular</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <h3 class="sub-title">Structure des dossiers</h3>
+  <pre>
+src/app/
+├── app.component.ts          ← Shell principal (sidebar + topbar)
+├── app.routes.ts             ← Configuration des routes
+├── app.config.ts             ← Configuration globale
+│
+├── components/               ← Composants réutilisables
+│   ├── bpmn-viewer/          ← Visionneuse BPMN (bpmn-js)
+│   ├── regle/                ← Gestion des règles métier
+│   ├── nlp-input/            ← Saisie NLP → règle
+│   └── drl-preview/          ← Aperçu code DRL
+│
+├── features/                 ← Modules fonctionnels
+│   ├── dashboard/            ← Tableau de bord KPI
+│   ├── processus/            ← Gestion des processus + tâches
+│   └── users/                ← Administration utilisateurs
+│
+├── pages/                    ← Pages d'application
+│   ├── import/               ← Page import dossiers
+│   └── export.component.ts   ← Page export dossiers
+│
+├── core/
+│   ├── services/             ← 14 services métier/technique
+│   ├── guards/               ← AuthGuard
+│   └── interceptors/         ← TokenInterceptor (JWT)
+│
+├── models/                   ← Interfaces TypeScript
+└── login/ , register/        ← Pages d'authentification
+  </pre>
+
+  <h3 class="sub-title">Patterns architecturaux</h3>
+  <div class="grid-3">
+    <div class="card">
+      <strong>Standalone Components</strong>
+      <p style="margin-top:6px;color:#64748b;font-size:12px">Architecture Angular moderne sans NgModules. Chaque composant déclare ses propres imports.</p>
+    </div>
+    <div class="card">
+      <strong>Reactive Services (RxJS)</strong>
+      <p style="margin-top:6px;color:#64748b;font-size:12px">Observables pour toutes les opérations asynchrones. HttpClient avec interceptor JWT automatique.</p>
+    </div>
+    <div class="card">
+      <strong>Role-Based Access</strong>
+      <p style="margin-top:6px;color:#64748b;font-size:12px">AuthGuard protège les routes. Les menus sont filtrés dynamiquement selon le rôle extrait du JWT.</p>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 3 – AUTHENTIFICATION ══ -->
+  <h2 class="section-title" id="s3">3. Fonctionnalité : Authentification &amp; Gestion des utilisateurs</h2>
+
+  <h3 class="sub-title">3.1 Composant Login</h3>
+  <p style="line-height:1.7;margin-bottom:12px">
+    Le composant <code>login.ts</code> est le point d'entrée de l'application. Il gère l'authentification des utilisateurs
+    via Keycloak et propose trois flux distincts accessibles depuis la même page.
+  </p>
+
+  <div class="grid-3">
+    <div class="card card-accent">
+      <strong>Connexion</strong>
+      <ul class="feature-list" style="margin-top:8px">
+        <li>Formulaire username / password</li>
+        <li>Appel Keycloak token endpoint</li>
+        <li>Décodage JWT et extraction des rôles</li>
+        <li>Redirection par rôle</li>
+      </ul>
+    </div>
+    <div class="card card-orange">
+      <strong>Création de compte</strong>
+      <ul class="feature-list" style="margin-top:8px">
+        <li>Modal d'inscription</li>
+        <li>Sélection du rôle</li>
+        <li>Indicateur de force du mot de passe</li>
+        <li>Vérification de la correspondance</li>
+      </ul>
+    </div>
+    <div class="card card-green">
+      <strong>Mot de passe oublié</strong>
+      <ul class="feature-list" style="margin-top:8px">
+        <li>Modal email</li>
+        <li>Appel API reset password</li>
+        <li>Confirmation visuelle</li>
+      </ul>
+    </div>
+  </div>
+
+  <h4 class="mini-title">Redirection post-connexion par rôle</h4>
+  <table>
+    <tr><th>Rôle</th><th>Redirection</th></tr>
+    <tr><td>SuperAdmin</td><td>/users</td></tr>
+    <tr><td>Gestionnaire des processus métier</td><td>/processus</td></tr>
+    <tr><td>Gestionnaire des règles métier</td><td>/regles</td></tr>
+    <tr><td>Défaut (non reconnu)</td><td>/dashboard</td></tr>
+  </table>
+
+  <h3 class="sub-title">3.2 Service Keycloak</h3>
+  <p style="line-height:1.7;margin-bottom:10px">
+    <code>keycloak.service.ts</code> centralise toute la communication avec le serveur Keycloak.
+    Il gère le token JWT et expose les méthodes de gestion des utilisateurs.
+  </p>
+  <pre>
+// Connexion directe (grant_type: password)
+loginWithCredentials(username, password): Promise&lt;boolean&gt;
+
+// Gestion des comptes
+registerUser(data)                  → POST /auth/register
+getAllUsersWithRoles()              → GET  /auth/users
+updateUser(username, data)         → PUT  /auth/users/{username}
+updateUserRoles(username, roles)   → PUT  /auth/users/{username}/roles
+toggleUserStatus(username, enabled)→ PUT  /auth/users/{username}/toggle
+deleteUser(username)               → DELETE /auth/users/{username}
+forgotPassword(email)              → POST /auth/forgot-password</pre>
+
+  <h3 class="sub-title">3.3 Composant Users (Administration)</h3>
+  <p style="line-height:1.7;margin-bottom:12px">
+    Accessible uniquement aux <strong>SuperAdmins</strong>, le composant <code>users.component.ts</code>
+    offre une console d'administration complète des comptes.
+  </p>
+
+  <div class="grid-2">
+    <div class="card">
+      <h4 class="mini-title">Fonctionnalités CRUD</h4>
+      <ul class="feature-list">
+        <li>Lister tous les utilisateurs</li>
+        <li>Créer un utilisateur (username, email, mot de passe, rôle)</li>
+        <li>Modifier les informations d'un compte</li>
+        <li>Supprimer un compte (confirmation requise)</li>
+        <li>Activer / désactiver un compte</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 class="mini-title">Filtres et affichage</h4>
+      <ul class="feature-list">
+        <li>Recherche par username / email</li>
+        <li>Filtre par rôle</li>
+        <li>Filtre actif / inactif</li>
+        <li>Pagination (3 par page par défaut)</li>
+        <li>Avatar avec initiales, badges de rôle</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 4 – DASHBOARD ══ -->
+  <h2 class="section-title" id="s4">4. Fonctionnalité : Tableau de bord (Dashboard)</h2>
+
+  <p style="line-height:1.7;margin-bottom:12px">
+    Le composant <code>dashboard.component.ts</code> constitue la page d'accueil de l'application après connexion.
+    Il présente une synthèse visuelle de l'activité du système.
+  </p>
+
+  <div class="kpi-strip">
+    <div class="kpi-card"><div class="num">1 248</div><div class="lbl">Importations ce mois</div></div>
+    <div class="kpi-card"><div class="num">984</div><div class="lbl">Exportations ce mois</div></div>
+    <div class="kpi-card"><div class="num">37</div><div class="lbl">Règles actives</div></div>
+    <div class="kpi-card"><div class="num">12</div><div class="lbl">Utilisateurs connectés</div></div>
+  </div>
+
+  <h4 class="mini-title" style="margin-top:20px">Cartes d'accès rapide</h4>
+  <div class="grid-2">
+    <div class="card card-accent"><strong>Import</strong> – Naviguer vers la gestion des dossiers d'importation</div>
+    <div class="card card-orange"><strong>Export</strong> – Naviguer vers la gestion des dossiers d'exportation</div>
+    <div class="card card-green"><strong>Règles</strong> – Accéder au moteur de règles métier</div>
+    <div class="card card-purple"><strong>Utilisateurs</strong> – Administration des comptes (SuperAdmin)</div>
+  </div>
+
+  <!-- ══ SECTION 5 – PROCESSUS ══ -->
+  <h2 class="section-title" id="s5">5. Fonctionnalité : Gestion des processus</h2>
+
+  <p style="line-height:1.7;margin-bottom:12px">
+    Le composant <code>processus-list.component.ts</code> (~1 749 lignes) est le module le plus complet de l'application.
+    Il orchestre la création et la gestion des flux de travail douaniers.
+  </p>
+
+  <h3 class="sub-title">5.1 CRUD des processus</h3>
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4 class="mini-title">Informations d'un processus</h4>
+      <ul class="bullet-list">
+        <li><strong>Nom</strong> du processus</li>
+        <li><strong>Type</strong> (Import / Export / autre)</li>
+        <li><strong>Date début</strong> et <strong>date fin</strong></li>
+        <li><strong>Statut</strong> : actif / inactif (toggle)</li>
+        <li><strong>ID BPMN</strong> et fichier BPMN associé</li>
+        <li>Compteur de tâches attachées</li>
+      </ul>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Actions disponibles</h4>
+      <ul class="feature-list">
+        <li>Créer un nouveau processus</li>
+        <li>Modifier (formulaire inline)</li>
+        <li>Supprimer (confirmation modale)</li>
+        <li>Activer / désactiver</li>
+        <li>Voir le diagramme BPMN généré</li>
+        <li>Exporter le fichier BPMN (.bpmn)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub-title">5.2 Service ProcessusService</h3>
+  <table>
+    <tr><th>Méthode HTTP</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td>GET</td><td>/api/process</td><td>Lister tous les processus</td></tr>
+    <tr><td>GET</td><td>/api/process/{id}</td><td>Détail d'un processus</td></tr>
+    <tr><td>POST</td><td>/api/process</td><td>Créer un processus</td></tr>
+    <tr><td>PUT</td><td>/api/process/{id}</td><td>Mettre à jour un processus</td></tr>
+    <tr><td>DELETE</td><td>/api/process/{id}</td><td>Supprimer un processus</td></tr>
+    <tr><td>PATCH</td><td>/api/process/{id}/toggle</td><td>Basculer statut actif/inactif</td></tr>
+  </table>
+
+  <!-- ══ SECTION 6 – TÂCHES ══ -->
+  <h2 class="section-title" id="s6">6. Fonctionnalité : Gestion des tâches</h2>
+
+  <p style="line-height:1.7;margin-bottom:12px">
+    Les tâches sont les étapes d'un processus. Chaque tâche possède un formulaire dynamique, des règles de transition
+    et optionnellement une logique de sous-processus (subprocess).
+  </p>
+
+  <h3 class="sub-title">6.1 Structure d'une tâche</h3>
+  <pre>
+interface Tache {
+  id?: number;
+  nom: string;
+  description?: string;
+  assignee?: string;           // Responsable (rôle ou utilisateur)
+  type: 'HUMAINE' | 'SYSTEME';
+  statut: 'EN_ATTENTE' | 'EN_COURS' | 'TERMINE';
+  ordre: number;               // Position dans le flux
+  processusId: number;
+  templateId?: string;         // Lien vers le catalogue de tâches
+  formData?: string;           // JSON : champs, règles, valeurs, subprocess
+}</pre>
+
+  <h3 class="sub-title">6.2 Onglets de configuration d'une tâche</h3>
+
+  <div class="grid-3">
+    <div class="card card-accent">
+      <strong>Onglet : Info</strong>
+      <ul class="bullet-list" style="margin-top:8px">
+        <li>Nom et description</li>
+        <li>Type (Humaine / Système)</li>
+        <li>Assignee (responsable)</li>
+        <li>Statut courant</li>
+      </ul>
+    </div>
+    <div class="card card-orange">
+      <strong>Onglet : Champs</strong>
+      <ul class="bullet-list" style="margin-top:8px">
+        <li>Définir des champs de formulaire</li>
+        <li>Types : text, number, date, select, checkbox</li>
+        <li>Champs requis / facultatifs</li>
+        <li>Valeurs par défaut et options</li>
+      </ul>
+    </div>
+    <div class="card card-green">
+      <strong>Onglet : Règles</strong>
+      <ul class="bullet-list" style="margin-top:8px">
+        <li>Règles de transition SI/ALORS</li>
+        <li>Mode simple (champ/opérateur/valeur)</li>
+        <li>Mode métier (règle externe)</li>
+        <li>Logique ET / OU</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:14px">
+    <div class="card card-purple">
+      <strong>Onglet : Données</strong>
+      <ul class="bullet-list" style="margin-top:8px">
+        <li>Valeurs remplies dans le formulaire</li>
+        <li>Prévisualisation des données saisies</li>
+      </ul>
+    </div>
+    <div class="card card-red">
+      <strong>Onglet : Subprocess</strong>
+      <ul class="bullet-list" style="margin-top:8px">
+        <li>Branches OUI / NON</li>
+        <li>Tâches supplémentaires dans la branche</li>
+        <li>Flux parallèles et conditionnels</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub-title">6.3 Règles de transition (RegleTransition)</h3>
+  <p style="line-height:1.7;margin-bottom:10px">
+    Chaque tâche peut définir des règles de transition qui déterminent automatiquement la prochaine tâche à exécuter.
+  </p>
+  <pre>
+interface RegleTransition {
+  id: string;
+  nom: string;
+  modeRegle: 'simple' | 'metier';
+
+  // Mode simple
+  champId?: string;
+  operateur?: OperateurCondition;   // ==, !=, >, <, >=, <=, contains, isEmpty
+  valeur?: any;
+
+  // Mode métier
+  regleMetierIds?: number[];        // IDs des règles métier
+  logiqueCombinaison?: 'ET' | 'OU';
+
+  // Cibles de transition
+  tacheOuiOrdres?: number[];        // Vers tâche(s) OUI (multi-cible possible)
+  tacheSinonOrdre?: number;         // Vers tâche NON (loop-back possible)
+  actif: boolean;
+}</pre>
+
+  <h3 class="sub-title">6.4 Service TacheService</h3>
+  <table>
+    <tr><th>Méthode HTTP</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td>GET</td><td>/api/taches</td><td>Toutes les tâches</td></tr>
+    <tr><td>GET</td><td>/api/taches/processus/{id}</td><td>Tâches d'un processus</td></tr>
+    <tr><td>GET</td><td>/api/taches/{id}</td><td>Détail d'une tâche</td></tr>
+    <tr><td>POST</td><td>/api/taches</td><td>Créer une tâche</td></tr>
+    <tr><td>PUT</td><td>/api/taches/{id}</td><td>Modifier une tâche</td></tr>
+    <tr><td>DELETE</td><td>/api/taches/{id}</td><td>Supprimer une tâche</td></tr>
+  </table>
+
+  <!-- ══ SECTION 7 – RÈGLES MÉTIER ══ -->
+  <h2 class="section-title" id="s7">7. Fonctionnalité : Règles métier</h2>
+
+  <p style="line-height:1.7;margin-bottom:12px">
+    Le composant <code>regle.ts</code> est le moteur central de règles de l'application. Il permet de créer,
+    gérer, versionner et exporter des règles métier conditionnelles utilisées dans les processus douaniers.
+  </p>
+
+  <h3 class="sub-title">7.1 Structure d'une règle métier</h3>
+  <pre>
+interface RegleMetier {
+  id?: number;
+  code: string;           // ex: "RISK_CIRCUIT_ROUGE"
+  nom: string;            // ex: "Circuit Rouge – Inspection physique"
+  action: string;         // ex: "Orienter vers circuit rouge"
+  active: boolean;
+  version?: number;
+  categorie?: Categorie;  // TAXE, QUOTA, CERTIFICATION...
+  conditions?: Condition[];
+}
+
+interface Condition {
+  id?: number;
+  champ: string;          // ex: "scoreRisque"
+  operateur: string;      // ==, !=, >, <, >=, <=, contains, isEmpty, isNotEmpty
+  valeur: string;         // ex: "60"
+}</pre>
+
+  <h3 class="sub-title">7.2 Fonctionnalités principales</h3>
+
+  <div class="grid-2">
+    <div>
+      <div class="card card-accent">
+        <strong>CRUD complet</strong>
+        <ul class="feature-list" style="margin-top:8px">
+          <li>Créer une règle avec code, nom, action</li>
+          <li>Associer à une catégorie douanière</li>
+          <li>Ajouter des conditions multiples</li>
+          <li>Modifier / supprimer (avec confirmation)</li>
+          <li>Activer / désactiver</li>
+        </ul>
+      </div>
+      <div class="card card-green" style="margin-top:14px">
+        <strong>Versionnage</strong>
+        <ul class="feature-list" style="margin-top:8px">
+          <li>Historique de toutes les versions</li>
+          <li>Motif de modification obligatoire</li>
+          <li>Restauration d'une version antérieure</li>
+          <li>Numéro de version automatique</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card card-orange">
+        <strong>Génération DRL (Drools)</strong>
+        <ul class="feature-list" style="margin-top:8px">
+          <li>Conversion automatique règle → DRL</li>
+          <li>Aperçu du code généré</li>
+          <li>Syntaxe exécutable par le moteur Drools</li>
+        </ul>
+      </div>
+      <div class="card card-purple" style="margin-top:14px">
+        <strong>Suivi d'utilisation</strong>
+        <ul class="feature-list" style="margin-top:8px">
+          <li>Liste des processus utilisant la règle</li>
+          <li>Compteur actif / inactif</li>
+          <li>Alerte si règle non utilisée</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="sub-title">7.3 Catégories de règles</h3>
+  <div class="grid-3">
+    <div class="card"><span class="badge badge-blue">TAXE</span><br/><small>Taux d'imposition import/export</small></div>
+    <div class="card"><span class="badge badge-orange">QUOTA</span><br/><small>Limites quantitatives</small></div>
+    <div class="card"><span class="badge badge-green">CERTIFICATION</span><br/><small>Documents obligatoires</small></div>
+    <div class="card"><span class="badge badge-purple">VERIFICATION</span><br/><small>Contrôle de conformité</small></div>
+    <div class="card"><span class="badge badge-blue">CONTROLE</span><br/><small>Inspection physique / documentaire</small></div>
+    <div class="card"><span class="badge badge-gray">DOUANE</span><br/><small>Procédures douanières générales</small></div>
+  </div>
+
+  <h3 class="sub-title">7.4 Filtres et recherche</h3>
+  <ul class="feature-list">
+    <li>Recherche par code, nom ou action</li>
+    <li>Filtre par type de catégorie</li>
+    <li>Filtre par statut (actif / inactif)</li>
+    <li>Suggestions intelligentes de champs et d'actions par catégorie</li>
+  </ul>
+
+  <h3 class="sub-title">7.5 Service RegleMetierService</h3>
+  <table>
+    <tr><th>Méthode</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td>GET</td><td>/api/regles</td><td>Toutes les règles</td></tr>
+    <tr><td>GET</td><td>/api/regles/{id}</td><td>Détail d'une règle</td></tr>
+    <tr><td>POST</td><td>/api/regles</td><td>Créer une règle</td></tr>
+    <tr><td>PUT</td><td>/api/regles/{id}</td><td>Mettre à jour</td></tr>
+    <tr><td>DELETE</td><td>/api/regles/{id}</td><td>Supprimer</td></tr>
+    <tr><td>PUT</td><td>/api/regles/{id}/toggle</td><td>Activer / désactiver</td></tr>
+    <tr><td>GET</td><td>/api/regles/{id}/conditions</td><td>Conditions d'une règle</td></tr>
+    <tr><td>GET</td><td>/api/regles/{id}/versions</td><td>Historique des versions</td></tr>
+    <tr><td>POST</td><td>/api/regles/restaurer/{versionId}</td><td>Restaurer une version</td></tr>
+    <tr><td>GET</td><td>/api/categories</td><td>Lister les catégories</td></tr>
+  </table>
+
+  <!-- ══ SECTION 8 – NLP ══ -->
+  <h2 class="section-title" id="s8">8. Fonctionnalité : NLP – Conversion de phrases en règles</h2>
+
+  <p style="line-height:1.7;margin-bottom:12px">
+    Le composant <code>nlp-input.component.ts</code> permet à un utilisateur métier de saisir une règle
+    en français naturel et d'obtenir automatiquement une règle structurée avec conditions et DRL.
+  </p>
+
+  <h3 class="sub-title">8.1 Flux de traitement NLP</h3>
+  <div class="card card-accent" style="margin-bottom:14px">
+    <p style="text-align:center;font-size:13px;color:#64748b">
+      <strong>1. Saisie phrase</strong>
+      &nbsp;→&nbsp;
+      <strong>2. Appel POST /api/nlp/convertir</strong>
+      &nbsp;→&nbsp;
+      <strong>3. Résultat parsé + score confiance</strong>
+      &nbsp;→&nbsp;
+      <strong>4. Edition / Validation</strong>
+      &nbsp;→&nbsp;
+      <strong>5. Sauvegarde règle</strong>
+    </p>
+  </div>
+
+  <h3 class="sub-title">8.2 Structure du résultat NLP</h3>
+  <pre>
+interface NlpConversionResult {
+  regle: {
+    code: string;
+    nom: string;
+    action: string;
+    categorieType: string;
+    conditions: Condition[];
+  };
+  drl: string;                // Code DRL généré automatiquement
+  confidence: number;         // Score 0 à 1 (ex: 0.87 = 87%)
+  ambiguites: string[];       // Liste des ambiguïtés détectées
+  phraseOriginale: string;    // Phrase entrée par l'utilisateur
+}</pre>
+
+  <h3 class="sub-title">8.3 Niveaux de confiance</h3>
+  <div class="grid-3">
+    <div class="card card-green">
+      <strong>Élevé ≥ 85%</strong>
+      <p style="margin-top:6px;font-size:12px">Création directe recommandée. L'utilisateur peut sauvegarder immédiatement.</p>
+    </div>
+    <div class="card card-orange">
+      <strong>Moyen 50–84%</strong>
+      <p style="margin-top:6px;font-size:12px">Vérification des valeurs conseillée. Edition possible avant sauvegarde.</p>
+    </div>
+    <div class="card card-red">
+      <strong>Faible &lt; 50%</strong>
+      <p style="margin-top:6px;font-size:12px">Révision manuelle obligatoire. Les conditions peuvent être incorrectes.</p>
+    </div>
+  </div>
+
+  <h3 class="sub-title">8.4 Exemples de phrases supportées</h3>
+  <table>
+    <tr><th>Phrase en français</th><th>Règle générée</th></tr>
+    <tr>
+      <td>"Si le score de risque &gt; 60, inspection physique obligatoire"</td>
+      <td>RISK_CIRCUIT_ROUGE — scoreRisque &gt; 60 → circuit rouge</td>
+    </tr>
+    <tr>
+      <td>"Si pays=Sénégal, appliquer taux préférentiel UEMOA 5%"</td>
+      <td>TAX_UEMOA — paysOrigine == Sénégal → taxe 5% FOB</td>
+    </tr>
+    <tr>
+      <td>"Si marchandise dangereuse, forcer circuit rouge"</td>
+      <td>RISK_MARCHANDISE_DANGEREUSE — marchandiseDangereuse == true</td>
+    </tr>
+  </table>
+
+  <h3 class="sub-title">8.5 Fonctionnalités post-conversion</h3>
+  <ul class="feature-list">
+    <li>Édition du code, nom et action générés</li>
+    <li>Ajout / suppression de conditions manuellement</li>
+    <li>Changement de catégorie</li>
+    <li>Aperçu du DRL généré avant sauvegarde</li>
+    <li>Indicateur visuel du score de confiance (barre colorée)</li>
+    <li>Liste des ambiguïtés détectées</li>
+  </ul>
+
+  <!-- ══ SECTION 9 – BPMN ══ -->
+  <h2 class="section-title" id="s9">9. Fonctionnalité : Visualisation &amp; Génération BPMN</h2>
+
+  <p style="line-height:1.7;margin-bottom:12px">
+    L'application génère automatiquement des diagrammes BPMN 2.0 à partir des définitions de tâches et de règles de transition.
+    Ces diagrammes peuvent être visualisés et téléchargés.
+  </p>
+
+  <h3 class="sub-title">9.1 Service BpmnGeneratorService</h3>
+  <p style="line-height:1.7;margin-bottom:10px">
+    <code>bpmn-generator.service.ts</code> transforme les tâches d'un processus en XML BPMN 2.0 complet incluant
+    les éléments de diagramme (positions, connecteurs).
+  </p>
+
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4 class="mini-title">Éléments BPMN générés</h4>
+      <ul class="feature-list">
+        <li>Événement de début (StartEvent)</li>
+        <li>Événement de fin (EndEvent)</li>
+        <li>Tâche utilisateur (UserTask — type HUMAINE)</li>
+        <li>Tâche de service (ServiceTask — type SYSTEME)</li>
+        <li>Passerelle exclusive (ExclusiveGateway)</li>
+        <li>Flux de séquence conditionnels (SequenceFlow)</li>
+        <li>Sous-processus (SubProcess)</li>
+      </ul>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Diagramme Interchange (DI)</h4>
+      <ul class="feature-list">
+        <li>Calcul automatique des positions X/Y</li>
+        <li>Génération des points de passage (waypoints)</li>
+        <li>Labels sur les flux conditionnels</li>
+        <li>Tailles standardisées des formes</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub-title">9.2 Composant BpmnViewer</h3>
+  <p style="line-height:1.7;margin-bottom:10px">
+    <code>bpmn-viewer.ts</code> intègre la librairie <strong>bpmn-js</strong> pour afficher interactivement
+    les diagrammes dans le navigateur.
+  </p>
+  <ul class="feature-list">
+    <li>Chargement depuis XML ou URL</li>
+    <li>Auto-fit du diagramme dans la fenêtre</li>
+    <li>Zoom et déplacement interactifs</li>
+    <li>Chargement dynamique à la demande</li>
+    <li>Export du fichier .bpmn</li>
+  </ul>
+
+  <h3 class="sub-title">9.3 Circuits douaniers représentés</h3>
+  <div class="grid-3">
+    <div class="card card-green">
+      <strong>Circuit Vert</strong>
+      <p style="font-size:12px;margin-top:6px">Score ≤ 30. Traitement rapide sans contrôle physique.</p>
+    </div>
+    <div class="card card-orange">
+      <strong>Circuit Orange</strong>
+      <p style="font-size:12px;margin-top:6px">Score 31–60. Contrôle documentaire obligatoire.</p>
+    </div>
+    <div class="card card-red">
+      <strong>Circuit Rouge</strong>
+      <p style="font-size:12px;margin-top:6px">Score &gt; 60 ou marchandise dangereuse. Inspection physique.</p>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 10 – IMPORT / EXPORT ══ -->
+  <h2 class="section-title" id="s10">10. Fonctionnalité : Import / Export de dossiers</h2>
+
+  <p style="line-height:1.7;margin-bottom:12px">
+    Les pages <code>import.ts</code> et <code>export.component.ts</code>, ainsi que le composant combiné
+    <code>import-export.component.ts</code>, permettent la gestion des dossiers douaniers.
+  </p>
+
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4 class="mini-title">Dossiers d'importation</h4>
+      <ul class="feature-list">
+        <li>Créer un dossier import</li>
+        <li>Lire / modifier les informations</li>
+        <li>Supprimer un dossier</li>
+        <li>Suivi statut : EN_ATTENTE, EN_COURS, VALIDE, REFUSE</li>
+        <li>Pays d'origine, type de produit, valeur, quantité</li>
+      </ul>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Dossiers d'exportation</h4>
+      <ul class="feature-list">
+        <li>Créer un dossier export</li>
+        <li>Lire / modifier les informations</li>
+        <li>Supprimer un dossier</li>
+        <li>Suivi statut similaire à l'import</li>
+        <li>Destination, déclarant, marchandise</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub-title">10.1 Services Import / Export</h3>
+  <table>
+    <tr><th>Méthode</th><th>Endpoint Import</th><th>Endpoint Export</th></tr>
+    <tr><td>GET</td><td>/api/import/dossiers</td><td>/api/export/dossiers</td></tr>
+    <tr><td>POST</td><td>/api/import/dossiers</td><td>/api/export/dossiers</td></tr>
+    <tr><td>PUT</td><td>/api/import/dossiers/{id}</td><td>/api/export/dossiers/{id}</td></tr>
+    <tr><td>DELETE</td><td>/api/import/dossiers/{id}</td><td>/api/export/dossiers/{id}</td></tr>
+  </table>
+
+  <!-- ══ SECTION 11 – SERVICES ══ -->
+  <h2 class="section-title" id="s11">11. Services et communication API</h2>
+
+  <table>
+    <tr>
+      <th>Service</th><th>Fichier</th><th>Rôle principal</th>
+    </tr>
+    <tr><td>KeycloakService</td><td>keycloak.service.ts</td><td>Authentification, gestion des tokens JWT, CRUD utilisateurs Keycloak</td></tr>
+    <tr><td>ProcessusService</td><td>processus.service.ts</td><td>CRUD des processus métier</td></tr>
+    <tr><td>TacheService</td><td>tache.service.ts</td><td>CRUD des tâches d'un processus</td></tr>
+    <tr><td>RegleMetierService</td><td>regle.service.ts</td><td>CRUD règles, conditions, versionnage, catégories</td></tr>
+    <tr><td>NlpRegleService</td><td>nlp-regle.service.ts</td><td>Conversion phrase → règle via API NLP</td></tr>
+    <tr><td>BpmnGeneratorService</td><td>bpmn-generator.service.ts</td><td>Génération XML BPMN 2.0, téléchargement .bpmn</td></tr>
+    <tr><td>ConditionEvaluatorService</td><td>condition-evaluator.service.ts</td><td>Évaluation locale des conditions de règles</td></tr>
+    <tr><td>PdfService</td><td>pdf.service.ts</td><td>Téléchargement de rapports PDF via jsPDF</td></tr>
+    <tr><td>ImportService</td><td>import.service.ts</td><td>CRUD dossiers d'importation</td></tr>
+    <tr><td>ExportService</td><td>export.service.ts</td><td>CRUD dossiers d'exportation</td></tr>
+    <tr><td>VersionService</td><td>version.service.ts</td><td>Gestion des versions de règles</td></tr>
+    <tr><td>UserService</td><td>user.service.ts</td><td>Gestion utilisateurs (fallback API)</td></tr>
+    <tr><td>TokenInterceptor</td><td>token.interceptor.ts</td><td>Injection automatique du Bearer Token dans chaque requête HTTP</td></tr>
+    <tr><td>AuthGuard</td><td>auth.guard.ts</td><td>Protection des routes (utilisateur connecté requis)</td></tr>
+  </table>
+
+  <h3 class="sub-title">11.1 ConditionEvaluatorService – Évaluation locale</h3>
+  <p style="line-height:1.7;margin-bottom:10px">
+    Ce service évalue les conditions d'une règle directement dans le navigateur, sans appel API,
+    en comparant les données de formulaire aux conditions définies.
+  </p>
+  <pre>
+evaluerRegle(regle: RegleMetier, formData: Record&lt;string, any&gt;): EvaluationResult
+
+// Retourne :
+{
+  valide: boolean;
+  conditionsEchouees: ConditionEchouee[];
+  message: string;
+}
+
+// Opérateurs supportés :
+// ==, !=, >, <, >=, <=, contains, isEmpty, isNotEmpty</pre>
+
+  <!-- ══ SECTION 12 – MODÈLES ══ -->
+  <h2 class="section-title" id="s12">12. Modèles de données (Interfaces TypeScript)</h2>
+
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4 class="mini-title">User</h4>
+      <pre style="background:#1e293b;font-size:11px">
+interface User {
+  id?: number;
+  nom: string;
+  prenom?: string;
+  email: string;
+  password?: string;
+  role?: string;
+  actif?: boolean;
+}</pre>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Processus</h4>
+      <pre style="background:#1e293b;font-size:11px">
+interface Processus {
+  id?: number;
+  nom: string;
+  typeProcessus?: string;
+  dateDebut?: string;
+  dateFin?: string;
+  actif?: boolean;
+  bpmnProcessId?: string;
+  fileBpmn?: string;
+}</pre>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:14px">
+    <div class="card card-green">
+      <h4 class="mini-title">RegleMetier + Condition</h4>
+      <pre style="background:#1e293b;font-size:11px">
+interface RegleMetier {
+  id?: number;
+  code: string;
+  nom: string;
+  action: string;
+  active: boolean;
+  version?: number;
+  categorie?: Categorie;
+  conditions?: Condition[];
+}
+interface Condition {
+  id?: number;
+  champ: string;
+  operateur: string;
+  valeur: string;
+}</pre>
+    </div>
+    <div class="card card-purple">
+      <h4 class="mini-title">NlpConversionResult</h4>
+      <pre style="background:#1e293b;font-size:11px">
+interface NlpConversionResult {
+  regle: NlpRegleDto;
+  drl: string;
+  confidence: number;   // 0–1
+  ambiguites: string[];
+  phraseOriginale: string;
+}
+interface NlpRegleDto {
+  code: string;
+  nom: string;
+  action: string;
+  categorieType: string;
+  conditions: Condition[];
+}</pre>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 13 – SÉCURITÉ ══ -->
+  <h2 class="section-title" id="s13">13. Sécurité et contrôle d'accès</h2>
+
+  <h3 class="sub-title">13.1 Matrice des accès par rôle</h3>
+  <table>
+    <tr>
+      <th>Fonctionnalité</th>
+      <th>SuperAdmin</th>
+      <th>Gestionnaire Processus</th>
+      <th>Gestionnaire Règles</th>
+    </tr>
+    <tr><td>Dashboard</td><td>✓</td><td>✓</td><td>✓</td></tr>
+    <tr><td>Gestion Utilisateurs</td><td>✓</td><td>–</td><td>–</td></tr>
+    <tr><td>Gestion Processus</td><td>✓</td><td>✓</td><td>–</td></tr>
+    <tr><td>Règles Métier</td><td>✓</td><td>–</td><td>✓</td></tr>
+    <tr><td>Import / Export</td><td>✓</td><td>✓</td><td>✓</td></tr>
+  </table>
+
+  <h3 class="sub-title">13.2 Mécanismes de sécurité</h3>
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4 class="mini-title">Authentification Keycloak</h4>
+      <ul class="feature-list">
+        <li>OAuth2 / OpenID Connect</li>
+        <li>Grant type: password (direct login)</li>
+        <li>JWT signé par Keycloak</li>
+        <li>Extraction des rôles depuis <code>realm_access.roles</code></li>
+        <li>SSO via check-sso en fallback</li>
+      </ul>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Protection frontend</h4>
+      <ul class="feature-list">
+        <li>AuthGuard sur toutes les routes protégées</li>
+        <li>TokenInterceptor injecte Bearer Token automatiquement</li>
+        <li>Menus filtrés dynamiquement par rôle</li>
+        <li>Redirection vers login si non authentifié</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 14 – CATALOGUE ══ -->
+  <h2 class="section-title" id="s14">14. Catalogue de tâches et règles prédéfinies</h2>
+
+  <h3 class="sub-title">14.1 Tâches prédéfinies (bpmn-tasks.model.ts)</h3>
+  <p style="line-height:1.7;margin-bottom:12px">
+    L'application inclut un catalogue complet de tâches couvrant l'intégralité du processus douanier d'importation :
+  </p>
+
+  <table>
+    <tr><th>Phase</th><th>Tâches incluses</th></tr>
+    <tr>
+      <td><strong>Phase 1 – Pré-dédouanement</strong></td>
+      <td>Saisie dossier, Procédures préalables, Déclaration d'importation (DI), Domiciliation bancaire, Assurance, Visas, Certificats, Complément pré-dédouanement</td>
+    </tr>
+    <tr>
+      <td><strong>Phase 2 – Arrivée</strong></td>
+      <td>Manifeste import, Déchargement / Entrée entrepôt, Reconnaissance marchandise, Traitement anomalie</td>
+    </tr>
+    <tr>
+      <td><strong>Phase 3 – Dédouanement</strong></td>
+      <td>Soumission DAU, Contrôle documentaire, Inspection physique / Scanner, Paiement électronique, Régulariser paiement</td>
+    </tr>
+    <tr>
+      <td><strong>Phase 4 – Enlèvement</strong></td>
+      <td>Compléter conditions BAE, Émission BAE, Bon à Délivrer (BAD), Constat de sortie</td>
+    </tr>
+  </table>
+
+  <h3 class="sub-title">14.2 Règles prédéfinies (regle-templates.model.ts)</h3>
+  <p style="line-height:1.7;margin-bottom:12px">40+ règles prédéfinies couvrant les domaines suivants :</p>
+
+  <div class="grid-2">
+    <div class="card card-accent">
+      <h4 class="mini-title">Règles d'importation</h4>
+      <table style="margin:0">
+        <tr><th>Code</th><th>Description</th></tr>
+        <tr><td>VALID_DECLARATION_IMPORT</td><td>Validation déclaration import</td></tr>
+        <tr><td>VALID_BESC_IMPORT</td><td>BESC obligatoire</td></tr>
+        <tr><td>VALID_FACTURE_IMPORT</td><td>Facture requise</td></tr>
+        <tr><td>RISK_CIRCUIT_VERT</td><td>Score ≤ 30 → circuit vert</td></tr>
+        <tr><td>RISK_CIRCUIT_ORANGE</td><td>Score 31–60 → contrôle doc.</td></tr>
+        <tr><td>RISK_CIRCUIT_ROUGE</td><td>Score &gt; 60 → inspection physique</td></tr>
+        <tr><td>RISK_MARCHANDISE_DANGEREUSE</td><td>Marchandise dangereuse → rouge</td></tr>
+        <tr><td>TAX_UEMOA</td><td>Taux préférentiel 5% FOB</td></tr>
+        <tr><td>TAX_CEDEAO</td><td>Taux préférentiel 10% FOB</td></tr>
+        <tr><td>TAX_STANDARD_IMPORT</td><td>Taux standard 20% FOB</td></tr>
+        <tr><td>TAX_TVA_18</td><td>TVA 18%</td></tr>
+        <tr><td>BAE_PAIEMENT_CONFIRME</td><td>Paiement confirmé → BAE</td></tr>
+        <tr><td>BAE_TOUTES_CONDITIONS</td><td>Toutes conditions remplies</td></tr>
+      </table>
+    </div>
+    <div class="card card-orange">
+      <h4 class="mini-title">Règles d'exportation</h4>
+      <table style="margin:0">
+        <tr><th>Code</th><th>Description</th></tr>
+        <tr><td>VALID_DECLARATION_EXPORT</td><td>Validation déclaration export</td></tr>
+        <tr><td>VALID_EXPORTATEUR_AGREE</td><td>Exportateur agréé conforme</td></tr>
+        <tr><td>TAX_EXPORT_MINIERE</td><td>Droit de sortie 3% FOB (mines)</td></tr>
+        <tr><td>TAX_EXPORT_BOIS</td><td>Droit de sortie 5% FOB + CITES</td></tr>
+        <tr><td>TAX_EXPORT_AGRICOLE</td><td>Droit de sortie 1.5% FOB</td></tr>
+        <tr><td>TAX_REDEVANCE_TONNE</td><td>1 000 XAF par tonne</td></tr>
+        <tr><td>EMBARQUE_PAIEMENT</td><td>Paiement confirmé avant embarquement</td></tr>
+        <tr><td>EMBARQUE_BON</td><td>Bon à Embarquer + BESC présents</td></tr>
+        <tr><td>EMBARQUE_VALEUR_ELEVEE</td><td>&gt; 50M XAF → validation hiérarchique</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ SECTION 15 – API RÉCAP ══ -->
+  <h2 class="section-title" id="s15">15. Récapitulatif complet des endpoints API</h2>
+
+  <table>
+    <tr><th>Méthode</th><th>Endpoint</th><th>Description</th></tr>
+    <tr><td>POST</td><td>/auth/login</td><td>Connexion directe (Keycloak token)</td></tr>
+    <tr><td>POST</td><td>/auth/register</td><td>Créer un compte</td></tr>
+    <tr><td>POST</td><td>/auth/forgot-password</td><td>Réinitialisation mot de passe</td></tr>
+    <tr><td>GET</td><td>/auth/users</td><td>Lister tous les utilisateurs avec rôles</td></tr>
+    <tr><td>PUT</td><td>/auth/users/{username}</td><td>Modifier un utilisateur</td></tr>
+    <tr><td>PUT</td><td>/auth/users/{username}/roles</td><td>Modifier les rôles</td></tr>
+    <tr><td>PUT</td><td>/auth/users/{username}/toggle</td><td>Activer/désactiver</td></tr>
+    <tr><td>DELETE</td><td>/auth/users/{username}</td><td>Supprimer un utilisateur</td></tr>
+    <tr><td>GET</td><td>/api/process</td><td>Lister les processus</td></tr>
+    <tr><td>GET</td><td>/api/process/{id}</td><td>Détail processus</td></tr>
+    <tr><td>POST</td><td>/api/process</td><td>Créer processus</td></tr>
+    <tr><td>PUT</td><td>/api/process/{id}</td><td>Modifier processus</td></tr>
+    <tr><td>DELETE</td><td>/api/process/{id}</td><td>Supprimer processus</td></tr>
+    <tr><td>PATCH</td><td>/api/process/{id}/toggle</td><td>Basculer statut processus</td></tr>
+    <tr><td>GET</td><td>/api/taches</td><td>Lister les tâches</td></tr>
+    <tr><td>GET</td><td>/api/taches/processus/{id}</td><td>Tâches d'un processus</td></tr>
+    <tr><td>POST</td><td>/api/taches</td><td>Créer tâche</td></tr>
+    <tr><td>PUT</td><td>/api/taches/{id}</td><td>Modifier tâche</td></tr>
+    <tr><td>DELETE</td><td>/api/taches/{id}</td><td>Supprimer tâche</td></tr>
+    <tr><td>GET</td><td>/api/regles</td><td>Lister les règles</td></tr>
+    <tr><td>GET</td><td>/api/regles/{id}</td><td>Détail règle</td></tr>
+    <tr><td>POST</td><td>/api/regles</td><td>Créer règle</td></tr>
+    <tr><td>PUT</td><td>/api/regles/{id}</td><td>Modifier règle</td></tr>
+    <tr><td>DELETE</td><td>/api/regles/{id}</td><td>Supprimer règle</td></tr>
+    <tr><td>PUT</td><td>/api/regles/{id}/toggle</td><td>Activer/désactiver règle</td></tr>
+    <tr><td>GET</td><td>/api/regles/{id}/conditions</td><td>Conditions d'une règle</td></tr>
+    <tr><td>GET</td><td>/api/regles/{id}/versions</td><td>Historique versions</td></tr>
+    <tr><td>POST</td><td>/api/regles/restaurer/{versionId}</td><td>Restaurer une version</td></tr>
+    <tr><td>GET</td><td>/api/categories</td><td>Catégories de règles</td></tr>
+    <tr><td>POST</td><td>/api/nlp/convertir</td><td>Conversion phrase NLP → règle</td></tr>
+    <tr><td>GET</td><td>/api/import/dossiers</td><td>Dossiers import</td></tr>
+    <tr><td>POST</td><td>/api/import/dossiers</td><td>Créer dossier import</td></tr>
+    <tr><td>PUT</td><td>/api/import/dossiers/{id}</td><td>Modifier dossier import</td></tr>
+    <tr><td>DELETE</td><td>/api/import/dossiers/{id}</td><td>Supprimer dossier import</td></tr>
+    <tr><td>GET</td><td>/api/export/dossiers</td><td>Dossiers export</td></tr>
+    <tr><td>POST</td><td>/api/export/dossiers</td><td>Créer dossier export</td></tr>
+    <tr><td>PUT</td><td>/api/export/dossiers/{id}</td><td>Modifier dossier export</td></tr>
+    <tr><td>DELETE</td><td>/api/export/dossiers/{id}</td><td>Supprimer dossier export</td></tr>
+    <tr><td>GET</td><td>/api/versions</td><td>Toutes les versions</td></tr>
+    <tr><td>GET</td><td>/api/process/pdf/{id}</td><td>Télécharger rapport PDF</td></tr>
+  </table>
+
+  <hr />
+
+  <!-- ══ FOOTER ══ -->
+  <div style="text-align:center;color:#94a3b8;font-size:11px;padding:20px 0">
+    <p>Document généré le 30 mai 2026 — ProcessFlow Angular 21 — Analyse complète du projet</p>
+    <p style="margin-top:4px">Pour télécharger en PDF : cliquer sur le bouton en haut à droite, puis <strong>Enregistrer en PDF</strong> dans la boîte de dialogue d'impression.</p>
+  </div>
+
+</div>
+</body>
+</html>

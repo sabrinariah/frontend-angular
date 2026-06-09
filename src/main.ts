@@ -26,7 +26,9 @@ import { ProcessusListComponent } from './app/features/processus/processus-list.
 import { ProcessusFormComponent } from './app/features/processus/processus-form.component';
 
 import { ProcessusModifierComponent } from './app/features/processus/processus-modifier.component';
+import { ProcessusWorkflowComponent } from './app/features/processus/processus-workflow.component';
 import { RegleMetierComponent } from './app/components/regle/regle';
+import { NlpIaPageComponent } from './app/pages/nlp-ia/nlp-ia-page.component';
 
 // 🔥 CAMUNDA
 import { BpmnViewerComponent } from './app/components/bpmn-viewer/bpmn-viewer';
@@ -82,6 +84,12 @@ const routes: Routes = [
   {
     path: 'regles',
     component: RegleMetierComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_REGLES }
+  },
+  {
+    path: 'nlp-ia',
+    component: NlpIaPageComponent,
     canActivate: [AuthGuardService],
     data: { roles: ROLES_REGLES }
   },
@@ -156,6 +164,12 @@ const routes: Routes = [
   {
     path: 'processus/:id/edit',
     component: ProcessusModifierComponent,
+    canActivate: [AuthGuardService],
+    data: { roles: ROLES_PROCESSUS }
+  },
+  {
+    path: 'processus/:id/workflow',
+    component: ProcessusWorkflowComponent,
     canActivate: [AuthGuardService],
     data: { roles: ROLES_PROCESSUS }
   },

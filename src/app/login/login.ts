@@ -26,7 +26,7 @@ export class LoginComponent {
   email = '';
   regPassword = '';
   confirmPassword = '';
-  selectedRole = 'Gestionnairedesprocessusmetier';
+  selectedRole = 'Gestionnaire des processus metier';
   registerLoading = false;
   registerError = '';
   registerSuccess = '';
@@ -39,8 +39,9 @@ export class LoginComponent {
   forgotError = '';
 
   availableRoles = [
-    { value: 'Gestionnairedesprocessusmetier', label: 'Gestionnaire des processus métier' },
-    { value: 'Gestionnairedesréglesmetier',    label: 'Gestionnaire des règles métier' }
+    { value: 'SuperAdmin',                        label: 'Super Admin' },
+    { value: 'Gestionnaire des processus metier', label: 'Gestionnaire des processus métier' },
+    { value: 'Gestionnaire des règles métier',    label: 'Gestionnaire des règles métier' }
   ];
 
   constructor(
@@ -68,9 +69,9 @@ export class LoginComponent {
 
         if (roles.includes('SuperAdmin')) {
           this.router.navigate(['/users']);
-        } else if (roles.includes('Gestionnairedesprocessusmetier')) {
+        } else if (roles.includes('Gestionnaire des processus metier')) {
           this.router.navigate(['/processus']);
-        } else if (roles.includes('Gestionnairedesréglesmetier')) {
+        } else if (roles.includes('Gestionnaire des règles métier')) {
           this.router.navigate(['/regles']);
         } else {
           this.router.navigate(['/dashboard']);

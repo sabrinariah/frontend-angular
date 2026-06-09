@@ -12,7 +12,6 @@ export class KeycloakService {
   public ready = false;
   public token: string | null = null;
 
-  // ✅ Vérifie que c'est le bon port de ton Spring Boot
   private backendUrl = 'http://localhost:8081/auth';
 
   constructor(private http: HttpClient) {
@@ -23,7 +22,6 @@ export class KeycloakService {
     });
   }
 
-  // ✅ INIT — silent-check-sso pour éviter la redirection forcée
   async init(): Promise<boolean> {
     try {
       const authenticated = await this.keycloak.init({
@@ -49,12 +47,35 @@ export class KeycloakService {
     this.keycloak.logout({ redirectUri: 'http://localhost:4200/login' });
   }
 
-  async isLoggedIn(): Promise<boolean> {
+  isLoggedIn(): boolean {
     return !!this.token;
   }
 
+  /**
+   * Décode le payload d'un JWT en respectant l'UTF-8.
+   * `atob` seul renvoie une chaîne "octet par octet" qui corrompt les
+   * caractères accentués (ex: "règles" devient "rÃ¨gles") avant le JSON.parse.
+   */
+  private decodeJwtPayload(token: string): any {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(base64);
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    const json = new TextDecoder('utf-8').decode(bytes);
+    return JSON.parse(json);
+  }
+
   getUsername(): string {
-    return this.keycloak.tokenParsed?.['preferred_username'] || '';
+    if (this.keycloak.tokenParsed?.['preferred_username']) {
+      return this.keycloak.tokenParsed['preferred_username'];
+    }
+    const token = this.getToken();
+    if (!token) return '';
+    try {
+      const payload = this.decodeJwtPayload(token);
+      return payload?.preferred_username || payload?.sub || '';
+    } catch {
+      return '';
+    }
   }
 
   getToken(): string | null {
@@ -69,15 +90,19 @@ export class KeycloakService {
     const token = this.getToken();
     if (!token) return [];
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload?.realm_access?.roles || [];
+      const payload = this.decodeJwtPayload(token);
+      const realmRoles: string[] = payload?.realm_access?.roles || [];
+      const clientRoles: string[] =
+        payload?.resource_access?.['app-angular']?.roles || [];
+      const all = [...new Set([...realmRoles, ...clientRoles])];
+      console.debug('[KeycloakService] Rôles détectés:', all);
+      return all;
     } catch (err) {
       console.error('Erreur décodage token:', err);
       return [];
     }
   }
 
-  // Headers avec token (pour routes protégées)
   private authHeaders(): HttpHeaders {
     return new HttpHeaders({
       Authorization: `Bearer ${this.token}`,
@@ -85,14 +110,12 @@ export class KeycloakService {
     });
   }
 
-  // Headers sans token (pour routes publiques)
   private publicHeaders(): HttpHeaders {
     return new HttpHeaders({
       'Content-Type': 'application/json'
     });
   }
 
-  // ✅ LOGIN direct Keycloak
   async loginWithCredentials(username: string, password: string): Promise<boolean> {
     const url = 'http://localhost:8080/realms/projet/protocol/openid-connect/token';
     const body = new URLSearchParams();
@@ -119,7 +142,6 @@ export class KeycloakService {
     }
   }
 
-  // ✅ REGISTER — route publique, pas de token needed
   async registerUser(data: {
     username: string;
     email: string;
@@ -133,7 +155,7 @@ export class KeycloakService {
         this.http.post(
           `${this.backendUrl}/register`,
           data,
-          { headers: this.publicHeaders() } // ✅ pas de Bearer token
+          { headers: this.publicHeaders() }
         )
       );
       return true;
@@ -143,14 +165,13 @@ export class KeycloakService {
     }
   }
 
-  // ✅ FORGOT PASSWORD — route publique
   async forgotPassword(email: string): Promise<boolean> {
     try {
       await firstValueFrom(
         this.http.post(
           `${this.backendUrl}/forgot-password`,
           { email },
-          { headers: this.publicHeaders() } // ✅ pas de Bearer token
+          { headers: this.publicHeaders() }
         )
       );
       return true;
@@ -160,7 +181,6 @@ export class KeycloakService {
     }
   }
 
-  // ✅ GET ALL USERS — route protégée
   getAllUsersWithRoles(): Observable<any[]> {
     return this.http.get<any[]>(
       `${this.backendUrl}/users`,
@@ -168,7 +188,6 @@ export class KeycloakService {
     );
   }
 
-  // ✅ UPDATE USER
   updateUser(username: string, data: any): Observable<any> {
     return this.http.put(
       `${this.backendUrl}/users/${username}`,
@@ -177,7 +196,6 @@ export class KeycloakService {
     );
   }
 
-  // ✅ UPDATE ROLES
   updateUserRoles(username: string, roles: string[]): Observable<any> {
     return this.http.put(
       `${this.backendUrl}/users/${username}/roles`,
@@ -186,7 +204,6 @@ export class KeycloakService {
     );
   }
 
-  // ✅ TOGGLE STATUS
   toggleUserStatus(username: string, enabled: boolean): Observable<any> {
     return this.http.patch(
       `${this.backendUrl}/users/${username}/status`,
@@ -195,7 +212,6 @@ export class KeycloakService {
     );
   }
 
-  // ✅ DELETE USER
   deleteUser(username: string): Observable<any> {
     return this.http.delete(
       `${this.backendUrl}/users/${username}`,

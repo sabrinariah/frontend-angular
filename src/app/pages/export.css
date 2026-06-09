@@ -1,49 +1,52 @@
 /* ── Variables ─────────────────────────────────────────────────── */
 :root {
-  --blue-50:    #eff6ff;
-  --blue-100:   #dbeafe;
-  --blue-500:   #2563eb;
-  --blue-600:   #1d4ed8;
-  --green-50:   #f0fdf4;
+  /* ── Palette Pro Blue (grille 8px) ── */
+  --blue-50:    #EFF6FF;
+  --blue-100:   #DBEAFE;
+  --blue-500:   #2563EB;
+  --blue-600:   #1E40AF;
+  --green-50:   #DCFCE7;
   --green-600:  #16a34a;
-  --orange-50:  #fffbeb;
-  --orange-500: #d97706;
+  --orange-50:  #DBEAFE;
+  --orange-500: #2563EB;
   --purple-50:  #f5f3ff;
   --purple-600: #7c3aed;
   --red-50:     #fef2f2;
   --red-500:    #dc2626;
   --red-600:    #b91c1c;
-  --gray-50:    #f8fafc;
-  --gray-100:   #f1f5f9;
-  --gray-200:   #e2e8f0;
-  --gray-300:   #cbd5e1;
-  --gray-400:   #94a3b8;
+  --gray-50:    #F8FAFC;
+  --gray-100:   #F1F5F9;
+  --gray-200:   #E2E8F0;
+  --gray-300:   #CBD5E1;
+  --gray-400:   #94A3B8;
   --gray-600:   #475569;
   --gray-700:   #334155;
-  --gray-800:   #1e293b;
-  --r-sm:  6px;
-  --r:     10px;
+  --gray-800:   #0F172A;
+  --r-sm:  8px;
+  --r:     8px;
   --r-lg:  16px;
-  --sh-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.06);
-  --sh:    0 4px 16px rgba(0,0,0,.09);
-  --sh-lg: 0 20px 48px rgba(0,0,0,.18);
+  --sh-sm: 0 1px 2px rgba(0,0,0,.05);
+  --sh:    0 4px 12px rgba(0,0,0,.08);
+  --sh-lg: 0 20px 40px rgba(0,0,0,.15);
 }
 
 /* ── Wrapper global ─────────────────────────────────────────────── */
 .export-wrapper {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px 48px;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  color: var(--gray-800);
+  padding: 0 24px 48px;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: #0F172A;
+  background: #F8FAFC;
+  min-height: 100vh;
 }
 
 /* ══ HERO ══════════════════════════════════════════════════════════ */
 .export-hero {
-  background: linear-gradient(135deg, #0f2563 0%, #1d4ed8 55%, #0ea5e9 100%);
+  background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 50%, #2563EB 100%);
   border-radius: var(--r-lg);
-  padding: 28px 32px 0;
-  margin-bottom: 28px;
+  padding: 32px 32px 0;
+  margin-bottom: 32px;
   color: #fff;
   overflow: hidden;
   position: relative;
@@ -845,7 +848,7 @@
 
 .detail-comment {
   padding: 14px 16px;
-  background: #fffbeb;
+  background: #ffffff;
   border-radius: var(--r-sm);
   font-size: 14px;
   color: var(--gray-600);

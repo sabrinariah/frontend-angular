@@ -1,16 +1,22 @@
 // Le composant TypeScript reste identique, seul le style change
 // Assurez-vous que votre composant a cette structure :
 
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { KeycloakService } from '../../core/services/keycloak.service';
+import { ProcessusService } from '../../core/services/processus.service';
+import { RegleMetierService } from '../../core/services/regle.service';
+import { UserService } from '../../core/services/user.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
+
 <div class="dashboard">
  
   <!-- HEADER -->
@@ -34,20 +40,20 @@ import { KeycloakService } from '../../core/services/keycloak.service';
   <!-- KPI STRIP -->
   <section class="kpi-strip">
     <div class="kpi-item">
-      <span class="kpi-value">1 248</span>
-      <span class="kpi-label">Importations ce mois</span>
+      <span class="kpi-value">{{ nbProcessus }}</span>
+      <span class="kpi-label">Processus total</span>
     </div>
     <div class="kpi-item">
-      <span class="kpi-value">984</span>
-      <span class="kpi-label">Exportations ce mois</span>
+      <span class="kpi-value">{{ nbProcessusActifs }}</span>
+      <span class="kpi-label">Processus actifs</span>
     </div>
     <div class="kpi-item">
-      <span class="kpi-value">37</span>
+      <span class="kpi-value">{{ nbRegles }}</span>
       <span class="kpi-label">Règles actives</span>
     </div>
     <div class="kpi-item">
-      <span class="kpi-value">12</span>
-      <span class="kpi-label">Utilisateurs connectés</span>
+      <span class="kpi-value">{{ nbUsers }}</span>
+      <span class="kpi-label">Utilisateurs</span>
     </div>
   </section>
  
@@ -651,13 +657,36 @@ import { KeycloakService } from '../../core/services/keycloak.service';
     }
   `]
 })
-export class DashboardComponent {
-  currentDate = new Date().toLocaleDateString('fr-FR', { 
-    weekday: 'long', 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+export class DashboardComponent implements OnInit {
+  currentDate = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
-  
-  constructor(public keycloakService: KeycloakService) {}
+
+  nbProcessus = 0;
+  nbProcessusActifs = 0;
+  nbRegles = 0;
+  nbUsers = 0;
+
+  constructor(
+    public keycloakService: KeycloakService,
+    private processusService: ProcessusService,
+    private regleService: RegleMetierService,
+    private userService: UserService
+  ) {}
+
+  ngOnInit(): void {
+    forkJoin({
+      processus: this.processusService.getAll().pipe(catchError(() => of([]))),
+      regles: this.regleService.getAll().pipe(catchError(() => of([]))),
+      users: this.userService.getUsers().pipe(catchError(() => of([])))
+    }).subscribe(({ processus, regles, users }) => {
+      this.nbProcessus = processus.length;
+      this.nbProcessusActifs = processus.filter((p: any) => p.actif).length;
+      this.nbRegles = regles.filter((r: any) => r.active).length;
+      this.nbUsers = users.length;
+    });
+  }
 }

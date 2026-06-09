@@ -18,7 +18,7 @@ export class CreateUserComponent {
   lastName = '';
   password = '';
   role = '';
-  roles = ['SuperAdmin', 'Gestionnaire des processus metier', 'Gestionnaire des réglesmetier'];
+  roles = ['SuperAdmin', 'Gestionnaire des processus metier', 'Gestionnaire des règles métier'];
 
   sections = {
     userInfo: true
