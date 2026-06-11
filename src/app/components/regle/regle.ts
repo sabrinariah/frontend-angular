@@ -34,6 +34,10 @@ export class RegleMetierComponent implements OnInit {
   selectedConditions: Condition[] = [];
   selected: RegleMetier = this.initRegle();
 
+  // ✅ AJOUT : option "Autre (nouvelle catégorie)" + nom saisi en texte libre
+  readonly nouvelleCategorieOption: Categorie = { id: -1, nom: 'Autre (nouvelle catégorie)', type: '', description: '' };
+  nouvelleCategorieNom = '';
+
   isEditing = false;
   loading = false;
   currentCategorieType: string | null = null;
@@ -185,6 +189,11 @@ export class RegleMetierComponent implements OnInit {
 
   onCategorieChange(cat: Categorie | null): void {
     if (!cat) { this.selected.categorie = undefined; this.currentCategorieType = null; return; }
+    if (cat === this.nouvelleCategorieOption) {
+      this.nouvelleCategorieNom = '';
+      this.currentCategorieType = null;
+      return;
+    }
     this.selected.categorie = cat;
     this.currentCategorieType = cat.type?.toUpperCase() ?? null;
   }
@@ -265,11 +274,14 @@ export class RegleMetierComponent implements OnInit {
   }
 
   isFormValid(): boolean {
+    const categorieValide = this.selected.categorie === this.nouvelleCategorieOption
+      ? !!this.nouvelleCategorieNom?.trim()
+      : !!this.selected.categorie?.id;
     return !!(
       this.selected.code?.trim() &&
       this.selected.nom?.trim() &&
       this.selected.action?.trim() &&
-      this.selected.categorie?.id
+      categorieValide
     );
   }
 
@@ -352,6 +364,30 @@ export class RegleMetierComponent implements OnInit {
     }
     this.loading = true;
 
+    // ✅ AJOUT : si l'utilisateur a saisi une nouvelle catégorie en texte libre,
+    // on la crée d'abord côté backend pour récupérer son id
+    if (this.selected.categorie === this.nouvelleCategorieOption) {
+      const nom = this.nouvelleCategorieNom.trim();
+      const type = nom.toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z0-9]+/g, '_');
+      this.regleService.createCategorie({ nom, type, description: nom }).subscribe({
+        next: (cat) => {
+          this.categories.push(cat);
+          this.selected.categorie = cat;
+          this.persistRegle();
+        },
+        error: (err) => {
+          console.error('Erreur création catégorie:', err);
+          this.addToast('error', 'Erreur', "Impossible de créer la nouvelle catégorie");
+          this.loading = false;
+        }
+      });
+      return;
+    }
+
+    this.persistRegle();
+  }
+
+  private persistRegle(): void {
     const payload: any = {
       code: this.selected.code,
       nom: this.selected.nom,
@@ -409,6 +445,7 @@ export class RegleMetierComponent implements OnInit {
     this.isEditing = false;
     this.loading = false;
     this.currentCategorieType = null;
+    this.nouvelleCategorieNom = '';
     this.showDrlPreview = false;
   }
 

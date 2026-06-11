@@ -328,7 +328,11 @@
               <option *ngFor="let cat of categories" [ngValue]="cat">
                 {{ iconCategorie(cat.type) }} {{ cat.nom }}
               </option>
+              <option [ngValue]="nouvelleCategorieOption">➕ Autre (nouvelle catégorie)</option>
             </select>
+            <input *ngIf="selected.categorie === nouvelleCategorieOption" type="text"
+              [(ngModel)]="nouvelleCategorieNom" name="nouvelleCategorieNom"
+              placeholder="Nom de la nouvelle catégorie" class="form-input" style="margin-top:8px">
           </div>
           <div class="form-group">
             <label class="form-label">Action <span class="required">*</span></label>

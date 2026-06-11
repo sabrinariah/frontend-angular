@@ -4,25 +4,42 @@
   <header class="ia-header">
     <div class="ia-header-inner">
       <div class="ia-header-left">
-        <div class="ia-header-icon">🤖</div>
+        <div class="ia-header-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff">
+            <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z"/>
+          </svg>
+        </div>
         <div class="ia-header-text">
           <h1 class="ia-header-title">Assistant IA — Règles Métier</h1>
           <p class="ia-header-sub">Décrivez votre règle en langage naturel, l'IA la convertit automatiquement en DRL</p>
         </div>
       </div>
-      <button class="ia-back-btn" (click)="retour()">← Retour aux règles</button>
+      <button class="ia-back-btn" (click)="retour()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Retour aux règles
+      </button>
     </div>
   </header>
 
   <!-- ═══ STEPS ═══ -->
   <div class="ia-steps" *ngIf="result">
     <div class="ia-step ia-step-done">
-      <div class="ia-step-circle">✓</div>
+      <div class="ia-step-circle">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <span>Saisie</span>
     </div>
     <div class="ia-step-line ia-step-line-done"></div>
     <div class="ia-step ia-step-done">
-      <div class="ia-step-circle">✓</div>
+      <div class="ia-step-circle">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
       <span>Analyse IA</span>
     </div>
     <div class="ia-step-line ia-step-line-done"></div>
@@ -43,7 +60,13 @@
     <!-- ── CARTE SAISIE ── -->
     <div class="ia-input-card">
       <div class="ia-input-card-header">
-        <span class="ia-input-card-badge">💬 Votre phrase métier</span>
+        <span class="ia-input-card-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 8H5C4.4 8 4 8.4 4 9V12C4 12.6 4.4 13 5 13H6C6 14.7 4.7 16 3 16V18C6 18 8 16 8 13V9C8 8.4 7.6 8 7 8Z"/>
+            <path d="M19 8H17C16.4 8 16 8.4 16 9V12C16 12.6 16.4 13 17 13H18C18 14.7 16.7 16 15 16V18C18 18 20 16 20 13V9C20 8.4 19.6 8 19 8Z"/>
+          </svg>
+          Votre phrase métier
+        </span>
       </div>
       <div class="ia-input-card-body">
         <textarea
@@ -83,11 +106,22 @@
 
       <div class="ia-input-card-footer">
         <button class="ia-btn-restart" *ngIf="result" (click)="recommencer()" type="button">
-          ↩ Recommencer
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M3 10H15A5 5 0 0 1 15 20H8M3 10L8 5M3 10L8 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Recommencer
         </button>
         <button class="ia-btn-convert" (click)="convertir()" [disabled]="!phrase.trim() || loading" type="button">
-          <span *ngIf="!loading">🤖 Convertir avec l'IA</span>
-          <span *ngIf="loading">⏳ Analyse en cours...</span>
+          <span *ngIf="!loading" class="ia-btn-content">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z"/>
+            </svg>
+            Convertir avec l'IA
+          </span>
+          <span *ngIf="loading" class="ia-btn-content">
+            <span class="ia-btn-spinner"></span>
+            Analyse en cours...
+          </span>
         </button>
       </div>
     </div>
@@ -115,7 +149,12 @@
           </div>
         </div>
         <div class="ia-phrase-quote">
-          <span class="ia-phrase-icon">💬</span>
+          <span class="ia-phrase-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7 8H5C4.4 8 4 8.4 4 9V12C4 12.6 4.4 13 5 13H6C6 14.7 4.7 16 3 16V18C6 18 8 16 8 13V9C8 8.4 7.6 8 7 8Z"/>
+              <path d="M19 8H17C16.4 8 16 8.4 16 9V12C16 12.6 16.4 13 17 13H18C18 14.7 16.7 16 15 16V18C18 18 20 16 20 13V9C20 8.4 19.6 8 19 8Z"/>
+            </svg>
+          </span>
           <em>« {{ result.phraseOriginale }} »</em>
         </div>
       </div>
@@ -123,7 +162,10 @@
       <!-- Ambiguïtés -->
       <div class="ia-ambiguites" *ngIf="result.ambiguites && result.ambiguites.length > 0">
         <div class="ia-ambiguites-title">
-          ⚠️ Points à clarifier ({{ result.ambiguites.length }})
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Points à clarifier ({{ result.ambiguites.length }})
         </div>
         <ul>
           <li *ngFor="let a of result.ambiguites">{{ a }}</li>
@@ -217,7 +259,11 @@
                 <input type="text" class="ia-input" [(ngModel)]="c.valeur"
                   [ngModelOptions]="{standalone: true}" placeholder="Valeur">
                 <button type="button" class="ia-btn-remove-cond"
-                  (click)="supprimerCondition(i)" title="Supprimer">✕</button>
+                  (click)="supprimerCondition(i)" title="Supprimer">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </div>
@@ -230,7 +276,9 @@
             <button class="ia-drl-toggle" type="button" (click)="showDrl = !showDrl">
               <span class="ia-drl-badge">DRL</span>
               {{ showDrl ? 'Masquer' : 'Afficher' }} le code
-              <span class="ia-drl-chevron">{{ showDrl ? '▲' : '▼' }}</span>
+              <svg class="ia-drl-chevron" [class.ia-drl-chevron-open]="showDrl" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </button>
             <div *ngIf="showDrl" class="ia-drl-content">
               <app-drl-preview [drl]="result.drl" [phraseOriginale]="result.phraseOriginale">
@@ -244,8 +292,16 @@
       <!-- Footer : sauvegarder -->
       <div class="ia-footer-actions">
         <button class="ia-btn-save" (click)="sauvegarder()" [disabled]="!isFormValid() || saving" type="button">
-          <span *ngIf="!saving">✓ Créer la règle</span>
-          <span *ngIf="saving">⏳ Création en cours...</span>
+          <span *ngIf="!saving" class="ia-btn-content">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Créer la règle
+          </span>
+          <span *ngIf="saving" class="ia-btn-content">
+            <span class="ia-btn-spinner"></span>
+            Création en cours...
+          </span>
         </button>
       </div>
     </div>
@@ -256,7 +312,11 @@
   <div *ngIf="loading" class="ia-loading-overlay">
     <div class="ia-loading-box">
       <div class="ia-spinner-wrap">
-        <span class="ia-loading-icon">🤖</span>
+        <span class="ia-loading-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z"/>
+          </svg>
+        </span>
         <div class="ia-spinner"></div>
       </div>
       <p class="ia-loading-title">L'IA analyse votre phrase...</p>
@@ -272,20 +332,41 @@
   <div class="ia-toasts">
     <div *ngFor="let t of toasts" class="ia-toast" [class]="'ia-toast-' + t.type">
       <div class="ia-toast-content">
-        <span class="ia-toast-icon">
-          <ng-container [ngSwitch]="t.type">
-            <span *ngSwitchCase="'success'">✅</span>
-            <span *ngSwitchCase="'error'">❌</span>
-            <span *ngSwitchCase="'warning'">⚠️</span>
-            <span *ngSwitchCase="'info'">ℹ️</span>
-          </ng-container>
-        </span>
+        <ng-container [ngSwitch]="t.type">
+          <span *ngSwitchCase="'success'" class="ia-toast-icon ia-toast-icon-success">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span *ngSwitchCase="'error'" class="ia-toast-icon ia-toast-icon-error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M9 9L15 15M15 9L9 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span *ngSwitchCase="'warning'" class="ia-toast-icon ia-toast-icon-warning">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span *ngSwitchCase="'info'" class="ia-toast-icon ia-toast-icon-info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 11V16M12 8H12.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </ng-container>
         <div class="ia-toast-body">
           <strong>{{ t.message }}</strong>
           <span class="ia-toast-detail" *ngIf="t.detail">{{ t.detail }}</span>
         </div>
       </div>
-      <button class="ia-toast-close" (click)="dismissToast(t.id)">✕</button>
+      <button class="ia-toast-close" (click)="dismissToast(t.id)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
   </div>
 

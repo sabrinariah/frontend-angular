@@ -2,7 +2,11 @@
      BOUTON DÉCLENCHEUR
      ============================================================ -->
 <button class="nlp-trigger-btn" (click)="ouvrir()" title="Créer une règle en langage naturel avec l'IA">
-  <span class="nlp-trigger-icon">🤖</span>
+  <span class="nlp-trigger-icon">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z"/>
+    </svg>
+  </span>
   <span class="nlp-trigger-label">Créer avec l'IA</span>
 </button>
 
@@ -15,13 +19,21 @@
     <!-- =========== EN-TÊTE =========== -->
     <div class="nlp-header">
       <div class="nlp-header-left">
-        <div class="nlp-header-icon">🤖</div>
+        <div class="nlp-header-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#fff">
+            <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z"/>
+          </svg>
+        </div>
         <div>
           <h2 class="nlp-header-title">Créer une règle en langage naturel</h2>
           <p class="nlp-header-sub">Convertisseur NLP → Règle métier douanière → DRL</p>
         </div>
       </div>
-      <button class="nlp-close-btn" (click)="fermer()" title="Fermer">✕</button>
+      <button class="nlp-close-btn" (click)="fermer()" title="Fermer">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
 
     <!-- =========== CORPS =========== -->
@@ -58,7 +70,12 @@
         <!-- Phrase source + confiance -->
         <div class="nlp-result-top">
           <div class="nlp-phrase-card">
-            <span class="nlp-phrase-quote">💬</span>
+            <span class="nlp-phrase-quote">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 8H5C4.4 8 4 8.4 4 9V12C4 12.6 4.4 13 5 13H6C6 14.7 4.7 16 3 16V18C6 18 8 16 8 13V9C8 8.4 7.6 8 7 8Z"/>
+                <path d="M19 8H17C16.4 8 16 8.4 16 9V12C16 12.6 16.4 13 17 13H18C18 14.7 16.7 16 15 16V18C18 18 20 16 20 13V9C20 8.4 19.6 8 19 8Z"/>
+              </svg>
+            </span>
             <em class="nlp-phrase-text">« {{ result.phraseOriginale }} »</em>
           </div>
 
@@ -83,7 +100,12 @@
 
         <!-- Ambiguïtés -->
         <div class="nlp-ambiguites-card" *ngIf="result.ambiguites && result.ambiguites.length > 0">
-          <div class="nlp-ambiguites-title">⚠️ Points à clarifier ({{ result.ambiguites.length }})</div>
+          <div class="nlp-ambiguites-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Points à clarifier ({{ result.ambiguites.length }})
+          </div>
           <ul class="nlp-ambiguites-list">
             <li *ngFor="let a of result.ambiguites" class="nlp-ambiguite-item">{{ a }}</li>
           </ul>
@@ -166,7 +188,11 @@
               <input type="text" class="nlp-input" [(ngModel)]="c.valeur"
                 [ngModelOptions]="{standalone: true}" placeholder="Valeur">
               <button type="button" class="nlp-btn-remove-cond"
-                (click)="supprimerCondition(i)" title="Supprimer">✕</button>
+                (click)="supprimerCondition(i)" title="Supprimer">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+              </button>
             </div>
           </div>
 
@@ -175,7 +201,9 @@
         <!-- DRL Preview (repliable) -->
         <div class="nlp-drl-section">
           <button class="nlp-drl-toggle-btn" (click)="showDrl = !showDrl">
-            <span>{{ showDrl ? '▲' : '▼' }}</span>
+            <svg class="nlp-drl-chevron" [class.nlp-drl-chevron-open]="showDrl" width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
             {{ showDrl ? 'Masquer' : 'Afficher' }} l'aperçu DRL (Drools Rule Language)
           </button>
           <div *ngIf="showDrl" class="nlp-drl-content">
@@ -191,15 +219,34 @@
     <!-- =========== PIED DE MODAL =========== -->
     <div class="nlp-footer">
       <button class="nlp-btn-secondary" (click)="result ? recommencer() : fermer()">
-        {{ result ? '↩ Recommencer' : 'Annuler' }}
+        <svg *ngIf="result" width="13" height="13" viewBox="0 0 24 24" fill="none">
+          <path d="M3 10H15A5 5 0 0 1 15 20H8M3 10L8 5M3 10L8 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {{ result ? 'Recommencer' : 'Annuler' }}
       </button>
       <button *ngIf="!result" class="nlp-btn-primary" (click)="convertir()" [disabled]="!phrase.trim() || loading">
-        <span *ngIf="!loading">🤖 Convertir avec l'IA</span>
-        <span *ngIf="loading">⏳ Analyse en cours...</span>
+        <span *ngIf="!loading" class="nlp-btn-content">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.2 9.8L22 12L14.2 14.2L12 22L9.8 14.2L2 12L9.8 9.8L12 2Z"/>
+          </svg>
+          Convertir avec l'IA
+        </span>
+        <span *ngIf="loading" class="nlp-btn-content">
+          <span class="nlp-btn-spinner"></span>
+          Analyse en cours...
+        </span>
       </button>
       <button *ngIf="result" class="nlp-btn-primary" (click)="sauvegarderEdition()" [disabled]="!isEditFormValid() || saving">
-        <span *ngIf="!saving">✓ Créer la règle</span>
-        <span *ngIf="saving">⏳ Création...</span>
+        <span *ngIf="!saving" class="nlp-btn-content">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12L10 17L19 8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Créer la règle
+        </span>
+        <span *ngIf="saving" class="nlp-btn-content">
+          <span class="nlp-btn-spinner"></span>
+          Création...
+        </span>
       </button>
     </div>
 
@@ -222,16 +269,39 @@
   <div *ngFor="let t of toasts" class="nlp-toast" [class]="'nlp-toast-' + t.type">
     <div class="nlp-toast-body">
       <ng-container [ngSwitch]="t.type">
-        <span *ngSwitchCase="'success'">✅</span>
-        <span *ngSwitchCase="'error'">❌</span>
-        <span *ngSwitchCase="'warning'">⚠️</span>
-        <span *ngSwitchCase="'info'">ℹ️</span>
+        <span *ngSwitchCase="'success'" class="nlp-toast-icon nlp-toast-icon-success">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span *ngSwitchCase="'error'" class="nlp-toast-icon nlp-toast-icon-error">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M9 9L15 15M15 9L9 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span *ngSwitchCase="'warning'" class="nlp-toast-icon nlp-toast-icon-warning">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.54 21H20.46A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span *ngSwitchCase="'info'" class="nlp-toast-icon nlp-toast-icon-info">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M12 11V16M12 8H12.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </span>
       </ng-container>
       <div>
         <strong>{{ t.message }}</strong>
         <span *ngIf="t.detail" class="nlp-toast-detail">{{ t.detail }}</span>
       </div>
     </div>
-    <button class="nlp-toast-close" (click)="dismissToast(t.id)">✕</button>
+    <button class="nlp-toast-close" (click)="dismissToast(t.id)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
 </div>

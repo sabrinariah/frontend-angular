@@ -481,19 +481,6 @@ import {
                   [attr.stroke-dasharray]="getEdgeDashArray(edge)"
                   stroke-linecap="round" stroke-linejoin="round"
                   [attr.marker-end]="getEdgeMarker(edge)"/>
-            <g *ngIf="edge.label">
-              <rect [attr.x]="ep.labelX - (edge.label!.length * 3.5 + 8)"
-                    [attr.y]="ep.labelY - 10"
-                    [attr.width]="edge.label!.length * 7 + 16"
-                    height="20" rx="10" fill="white"
-                    [attr.stroke]="getEdgeColor(edge)" stroke-width="1.5"/>
-              <text [attr.x]="ep.labelX" [attr.y]="ep.labelY"
-                    text-anchor="middle" dominant-baseline="central"
-                    font-size="11" [attr.fill]="getEdgeColor(edge)"
-                    font-family="'Inter', sans-serif" font-weight="700">
-                {{ truncate(edge.label!, 24) }}
-              </text>
-            </g>
           </ng-container>
         </g>
 
@@ -587,15 +574,6 @@ import {
           <g *ngIf="el.type === 'gateway'">
             <polygon [attr.points]="getDiamondPoints(el.x, el.y, el.width, el.height)"
                      fill="white" stroke="#0a1929" stroke-width="2"/>
-            <text [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height/2 + 6"
-                  text-anchor="middle" font-size="20" fill="#0a1929" font-weight="700"
-                  font-family="'Inter', sans-serif">{{ el.question ? '?' : '+' }}</text>
-            <text *ngIf="el.question"
-                  [attr.x]="el.x + el.width/2" [attr.y]="el.y + el.height + 20"
-                  text-anchor="middle" font-size="11" fill="#0a1929"
-                  font-family="'Inter', sans-serif" font-weight="600">
-              {{ truncate(el.question, 26) }}
-            </text>
           </g>
 
         </g>
@@ -1141,7 +1119,7 @@ export class ProcessusWorkflowComponent implements OnInit {
     this.isNewTask = true;
     this.formTaskOpen = {
       nom: 'Nouvelle tâche', description: '', assignee: '',
-      type: 'HUMAINE', statut: 'EN_ATTENTE',
+      type: 'HUMAINE', statut: 'TERMINE',
       ordre: this.taches.length + 1,
       processusId: this.processus?.id ?? 0, formData: ''
     };
@@ -1762,8 +1740,32 @@ export class ProcessusWorkflowComponent implements OnInit {
       const fn = nodes.find((n: any) => n.id === f.from);
       const tn = nodes.find((n: any) => n.id === f.to);
       if (!fn || !tn) return '';
-      const wp = `<di:waypoint x="${fn.x + fn.w}" y="${fn.y + fn.h / 2}" /><di:waypoint x="${tn.x}" y="${tn.y + tn.h / 2}" />`;
-      return `      <bpmndi:BPMNEdge id="${f.id}_di" bpmnElement="${f.id}">${wp}</bpmndi:BPMNEdge>`;
+
+      let wp: string;
+      let labelXml = '';
+
+      if (tn.x < fn.x) {
+        // Retour en arrière (boucle) : on route le flux sous le diagramme
+        // pour éviter qu'il ne traverse les tâches intermédiaires.
+        const fcx = fn.x + fn.w / 2;
+        const tcx = tn.x + tn.w / 2;
+        const pathY = Math.max(fn.y + fn.h, tn.y + tn.h) + 70;
+        wp = `<di:waypoint x="${fcx}" y="${fn.y + fn.h}" /><di:waypoint x="${fcx}" y="${pathY}" /><di:waypoint x="${tcx}" y="${pathY}" /><di:waypoint x="${tcx}" y="${tn.y + tn.h}" />`;
+        if (f.name) {
+          const labelW = Math.max(40, f.name.length * 6 + 10);
+          labelXml = `<bpmndi:BPMNLabel><dc:Bounds x="${(fcx + tcx) / 2 - labelW / 2}" y="${pathY + 4}" width="${labelW}" height="14" /></bpmndi:BPMNLabel>`;
+        }
+      } else {
+        const x1 = fn.x + fn.w, y1 = fn.y + fn.h / 2;
+        const x2 = tn.x, y2 = tn.y + tn.h / 2;
+        wp = `<di:waypoint x="${x1}" y="${y1}" /><di:waypoint x="${x2}" y="${y2}" />`;
+        if (f.name) {
+          const labelW = Math.max(40, f.name.length * 6 + 10);
+          labelXml = `<bpmndi:BPMNLabel><dc:Bounds x="${(x1 + x2) / 2 - labelW / 2}" y="${Math.min(y1, y2) - 20}" width="${labelW}" height="14" /></bpmndi:BPMNLabel>`;
+        }
+      }
+
+      return `      <bpmndi:BPMNEdge id="${f.id}_di" bpmnElement="${f.id}">${wp}${labelXml}</bpmndi:BPMNEdge>`;
     }).join('\n');
 
     return `<?xml version="1.0" encoding="UTF-8"?>

@@ -1053,7 +1053,7 @@ ${innerFlows}
           const outF = flows.filter(f => f.from === n.id).map(f => `<bpmn:outgoing>${f.id}</bpmn:outgoing>`).join('');
           const defFlow = flows.find(f => f.from === n.id && (f.id.startsWith('Flow_NON_') || f.id.startsWith('Flow_NON_SP_')));
           const defAttr = defFlow ? ` default="${defFlow.id}"` : '';
-          return `    <bpmn:exclusiveGateway id="${n.id}" name="${esc(n.label)}" gatewayDirection="Diverging"${defAttr}>${inF}${outF}</bpmn:exclusiveGateway>`;
+          return `    <bpmn:exclusiveGateway id="${n.id}" gatewayDirection="Diverging"${defAttr}>${inF}${outF}</bpmn:exclusiveGateway>`;
         }
       }
     }).join('\n');
@@ -1062,9 +1062,9 @@ ${innerFlows}
       .filter(f => f.type !== 'sp-internal')
       .map(f => {
         if (f.isCondition && f.condExpr) {
-          return `    <bpmn:sequenceFlow id="${f.id}"${f.name ? ` name="${esc(f.name)}"` : ''} sourceRef="${f.from}" targetRef="${f.to}"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${esc(f.condExpr)}</bpmn:conditionExpression></bpmn:sequenceFlow>`;
+          return `    <bpmn:sequenceFlow id="${f.id}" sourceRef="${f.from}" targetRef="${f.to}"><bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${esc(f.condExpr)}</bpmn:conditionExpression></bpmn:sequenceFlow>`;
         }
-        return `    <bpmn:sequenceFlow id="${f.id}"${f.name ? ` name="${esc(f.name)}"` : ''} sourceRef="${f.from}" targetRef="${f.to}" />`;
+        return `    <bpmn:sequenceFlow id="${f.id}" sourceRef="${f.from}" targetRef="${f.to}" />`;
       }).join('\n');
 
     // ═══════════════════════════════════════════════════════════
@@ -1101,6 +1101,7 @@ ${innerFlows}
       if (!fn || !tn) return '';
 
       let wp = '';
+      let labelPos = { x: 0, y: 0 };
 
       const fromN = nodes.find(n => n.id === f.from);
       const toN   = nodes.find(n => n.id === f.to);
@@ -1117,29 +1118,39 @@ ${innerFlows}
 
       if (f.type === 'oui-sp' && toIsSPAbove) {
         wp = `<di:waypoint x="${fcx}" y="${fn.y}" /><di:waypoint x="${fcx}" y="${tn.y + tn.h/2}" /><di:waypoint x="${tn.x}" y="${tn.y + tn.h/2}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: Math.min(fcy, tcy) - 20 };
       } else if (f.type === 'oui-sp' && toIsSPBelow) {
         wp = `<di:waypoint x="${fcx}" y="${fn.y + fn.h}" /><di:waypoint x="${fcx}" y="${tn.y + tn.h/2}" /><di:waypoint x="${tn.x}" y="${tn.y + tn.h/2}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: Math.min(fcy, tcy) - 20 };
       } else if (f.type === 'non-sp' && toIsSPBelow) {
         wp = `<di:waypoint x="${fcx}" y="${fn.y + fn.h}" /><di:waypoint x="${fcx}" y="${tn.y + tn.h/2}" /><di:waypoint x="${tn.x}" y="${tn.y + tn.h/2}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: Math.min(fcy, tcy) - 20 };
       } else if (f.type === 'non-sp' && toIsSPAbove) {
         wp = `<di:waypoint x="${fcx}" y="${fn.y}" /><di:waypoint x="${fcx}" y="${tn.y + tn.h/2}" /><di:waypoint x="${tn.x}" y="${tn.y + tn.h/2}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: Math.min(fcy, tcy) - 20 };
       } else if (f.type === 'sp-return' && fromIsSPAboveX) {
         wp = `<di:waypoint x="${fn.x + fn.w}" y="${fcy}" /><di:waypoint x="${tcx}" y="${fcy}" /><di:waypoint x="${tcx}" y="${tn.y}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: Math.min(fcy, tcy) - 20 };
       } else if (f.type === 'sp-return' && fromIsSPBelowX) {
         wp = `<di:waypoint x="${fn.x + fn.w}" y="${fcy}" /><di:waypoint x="${tcx}" y="${fcy}" /><di:waypoint x="${tcx}" y="${tn.y + tn.h}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: Math.min(fcy, tcy) - 20 };
       } else if (f.type === 'main' && f.id.startsWith('Flow_NON_')) {
+        // Boucle de retour : on route sous le diagramme et on place le
+        // label sur ce chemin bas pour éviter qu'il ne chevauche les
+        // tâches situées entre la source et la cible.
         const lowY = Math.max(fn.y + fn.h, tn.y + tn.h) + 60;
         wp = `<di:waypoint x="${fcx}" y="${fn.y + fn.h}" /><di:waypoint x="${fcx}" y="${lowY}" /><di:waypoint x="${tcx}" y="${lowY}" /><di:waypoint x="${tcx}" y="${tn.y + tn.h}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: lowY + 4 };
       } else if (f.type === 'main' && f.id.startsWith('Flow_OUI_') && Math.abs(tn.x - (fn.x + fn.w)) > H_GAP * 2) {
         const highY = Math.min(fn.y, tn.y) - 50;
         wp = `<di:waypoint x="${fcx}" y="${fn.y}" /><di:waypoint x="${fcx}" y="${highY}" /><di:waypoint x="${tcx}" y="${highY}" /><di:waypoint x="${tcx}" y="${tn.y}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: highY - 18 };
       } else {
         wp = `<di:waypoint x="${fn.x + fn.w}" y="${fcy}" /><di:waypoint x="${tn.x}" y="${tcy}" />`;
+        labelPos = { x: (fcx + tcx)/2 - 30, y: Math.min(fcy, tcy) - 20 };
       }
 
-      const labelXml = f.name ? `<bpmndi:BPMNLabel><dc:Bounds x="${(fcx + tcx)/2 - 30}" y="${Math.min(fcy, tcy) - 20}" width="60" height="14" /></bpmndi:BPMNLabel>` : '';
-
-      return `      <bpmndi:BPMNEdge id="${f.id}_di" bpmnElement="${f.id}">${wp}${labelXml}</bpmndi:BPMNEdge>`;
+      return `      <bpmndi:BPMNEdge id="${f.id}_di" bpmnElement="${f.id}">${wp}</bpmndi:BPMNEdge>`;
     }).join('\n');
 
     return `<?xml version="1.0" encoding="UTF-8"?>
@@ -1309,7 +1320,7 @@ ${edgesXml}
     this.isNewTask = true;
     this.formTaskOpen = {
       nom: 'Nouvelle tâche', description: '', assignee: '',
-      type: 'HUMAINE', statut: 'EN_ATTENTE',
+      type: 'HUMAINE', statut: 'TERMINE',
       ordre: this.taches.length + 1,
       processusId: this.selectedProcessus.id, formData: ''
     };
