@@ -110,6 +110,12 @@
       <button class="filter-btn" [class.active]="selectedStatus === 'active'" (click)="setStatusFilter('active')">Actifs</button>
       <button class="filter-btn" [class.active]="selectedStatus === 'inactive'" (click)="setStatusFilter('inactive')">Inactifs</button>
     </div>
+    <div class="role-filter">
+      <select [(ngModel)]="selectedRole" (change)="setRoleFilter(selectedRole)">
+        <option value="">Tous les rôles</option>
+        <option *ngFor="let r of availableRoles" [value]="r.value">{{ r.label }}</option>
+      </select>
+    </div>
     <button class="btn btn-sm btn-secondary" (click)="exportCSV()">⬇ Export CSV</button>
     <div class="entries-select">
       <label>
@@ -164,10 +170,15 @@
           </td>
 
           <td>
-            <span class="status-pill" [class.pill-active]="user.active" [class.pill-inactive]="!user.active">
+            <button type="button"
+                    class="status-pill"
+                    [class.pill-active]="user.active"
+                    [class.pill-inactive]="!user.active"
+                    (click)="toggleUserActive(user)"
+                    [title]="user.active ? 'Cliquer pour désactiver' : 'Cliquer pour activer'">
               <span class="status-dot"></span>
               {{ user.active ? 'Actif' : 'Inactif' }}
-            </span>
+            </button>
           </td>
 
           <td class="td-actions">

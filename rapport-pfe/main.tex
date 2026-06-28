@@ -1,0 +1,120 @@
+% =====================================================================
+%  RAPPORT DE PROJET DE FIN D'ETUDES (PFE)
+%  Plateforme E-FORCE - Gestion du commerce international
+% =====================================================================
+\documentclass[12pt, a4paper]{report}
+
+% ---------------------------------------------------------------------
+% PACKAGES
+% ---------------------------------------------------------------------
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{setspace}
+
+% ---------------------------------------------------------------------
+% COULEURS (bleu/violet uniquement, pas d'orange)
+% ---------------------------------------------------------------------
+\definecolor{primaryblue}{RGB}{31,78,121}
+\definecolor{accentpurple}{RGB}{106,61,154}
+\definecolor{codegray}{RGB}{245,245,245}
+
+% ---------------------------------------------------------------------
+% MISE EN PAGE
+% ---------------------------------------------------------------------
+\onehalfspacing
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\chapter}[display]
+  {\normalfont\Huge\bfseries\color{primaryblue}}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titleformat{\section}{\large\bfseries\color{primaryblue}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{accentpurple}}{\thesubsection}{1em}{}
+
+% ---------------------------------------------------------------------
+% CONFIGURATION HYPERREF
+% ---------------------------------------------------------------------
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primaryblue,
+    citecolor=accentpurple,
+    urlcolor=accentpurple,
+    pdftitle={Rapport PFE - Plateforme E-FORCE},
+    pdfauthor={Sabrina Riahi}
+}
+
+% ---------------------------------------------------------------------
+% CONFIGURATION LISTINGS (code TypeScript / DRL / XML)
+% ---------------------------------------------------------------------
+\lstdefinestyle{code}{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{primaryblue}\bfseries,
+    commentstyle=\color{gray}\itshape,
+    stringstyle=\color{accentpurple},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2
+}
+\lstset{style=code}
+
+% =====================================================================
+% DOCUMENT
+% =====================================================================
+\begin{document}
+
+% --------------------- PAGE DE GARDE --------------------------------
+\input{titlepage}
+
+% --------------------- PAGES LIMINAIRES ------------------------------
+\frontmatter
+\pagenumbering{roman}
+
+\input{frontmatter/dedicaces}
+\input{frontmatter/remerciements}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{frontmatter/abreviations}
+
+% --------------------- CORPS DU RAPPORT ------------------------------
+\mainmatter
+\pagenumbering{arabic}
+
+\input{chapters/introduction_generale}
+\input{chapters/chap1_contexte_general}
+\input{chapters/chap2_analyse_specification}
+\input{chapters/chap3_conception}
+\input{chapters/chap4_realisation}
+\input{chapters/conclusion_generale}
+
+% --------------------- ANNEXES & BIBLIOGRAPHIE -----------------------
+\appendix
+\input{annexes/annexe_a}
+
+\backmatter
+\bibliographystyle{plain}
+\bibliography{biblio}
+
+\end{document}

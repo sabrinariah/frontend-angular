@@ -1,5 +1,5 @@
 import { bootstrapApplication } from '@angular/platform-browser';
-import { importProvidersFrom } from '@angular/core';
+import { importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
 
 import { AppComponent } from './app/app.component';
 import { provideRouter, Routes } from '@angular/router';
@@ -203,18 +203,21 @@ bootstrapApplication(AppComponent, {
       provide: HTTP_INTERCEPTORS,
       useClass: TokenInterceptor,
       multi: true
-    }
-  ]
-})
-.then(appRef => {
-  const keycloakService = appRef.injector.get(KeycloakService);
+    },
 
-  keycloakService.init()
-    .then(authenticated => {
-      console.log('✅ Keycloak initialisé, connecté ?', authenticated);
+    // 🔐 Attendre l'initialisation de Keycloak avant que le router
+    // n'évalue les guards (évite la redirection systématique vers
+    // la page de login Keycloak à chaque reload).
+    provideAppInitializer(() => {
+      const keycloakService = inject(KeycloakService);
+      return keycloakService.init()
+        .then(authenticated => {
+          console.log('✅ Keycloak initialisé, connecté ?', authenticated);
+        })
+        .catch(err => {
+          console.error('❌ Erreur init Keycloak:', err);
+        });
     })
-    .catch(err => {
-      console.error('❌ Erreur init Keycloak:', err);
-    });
+  ]
 })
 .catch(err => console.error('❌ Erreur bootstrap:', err));

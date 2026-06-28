@@ -22,28 +22,36 @@
   <section class="stats-section">
     <div class="stats-grid">
       <div class="stat-card stat-total">
-        <div class="stat-icon-wrap stat-icon-navy">📋</div>
+        <div class="stat-icon-wrap stat-icon-navy">
+          <span class="material-icons-round">rule</span>
+        </div>
         <div class="stat-body">
           <div class="stat-value">{{ regles.length }}</div>
           <div class="stat-label">Total Règles</div>
         </div>
       </div>
       <div class="stat-card stat-active">
-        <div class="stat-icon-wrap stat-icon-green">✅</div>
+        <div class="stat-icon-wrap stat-icon-green">
+          <span class="material-icons-round">check_circle</span>
+        </div>
         <div class="stat-body">
           <div class="stat-value">{{ countActives() }}</div>
           <div class="stat-label">Actifs</div>
         </div>
       </div>
       <div class="stat-card stat-inactive">
-        <div class="stat-icon-wrap stat-icon-orange">⏸️</div>
+        <div class="stat-icon-wrap stat-icon-orange">
+          <span class="material-icons-round">pause_circle</span>
+        </div>
         <div class="stat-body">
           <div class="stat-value">{{ countInactives() }}</div>
           <div class="stat-label">Inactifs</div>
         </div>
       </div>
       <div class="stat-card stat-utilisees">
-        <div class="stat-icon-wrap stat-icon-red">📌</div>
+        <div class="stat-icon-wrap stat-icon-red">
+          <span class="material-icons-round">assignment</span>
+        </div>
         <div class="stat-body">
           <div class="stat-value">{{ countUtilisees() }}</div>
           <div class="stat-label">Total Tâches</div>
@@ -58,9 +66,9 @@
       <div class="search-box">
         <span class="search-icon">🔍</span>
         <input type="text" placeholder="Rechercher un processus..."
-          [(ngModel)]="searchTerm" class="search-input">
+          [(ngModel)]="searchTerm" (ngModelChange)="currentPage = 1" class="search-input">
       </div>
-      <select [(ngModel)]="filtreCategorieAffichage" class="select-input">
+      <select [(ngModel)]="filtreCategorieAffichage" (ngModelChange)="currentPage = 1" class="select-input">
         <option value="TOUS">Toutes les catégories</option>
         <option *ngFor="let cat of getCategoriesUtilisees()" [value]="cat">
           {{ iconCategorie(cat) }} {{ cat }}
@@ -68,11 +76,11 @@
       </select>
       <div class="filter-group">
         <button class="filter-btn" [class.active]="filtreStatut === 'TOUS'"
-          (click)="filtreStatut = 'TOUS'">Tous</button>
+          (click)="filtreStatut = 'TOUS'; currentPage = 1">Tous</button>
         <button class="filter-btn" [class.active]="filtreStatut === 'ACTIVE'"
-          (click)="filtreStatut = 'ACTIVE'">Actifs</button>
+          (click)="filtreStatut = 'ACTIVE'; currentPage = 1">Actifs</button>
         <button class="filter-btn" [class.active]="filtreStatut === 'INACTIVE'"
-          (click)="filtreStatut = 'INACTIVE'">Inactifs</button>
+          (click)="filtreStatut = 'INACTIVE'; currentPage = 1">Inactifs</button>
       </div>
     </div>
   </section>
@@ -103,7 +111,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let r of reglesFiltrees(); trackBy: trackById" class="table-row" [class.row-active]="r.active" [class.row-inactive]="!r.active">
+            <tr *ngFor="let r of reglesPagees(); trackBy: trackById" class="table-row" [class.row-active]="r.active" [class.row-inactive]="!r.active">
               <td class="col-code">
                 <span class="code-badge">{{ r.code }}</span>
               </td>
@@ -126,19 +134,20 @@
                 <span class="version-pill">v{{ r.version || 1 }}</span>
               </td>
               <td class="col-statut">
-                <span class="status-indicator" [class.active]="r.active" [class.inactive]="!r.active">
-                  {{ r.active ? 'Active' : 'Inactif' }}
-                </span>
+                <button type="button"
+                        class="status-switch"
+                        [class.switch-on]="r.active"
+                        [class.switch-off]="!r.active"
+                        (click)="toggleActive(r)"
+                        [title]="r.active ? 'Cliquer pour désactiver' : 'Cliquer pour activer'">
+                  <span class="switch-track"><span class="switch-thumb"></span></span>
+                  <span class="switch-label">{{ r.active ? 'ON' : 'OFF' }}</span>
+                </button>
               </td>
               <td class="col-actions">
                 <div class="action-buttons">
                   <button class="act-btn act-detail" title="Voir le détail" (click)="openDetail(r)">👁</button>
                   <button class="act-btn act-edit"   title="Modifier"       (click)="openEditForm(r)">✎</button>
-                  <button class="tbl-toggle-switch" [class.switch-on]="r.active" [class.switch-off]="!r.active"
-                          title="{{ r.active ? 'Désactiver' : 'Activer' }}" (click)="toggleActive(r)">
-                    <span class="switch-track"><span class="switch-thumb"></span></span>
-                    <span class="switch-label">{{ r.active ? 'ON' : 'OFF' }}</span>
-                  </button>
                   <button class="act-btn act-del"   title="Supprimer"      (click)="confirmDelete(r)">🗑</button>
                 </div>
               </td>
@@ -146,7 +155,14 @@
           </tbody>
         </table>
         <div class="table-footer-bar">
-          {{ reglesFiltrees().length }} règle{{ reglesFiltrees().length > 1 ? 's' : '' }} affichée{{ reglesFiltrees().length > 1 ? 's' : '' }}
+          <span class="footer-info">
+            Affichage {{ pageStart() }}–{{ pageEnd() }} sur {{ reglesFiltrees().length }} règle{{ reglesFiltrees().length > 1 ? 's' : '' }}
+          </span>
+          <div class="pagination" *ngIf="totalPages() > 1">
+            <button class="page-btn" (click)="goToPage(currentPage - 1)" [disabled]="currentPage === 1" title="Page précédente">‹</button>
+            <button class="page-btn" *ngFor="let p of pageNumbers()" [class.active]="p === currentPage" (click)="goToPage(p)">{{ p }}</button>
+            <button class="page-btn" (click)="goToPage(currentPage + 1)" [disabled]="currentPage === totalPages()" title="Page suivante">›</button>
+          </div>
         </div>
       </div>
     </div>
@@ -292,7 +308,7 @@
       <!-- PIED -->
       <div class="simple-detail-footer">
         <button class="btn btn-secondary" (click)="closeDetail()">Fermer</button>
-        <button class="btn btn-outline" (click)="toggleActive(selectedDetail); closeDetail()">
+        <button class="btn btn-outline" (click)="toggleActive(selectedDetail)">
           {{ selectedDetail.active ? 'Désactiver' : 'Activer' }}
         </button>
         <button class="btn btn-primary" (click)="editFromDetail()">Modifier</button>

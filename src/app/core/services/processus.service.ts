@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError, timeout } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Processus } from '../../models/processus.model';
+import { environment } from '../../../environments/environment';
 
 import { inject, Injectable } from '@angular/core';
 @Injectable({
@@ -10,7 +11,7 @@ import { inject, Injectable } from '@angular/core';
 })
 export class ProcessusService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8081/api/process';
+  private apiUrl = `${environment.apiUrl}/process`;
 
   getAll(): Observable<Processus[]> {
     return this.http.get<Processus[]>(this.apiUrl);
@@ -31,5 +32,12 @@ export class ProcessusService {
   // ✅ TOGGLE — méthode PATCH sur /api/process/{id}/toggle
   toggle(id: number): Observable<Processus> {
     return this.http.patch<Processus>(`${this.apiUrl}/${id}/toggle`, {});
+  }
+
+  // ✅ DEPLOY — envoie le BPMN au moteur Camunda via le backend
+  deployerProcessus(id: number, bpmnBlob: Blob, fileName = 'processus.bpmn'): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', bpmnBlob, fileName);
+    return this.http.post<any>(`${this.apiUrl}/${id}/deploy`, formData);
   }
 }

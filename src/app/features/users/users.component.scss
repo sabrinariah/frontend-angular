@@ -174,14 +174,14 @@
   align-items: center;
   gap: 16px;
   border: 1px solid #e8eef8;
-  border-top: 3px solid transparent;
+  border-left: 3px solid transparent;
   transition: transform .18s, box-shadow .18s;
   &:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.10); }
 }
-.kpi-blue   { border-top-color: var(--navy); }
-.kpi-green  { border-top-color: var(--success); }
-.kpi-red    { border-top-color: var(--orange); }
-.kpi-purple { border-top-color: var(--info); }
+.kpi-blue   { border-left-color: var(--navy); }
+.kpi-green  { border-left-color: var(--success); }
+.kpi-red    { border-left-color: var(--orange); }
+.kpi-purple { border-left-color: var(--info); }
 
 .kpi-icon {
   width: 48px; height: 48px;
@@ -259,6 +259,15 @@
   color: var(--gray-500); transition: all var(--transition); font-family: inherit;
   &:hover { color: var(--navy-dark); background: rgba(255,255,255,.7); }
   &.active { background: var(--navy-dark); color: #fff; box-shadow: 0 2px 6px rgba(21,101,192,.25); }
+}
+.role-filter {
+  select {
+    padding: 7px 10px; border: 1.5px solid #dde8f5;
+    border-radius: 8px; font-size: 12.5px; font-family: inherit;
+    color: var(--gray-500); background: #f6f9ff; outline: none; cursor: pointer;
+    font-weight: 600;
+    &:focus { border-color: var(--navy); background: #fff; }
+  }
 }
 .entries-select {
   label {
@@ -345,6 +354,10 @@
   padding: 5px 12px; border-radius: 20px;
   font-size: 11.5px; font-weight: 700;
   border: 1px solid; letter-spacing: .2px;
+  cursor: pointer; font-family: inherit;
+  transition: filter var(--transition), transform var(--transition);
+  &:hover { filter: brightness(0.96); transform: translateY(-1px); }
+  &:active { transform: translateY(0); }
 }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
 .pill-active   { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }

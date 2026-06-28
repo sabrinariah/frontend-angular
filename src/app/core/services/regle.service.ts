@@ -6,13 +6,14 @@ import { RegleMetier } from '../../models/regle.model';
 import { Categorie } from '../../models/categorie.model';
 import { Condition } from '../../models/condition.model';
 import { Version } from '../../models/version.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RegleMetierService {
 
-  private base = 'http://localhost:8081/api/regles';
+  private base = `${environment.apiUrl}/regles`;
 
   constructor(private http: HttpClient) {}
 
@@ -53,11 +54,11 @@ export class RegleMetierService {
 
   // ================= CATEGORIES =================
   getAllCategories(): Observable<Categorie[]> {
-    return this.http.get<Categorie[]>('http://localhost:8081/api/categories');
+    return this.http.get<Categorie[]>(`${environment.apiUrl}/categories`);
   }
 
   createCategorie(categorie: Partial<Categorie>): Observable<Categorie> {
-    return this.http.post<Categorie>('http://localhost:8081/api/categories', categorie);
+    return this.http.post<Categorie>(`${environment.apiUrl}/categories`, categorie);
   }
   // Ajouter dans la section ================= VERSIONS =================
 restaurerVersion(versionId: number): Observable<RegleMetier> {

@@ -3,11 +3,12 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DossierImport } from '../../models/import.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ImportService {
 
-  private readonly BASE = 'http://localhost:8081/api/import';
+  private readonly BASE = `${environment.apiUrl}/import`;
 
   constructor(private http: HttpClient) {}
 

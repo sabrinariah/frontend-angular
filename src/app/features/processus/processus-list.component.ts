@@ -126,6 +126,7 @@ export class ProcessusListComponent implements OnInit {
   taskCounts: Record<number, number> = {};
   searchTerm = '';
   filterStatus: 'all' | 'active' | 'inactive' = 'all';
+  filterType = 'all';
 
   // ── Pagination ──
   currentPage = 1;
@@ -149,6 +150,8 @@ export class ProcessusListComponent implements OnInit {
   toasts: Toast[] = [];
   tacheToDelete: Tache | null = null;
   deleting = false;
+  processusToDelete: Processus | null = null;
+  deletingProcessus = false;
 
   openMenuId: number | null = null;
   toggleMenu(id: number): void { this.openMenuId = this.openMenuId === id ? null : id; }
@@ -282,8 +285,17 @@ export class ProcessusListComponent implements OnInit {
         this.filterStatus === 'all' ||
         (this.filterStatus === 'active' && p.actif) ||
         (this.filterStatus === 'inactive' && !p.actif);
-      return matchSearch && matchStatus;
+      const matchType =
+        this.filterType === 'all' ||
+        (p.typeProcessus || '').toLowerCase() === this.filterType.toLowerCase();
+      return matchSearch && matchStatus && matchType;
     });
+  }
+
+  availableTypes(): string[] {
+    const types = new Set<string>();
+    this.processus.forEach(p => { if (p.typeProcessus) types.add(p.typeProcessus); });
+    return Array.from(types).sort((a, b) => a.localeCompare(b));
   }
 
   filteredProcessus(): Processus[] {
@@ -345,10 +357,34 @@ export class ProcessusListComponent implements OnInit {
     });
   }
 
-  delete(id: number) {
-    if (confirm('Supprimer ce processus ?')) {
-      this.processusService.delete(id).subscribe(() => this.load());
-    }
+  confirmDeleteProcessus(p: Processus): void {
+    if (!p.id) return;
+    this.processusToDelete = p;
+  }
+
+  cancelDeleteProcessus(): void {
+    this.processusToDelete = null;
+    this.deletingProcessus = false;
+  }
+
+  executeDeleteProcessus(): void {
+    if (!this.processusToDelete?.id) return;
+    this.deletingProcessus = true;
+    const id = this.processusToDelete.id;
+    const nom = this.processusToDelete.nom;
+    this.processusService.delete(id).subscribe({
+      next: () => {
+        this.deletingProcessus = false;
+        this.processusToDelete = null;
+        this.load();
+        this.addToast('success', `Processus "${nom}" supprimé`);
+      },
+      error: (err) => {
+        this.deletingProcessus = false;
+        this.processusToDelete = null;
+        this.addToast('error', 'Erreur lors de la suppression', err?.error?.message);
+      }
+    });
   }
 
   openTachesPopup(p: Processus) {
@@ -429,6 +465,54 @@ export class ProcessusListComponent implements OnInit {
     link.href = url; link.download = filename; link.click();
     URL.revokeObjectURL(url);
     this.addToast('success', '✅ BPMN exporté', filename, 4000);
+  }
+
+  deployingProcessusId: number | null = null;
+
+  deployerVersCamunda(p: Processus): void {
+    if (!p.id) return;
+    this.tacheService.getByProcessus(p.id).subscribe({
+      next: (taches) => {
+        if (taches.length === 0) { this.addToast('warning', 'Aucune tâche', 'Ce processus ne contient pas de tâches.'); return; }
+        const prevSelected = this.selectedProcessus;
+        const prevTaches = [...this.taches];
+        this.selectedProcessus = p;
+        this.taches = taches;
+        const xml = this.generateBpmnXml();
+        this.selectedProcessus = prevSelected;
+        this.taches = prevTaches;
+        if (!xml) return;
+        const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' });
+        this.envoyerDeploiement(p, blob);
+      },
+      error: () => this.addToast('error', 'Erreur', 'Impossible de charger les tâches.')
+    });
+  }
+
+  deployerBpmnSeul(): void {
+    if (!this.bpmnModalXml || !this.bpmnModalProcessus) return;
+    const blob = new Blob([this.bpmnModalXml], { type: 'application/xml;charset=utf-8' });
+    this.envoyerDeploiement(this.bpmnModalProcessus, blob);
+  }
+
+  private envoyerDeploiement(p: Processus, blob: Blob): void {
+    if (!p.id) return;
+    const nom = (p.nom || 'processus').replace(/\s+/g, '_').toLowerCase();
+    const filename = `${nom}_${p.id}.bpmn`;
+    this.deployingProcessusId = p.id;
+    this.processusService.deployerProcessus(p.id, blob, filename).subscribe({
+      next: (res) => {
+        this.deployingProcessusId = null;
+        const cle = res?.processDefinitionKey ?? '';
+        const version = res?.version ?? res?.processDefinitionVersion ?? '';
+        this.addToast('success', '✅ Déployé vers Camunda', `${cle} ${version ? 'v' + version : ''}`.trim(), 5000);
+      },
+      error: (err) => {
+        this.deployingProcessusId = null;
+        const detail = err?.error?.message ?? err?.message ?? 'Erreur inconnue';
+        this.addToast('error', '❌ Déploiement échoué', detail, 6000);
+      }
+    });
   }
 
   closePopup() {
@@ -1021,7 +1105,9 @@ export class ProcessusListComponent implements OnInit {
             const innIn  = flows.filter(f => f.to   === inn.id).map(f => `<bpmn:incoming>${f.id}</bpmn:incoming>`).join('');
             const innOut = flows.filter(f => f.from === inn.id).map(f => `<bpmn:outgoing>${f.id}</bpmn:outgoing>`).join('');
             const tt = inn.type === 'HUMAINE' ? 'bpmn:userTask' : 'bpmn:serviceTask';
-            const aa = inn.assignee ? ` camunda:assignee="${esc(inn.assignee)}"` : '';
+            const aa = tt === 'bpmn:userTask'
+              ? (inn.assignee ? ` camunda:assignee="${esc(inn.assignee)}"` : '')
+              : ` camunda:type="external" camunda:topic="${esc(inn.id)}"`;
             return `      <${tt} id="${inn.id}" name="${esc(inn.label)}"${aa}>${innIn}${innOut}</${tt}>`;
           }).join('\n');
 
@@ -1040,13 +1126,18 @@ ${innerFlows}
           const outF = flows.filter(f => f.from === n.id).map(f => `<bpmn:outgoing>${f.id}</bpmn:outgoing>`).join('');
           if (n.isSpTask) {
             const tt = n.spTaskType === 'HUMAINE' ? 'bpmn:userTask' : 'bpmn:serviceTask';
-            const aa = n.spTaskAssignee ? ` camunda:assignee="${esc(n.spTaskAssignee)}"` : '';
+            const aa = tt === 'bpmn:userTask'
+              ? (n.spTaskAssignee ? ` camunda:assignee="${esc(n.spTaskAssignee)}"` : '')
+              : ` camunda:type="external" camunda:topic="${esc(n.id)}"`;
             return `    <${tt} id="${n.id}" name="${esc(n.label)}"${aa}>${inF}${outF}</${tt}>`;
           }
           const t = n.tache!;
           const tt = t.type === 'HUMAINE' ? 'bpmn:userTask' : 'bpmn:serviceTask';
-          const aa = t.assignee ? ` camunda:assignee="${esc(t.assignee)}"` : '';
-          return `    <${tt} id="${n.id}" name="${esc(t.nom)}"${aa}>${inF}${outF}</${tt}>`;
+          const aa = tt === 'bpmn:userTask'
+            ? (t.assignee ? ` camunda:assignee="${esc(t.assignee)}"` : '')
+            : ` camunda:type="external" camunda:topic="${esc(n.id)}"`;
+          const formData = tt === 'bpmn:userTask' ? this.buildFormDataXml(t, esc) : '';
+          return `    <${tt} id="${n.id}" name="${esc(t.nom)}"${aa}>${formData}${inF}${outF}</${tt}>`;
         }
         case 'gateway': {
           const inF  = flows.filter(f => f.to   === n.id).map(f => `<bpmn:incoming>${f.id}</bpmn:incoming>`).join('');
@@ -1188,6 +1279,35 @@ ${edgesXml}
       return exprs.length > 0 ? `\${${exprs.join(sep)}}` : '${true}';
     }
     return this.conditionToExpression(regle.champId || '', regle.operateur || '==', regle.valeur);
+  }
+
+  private mapChampTypeCamunda(type: ChampType): string {
+    switch (type) {
+      case 'number':   return 'long';
+      case 'boolean':  return 'boolean';
+      case 'date':     return 'date';
+      case 'enum':     return 'enum';
+      default:         return 'string';
+    }
+  }
+
+  // Déclare les champs de la tâche comme camunda:formField, avec le même id
+  // que celui référencé par regle.champId dans la conditionExpression de la
+  // gateway suivante — sans ça la variable n'existe jamais dans le process Camunda.
+  private buildFormDataXml(t: Tache, esc: (s: string) => string): string {
+    const champs = this.getChamps(t);
+    if (champs.length === 0) return '';
+    const fields = champs.map(c => {
+      const type = this.mapChampTypeCamunda(c.type);
+      if (type === 'enum' && c.options?.length) {
+        const values = c.options
+          .map(o => `          <camunda:value id="${esc(String(o.value))}" name="${esc(o.label)}" />`)
+          .join('\n');
+        return `        <camunda:formField id="${esc(c.id)}" label="${esc(c.label)}" type="enum">\n${values}\n        </camunda:formField>`;
+      }
+      return `        <camunda:formField id="${esc(c.id)}" label="${esc(c.label)}" type="${type}" />`;
+    }).join('\n');
+    return `    <bpmn:extensionElements>\n      <camunda:formData>\n${fields}\n      </camunda:formData>\n    </bpmn:extensionElements>\n`;
   }
 
   private conditionToExpression(champ: string, operateur: string, valeur: any): string {

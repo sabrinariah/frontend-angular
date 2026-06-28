@@ -295,6 +295,11 @@ export class UsersComponent implements OnInit {
     this.filterUsers();
   }
 
+  setRoleFilter(role: string): void {
+    this.selectedRole = role;
+    this.filterUsers();
+  }
+
   // ── Changement taille page ──────────────────────────────────
   onPageSizeChange(size: number): void {
     this.pageSize = size;

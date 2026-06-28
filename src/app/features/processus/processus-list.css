@@ -223,14 +223,14 @@
   align-items: center;
   gap: 16px;
   border: 1px solid #e8eef8;
-  border-top: 3px solid transparent;
+  border-left: 3px solid transparent;
   transition: transform .18s, box-shadow .18s;
 }
 .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.10); }
-.kpi-blue   { border-top-color: var(--navy); }
-.kpi-green  { border-top-color: var(--success); }
-.kpi-red    { border-top-color: var(--orange); }
-.kpi-purple { border-top-color: var(--info); }
+.kpi-blue   { border-left-color: var(--navy); }
+.kpi-green  { border-left-color: var(--success); }
+.kpi-red    { border-left-color: var(--orange); }
+.kpi-purple { border-left-color: var(--info); }
 
 .kpi-icon {
   width: 48px;
@@ -327,6 +327,20 @@
 .filter-btn:hover { color: var(--navy-dark); background: rgba(255,255,255,.7); }
 .filter-btn.active { background: var(--navy-dark); color: #fff; box-shadow: 0 2px 6px rgba(21,101,192,.25); }
 
+.type-filter select {
+  padding: 7px 10px;
+  border: 1.5px solid #dde8f5;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--gray-500);
+  background: #f6f9ff;
+  outline: none;
+  cursor: pointer;
+}
+.type-filter select:focus { border-color: var(--navy); background: #fff; }
+
 /* ── TABLEAU ── */
 .table-wrapper {
   border-radius: 12px;
@@ -394,23 +408,53 @@
 .type-badge.type-dedouanement,
 .type-badge.type-entreposage { background: var(--gray-100); color: var(--gray-600); border-color: var(--gray-200); }
 
-.status-pill {
+/* ── Status switch (toggle ON/OFF cliquable) ── */
+.status-switch {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 11.5px;
-  font-weight: 700;
-  border: 1px solid;
-  letter-spacing: .2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  font-family: inherit;
 }
-.pill-active   { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
-.pill-inactive { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
-.status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-.pill-active .status-dot   { background: #22c55e; box-shadow: 0 0 0 2px rgba(34,197,94,.2); animation: pulse-dot 2s ease-in-out infinite; }
-.pill-inactive .status-dot { background: #ef4444; }
-@keyframes pulse-dot { 0%,100%{box-shadow:0 0 0 2px rgba(34,197,94,.2)} 50%{box-shadow:0 0 0 4px rgba(34,197,94,.1)} }
+.status-switch:hover .switch-track { opacity: .85; }
+
+.switch-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: 20px;
+  background: var(--gray-300);
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+.switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform var(--transition);
+}
+.switch-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: var(--gray-500);
+  min-width: 22px;
+  transition: color var(--transition);
+}
+.switch-on .switch-track  { background: var(--success); }
+.switch-on .switch-thumb  { transform: translateX(16px); }
+.switch-on .switch-label  { color: var(--success); }
+.switch-off .switch-track { background: var(--gray-300); }
+.switch-off .switch-thumb { transform: translateX(0); }
+.switch-off .switch-label { color: var(--gray-400); }
 
 .date-chip {
   display: inline-block;
@@ -2631,7 +2675,7 @@
 .col-actions { width: 160px; text-align: right; }
 
 /* ── KPI "Inactifs" → gris (cohérent avec pill-inactive) ── */
-.kpi-red                { border-top-color: #94a3b8 !important; }
+.kpi-red                { border-left-color: #94a3b8 !important; }
 .kpi-red .kpi-icon      { background: #f1f5f9 !important; }
 
 /* ── Bouton Ouvrir avec icône SVG ── */

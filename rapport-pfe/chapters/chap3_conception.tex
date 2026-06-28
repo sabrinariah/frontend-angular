@@ -1,0 +1,112 @@
+\chapter{Conception}
+\label{chap:conception}
+
+\section{Introduction}
+% Annoncer le contenu : architecture generale, conception detaillee
+% (diagrammes de sequence), modele de donnees, conception de l'IHM.
+
+[\`A compl\'eter]
+
+\section{Architecture g\'enérale}
+% Decrire l'architecture globale de la solution :
+%   - Architecture 3-tiers : Frontend (Angular) <-> Backend (API REST,
+%     port 8081) <-> Bases de donnees / moteur Drools
+%   - Keycloak comme serveur d'authentification (port 8080)
+%   - Schema d'architecture a inserer (cf. DOCUMENTATION_IA_NLP.md
+%     section 12 pour un exemple de schema en couches pour le module IA)
+
+La plateforme E-FORCE repose sur une architecture en trois couches~:
+
+\begin{itemize}
+    \item \textbf{Couche pr\'esentation} : application Angular 21
+    (standalone components), responsable de l'interface utilisateur et
+    de la navigation ;
+    \item \textbf{Couche m\'etier / services} : API REST Java (Spring
+    Boot, port 8081) expose les ressources (utilisateurs, processus,
+    t\^aches, r\`egles, dossiers import/export, NLP) et int\`egre le moteur
+    de r\`egles \textbf{Drools} ;
+    \item \textbf{Couche s\'ecurit\'e} : serveur \textbf{Keycloak} (port
+    8080) g\'erant l'authentification SSO et les r\^oles des utilisateurs.
+\end{itemize}
+
+[\`A compl\'eter : ins\'erer le sch\'ema d'architecture globale.]
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\textwidth]{images/architecture_globale.png}
+%     \caption{Architecture g\'en\'erale de la plateforme E-FORCE}
+%     \label{fig:architecture-globale}
+% \end{figure}
+
+\section{Architecture du frontend Angular}
+% Decrire l'organisation des dossiers du projet Angular (cf.
+% DOCUMENTATION.md section 3) : core (services, guards, interceptors),
+% components (regle, bpmn-viewer, nlp-input, drl-preview), features
+% (dashboard, processus, users, taches), pages (import/export).
+
+[\`A compl\'eter : pr\'esenter l'organisation des dossiers \texttt{core/},
+\texttt{components/}, \texttt{features/} et \texttt{pages/} du projet
+Angular, \'eventuellement sous forme d'arborescence ou de diagramme de
+paquetages.]
+
+\section{Conception d\'etaill\'ee}
+% Pour chaque cas d'utilisation cle, fournir un diagramme de sequence
+% illustrant les echanges entre l'utilisateur, le frontend Angular,
+% les services et le backend. Exemples suggeres :
+%   - Authentification (login via Keycloak)
+%   - Creation d'une regle metier via l'IA (NLP)
+%   - Generation et visualisation d'un diagramme BPMN
+
+\subsection{Diagramme de s\'equence : authentification}
+[\`A compl\'eter : diagramme de s\'equence du processus de connexion via
+Keycloak.]
+
+\subsection{Diagramme de s\'equence : cr\'eation d'une r\`egle via l'IA (NLP)}
+% Le pipeline est deja documente dans DOCUMENTATION_IA_NLP.md section 9
+% (flux utilisateur complet) : Saisie -> POST /api/nlp/convertir ->
+% Apercu (confiance, conditions, DRL) -> Edition eventuelle -> POST
+% /api/regles
+
+[\`A compl\'eter : diagramme de s\'equence illustrant le flux Saisie ->
+Conversion IA -> Aper\c{c}u -> (\'Edition) -> Cr\'eation de la r\`egle.]
+
+\subsection{Diagramme de s\'equence : g\'en\'eration du diagramme BPMN}
+[\`A compl\'eter : diagramme de s\'equence illustrant la g\'en\'eration du
+XML BPMN \`a partir des t\^aches d'un processus et son affichage dans le
+visualiseur (\texttt{bpmn-js}).]
+
+\section{Mod\`ele de donn\'ees}
+% Decrire les principales entites manipulees par l'application, sous
+% forme de diagramme de classes UML. Les modeles TypeScript existants
+% (src/app/models/) donnent une bonne base :
+%   - Utilisateur (Keycloak)
+%   - Processus / Tache
+%   - RegleMetier / Condition / Categorie / Version
+%   - DossierImport / DossierExport
+%   - NlpConversionRequest / NlpConversionResult / NlpRegleDto
+
+[\`A compl\'eter : diagramme de classes (ou mod\`ele relationnel) reprenant
+les entit\'es \texttt{Processus}, \texttt{Tache}, \texttt{RegleMetier},
+\texttt{Condition}, \texttt{Categorie}, \texttt{DossierImport},
+\texttt{DossierExport}, etc., et leurs relations.]
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\textwidth]{images/diagramme_classes.png}
+%     \caption{Diagramme de classes (extrait)}
+%     \label{fig:diagramme-classes}
+% \end{figure}
+
+\section{Conception de l'interface utilisateur}
+% Presenter les maquettes (wireframes) des principaux ecrans :
+% dashboard, liste des regles, formulaire de creation via IA, liste des
+% processus, visualiseur BPMN, import/export.
+
+[\`A compl\'eter : maquettes ou \'ecrans repr\'esentatifs de l'application.]
+
+\section{Conclusion}
+% Resumer le chapitre et faire la transition vers la realisation.
+
+[\`A compl\'eter]
+
+\clearpage

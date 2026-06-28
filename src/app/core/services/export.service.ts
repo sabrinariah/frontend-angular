@@ -3,11 +3,12 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { DossierExport } from '../../models/export.models';
+import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ExportService {
 
-  private readonly BASE = 'http://localhost:8081/api/export';
+  private readonly BASE = `${environment.apiUrl}/export`;
 
   constructor(private http: HttpClient) {}
 

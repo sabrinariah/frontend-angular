@@ -47,6 +47,10 @@ export class RegleMetierComponent implements OnInit {
   filtreStatut: 'TOUS' | 'ACTIVE' | 'INACTIVE' = 'TOUS';
   viewMode:  'table' = 'table';
 
+  // ✅ AJOUT : pagination de la liste des règles
+  currentPage = 1;
+  pageSize = 10;
+
   showFormPopup = false;
   showDrlPreview = false;
   showDrlDetailPreview = false;
@@ -245,6 +249,37 @@ export class RegleMetierComponent implements OnInit {
     this.filtreCategorieAffichage = 'TOUS';
     this.filtreStatut = 'TOUS';
     this.searchTerm = '';
+    this.currentPage = 1;
+  }
+
+  // ✅ AJOUT : pagination
+  totalPages(): number {
+    return Math.max(1, Math.ceil(this.reglesFiltrees().length / this.pageSize));
+  }
+
+  pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages() }, (_, i) => i + 1);
+  }
+
+  reglesPagees(): RegleMetier[] {
+    const filtered = this.reglesFiltrees();
+    const totalPages = Math.max(1, Math.ceil(filtered.length / this.pageSize));
+    if (this.currentPage > totalPages) this.currentPage = totalPages;
+    const start = (this.currentPage - 1) * this.pageSize;
+    return filtered.slice(start, start + this.pageSize);
+  }
+
+  pageStart(): number {
+    return this.reglesFiltrees().length === 0 ? 0 : (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  pageEnd(): number {
+    return Math.min(this.currentPage * this.pageSize, this.reglesFiltrees().length);
+  }
+
+  goToPage(page: number): void {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage = page;
   }
 
   iconCategorie(type?: string): string {
@@ -564,16 +599,26 @@ export class RegleMetierComponent implements OnInit {
     this.motifModification = ''; // ✅ réinitialiser le motif à chaque ouverture d'édition
   }
 
+  // ✅ Mise à jour optimiste locale (pas de loadRegles() : évite que
+  // repository.findAll() renvoie les lignes dans un ordre différent
+  // et donne l'impression qu'une AUTRE règle a changé de statut).
   toggleActive(r: RegleMetier): void {
     if (!r.id) return;
+    const ancienEtat = r.active;
+    r.active = !r.active;
+
     this.regleService.toggle(r.id).subscribe({
-      next: () => {
-        this.loadRegles();
-        const newState = r.active ? 'désactivée' : 'activée';
+      next: (upd) => {
+        if (upd && typeof upd.active === 'boolean') r.active = upd.active;
+        const newState = r.active ? 'activée' : 'désactivée';
         this.addToast('info', `Règle ${newState}`, r.code);
-        this.notifSvc.notify({ type: 'info', category: 'regle', icon: r.active ? '🔴' : '🟢', title: `Règle ${newState}`, message: `La règle « ${r.code} » a été ${newState}.` });
+        this.notifSvc.notify({ type: 'info', category: 'regle', icon: r.active ? '🟢' : '🔴', title: `Règle ${newState}`, message: `La règle « ${r.code} » a été ${newState}.` });
       },
-      error: (err) => { console.error(err); this.addToast('error', 'Erreur', err.message); }
+      error: (err) => {
+        r.active = ancienEtat;
+        console.error(err);
+        this.addToast('error', 'Erreur', err.error?.message || err.message);
+      }
     });
   }
 

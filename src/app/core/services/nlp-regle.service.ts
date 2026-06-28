@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { NlpConversionRequest, NlpConversionResult } from '../../models/nlp.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NlpRegleService {
 
-  private base = 'http://localhost:8081/api/nlp';
+  private base = `${environment.apiUrl}/nlp`;
 
   constructor(private http: HttpClient) {}
 

@@ -1,0 +1,135 @@
+\chapter{Analyse et sp\'ecification des besoins}
+\label{chap:analyse}
+
+\section{Introduction}
+% Annoncer le contenu : acteurs, besoins fonctionnels/non fonctionnels,
+% cas d'utilisation.
+
+[\`A compl\'eter]
+
+\section{Identification des acteurs}
+% Reprendre les roles deja presents dans l'application (cf.
+% docs/cas-utilisation.md) et les decrire en 1-2 phrases chacun.
+
+La plateforme E-FORCE distingue les acteurs suivants~:
+
+\begin{itemize}
+    \item \textbf{SuperAdmin} : administre l'ensemble de la plateforme,
+    g\`ere les utilisateurs, les processus et les r\`egles m\'etier ;
+    \item \textbf{Gestionnaire des processus m\'etier} : cr\'ee et g\`ere les
+    processus BPMN et leurs t\^aches, et peut g\'erer les r\`egles m\'etier ;
+    \item \textbf{Gestionnaire des r\`egles m\'etier} : cr\'ee, modifie et
+    consulte l'historique des r\`egles m\'etier (manuellement ou via le
+    module IA/NLP) ;
+    \item \textbf{Visiteur / utilisateur non authentifi\'e} : peut
+    uniquement se connecter, cr\'eer un compte ou r\'einitialiser son mot
+    de passe.
+\end{itemize}
+
+\section{Sp\'ecification des besoins fonctionnels}
+% Organiser par module. Pour chaque module, lister les fonctionnalites
+% sous forme de puces courtes (le detail complet ira dans les cas
+% d'utilisation, section suivante).
+
+\subsection{Module Authentification et gestion des utilisateurs}
+\begin{itemize}
+    \item Authentification via Keycloak (SSO) ;
+    \item Inscription avec choix d'un r\^ole m\'etier ;
+    \item R\'einitialisation de mot de passe ;
+    \item Gestion CRUD des utilisateurs, activation/d\'esactivation des
+    comptes, gestion des r\^oles (SuperAdmin uniquement).
+\end{itemize}
+
+\subsection{Module Gestion des processus m\'etier (BPMN)}
+\begin{itemize}
+    \item Cr\'eation, modification, activation/d\'esactivation et
+    suppression de processus ;
+    \item Gestion des t\^aches d'un processus (formulaires dynamiques,
+    r\`egles de transition) ;
+    \item G\'en\'eration automatique d'un diagramme BPMN \`a partir des
+    t\^aches ;
+    \item Visualisation et export du diagramme BPMN.
+\end{itemize}
+
+\subsection{Module Moteur de r\`egles m\'etier}
+\begin{itemize}
+    \item Cr\'eation, modification, activation/d\'esactivation et
+    suppression de r\`egles m\'etier (conditions + action + cat\'egorie) ;
+    \item G\'en\'eration automatique du code DRL correspondant ;
+    \item Gestion du versioning : historique des modifications et
+    restauration d'une version ant\'erieure.
+\end{itemize}
+
+\subsection{Module IA / NLP}
+\begin{itemize}
+    \item Saisie d'une phrase en langage naturel (fran\c{c}ais) ;
+    \item Conversion automatique en r\`egle m\'etier structur\'ee + code DRL ;
+    \item Affichage d'un score de confiance et des ambigu\"it\'es
+    \'eventuelles ;
+    \item \'Edition manuelle avant validation et enregistrement de la
+    r\`egle.
+\end{itemize}
+
+\subsection{Module Import / Export de dossiers}
+\begin{itemize}
+    \item Cr\'eation et consultation des dossiers d'importation et
+    d'exportation ;
+    \item Filtrage par statut (\texttt{EN\_ATTENTE}, \texttt{EN\_COURS},
+    \texttt{VALIDE}, \texttt{REFUSE}) ;
+    \item Export des listes filtr\'ees au format Excel (.xlsx) et PDF.
+\end{itemize}
+
+\section{Sp\'ecification des besoins non fonctionnels}
+% Adapter / completer selon les contraintes reelles du projet.
+
+\begin{itemize}
+    \item \textbf{S\'ecurit\'e} : authentification centralis\'ee via
+    Keycloak, contr\^ole d'acc\`es bas\'e sur les r\^oles (RBAC), protection
+    des routes par garde Angular et v\'erification du jeton JWT \`a chaque
+    requ\^ete ;
+    \item \textbf{Ergonomie} : interface simple et intuitive, adapt\'ee \`a
+    des utilisateurs non techniques (notamment pour la cr\'eation de
+    r\`egles via le module NLP) ;
+    \item \textbf{Performance} : temps de r\'eponse acceptable pour les
+    listes de dossiers, processus et r\`egles ;
+    \item \textbf{Portabilit\'e} : application web accessible depuis un
+    navigateur, architecture frontend/backend d\'ecoupl\'ee ;
+    \item \textbf{Maintenabilit\'e / \'evolutivit\'e} : architecture
+    modulaire (composants Angular standalone, services d\'edi\'es par
+    domaine).
+\end{itemize}
+
+\section{Diagramme de cas d'utilisation global}
+% Inserer ici le diagramme de cas d'utilisation global (cf.
+% docs/cas-utilisation.md pour le diagramme mermaid existant, a
+% reexporter en image ou a redessiner avec un outil UML).
+
+[\`A compl\'eter : diagramme de cas d'utilisation global.]
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\textwidth]{images/diagramme_cas_utilisation.png}
+%     \caption{Diagramme de cas d'utilisation global}
+%     \label{fig:cas-utilisation-global}
+% \end{figure}
+
+\section{Description des cas d'utilisation principaux}
+% Pour chaque cas d'utilisation important, fournir une fiche descriptive
+% (acteur, objectif, precondition, scenario nominal, scenarios
+% alternatifs, postcondition). Le fichier docs/cas-utilisation.md
+% contient deja des fiches pretes a etre reprises/adaptees, par exemple :
+%   - Se connecter
+%   - Gerer les utilisateurs
+%   - Creer un processus / Visualiser et exporter le BPMN
+%   - Creer une regle metier (manuellement)
+%   - Creer une regle metier via l'IA (NLP)
+%   - Consulter l'historique et restaurer une version
+
+[\`A compl\'eter : fiches descriptives des cas d'utilisation principaux.]
+
+\section{Conclusion}
+% Resumer le chapitre et faire la transition vers la conception.
+
+[\`A compl\'eter]
+
+\clearpage

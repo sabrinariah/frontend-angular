@@ -96,6 +96,12 @@
       <button (click)="filterStatus = 'active';   resetPage()" [class.active]="filterStatus === 'active'"   class="filter-btn">Actifs</button>
       <button (click)="filterStatus = 'inactive'; resetPage()" [class.active]="filterStatus === 'inactive'" class="filter-btn">Inactifs</button>
     </div>
+    <div class="type-filter">
+      <select [(ngModel)]="filterType" (change)="resetPage()">
+        <option value="all">Tous les types</option>
+        <option *ngFor="let t of availableTypes()" [value]="t">{{ t }}</option>
+      </select>
+    </div>
   </div>
 
   <!-- ====================== TABLE ====================== -->
@@ -129,9 +135,15 @@
             </td>
             <td class="col-type"><span class="type-badge" [class]="'type-badge type-' + (p.typeProcessus || '').toLowerCase()">{{ p.typeProcessus }}</span></td>
             <td class="col-statut">
-              <span class="status-pill" [class.pill-active]="p.actif" [class.pill-inactive]="!p.actif">
-                <span class="status-dot"></span>{{ p.actif ? 'Actif' : 'Inactif' }}
-              </span>
+              <button type="button"
+                      class="status-switch"
+                      [class.switch-on]="p.actif"
+                      [class.switch-off]="!p.actif"
+                      (click)="toggle(p.id!); $event.stopPropagation()"
+                      [title]="p.actif ? 'Cliquer pour désactiver' : 'Cliquer pour activer'">
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+                <span class="switch-label">{{ p.actif ? 'ON' : 'OFF' }}</span>
+              </button>
             </td>
             <td class="col-dates"><span class="date-chip">{{ p.dateDebut || '—' }}</span></td>
             <td class="col-dates"><span class="date-chip">{{ p.dateFin || '—' }}</span></td>
@@ -157,12 +169,15 @@
         <button (click)="openTachesListPopup(p); closeMenu()">Liste des tâches</button>
         <button (click)="ouvrirVueBpmn(p); closeMenu()">Diagramme BPMN</button>
         <button (click)="exporterBpmnDirect(p); closeMenu()">Exporter BPMN</button>
+        <button (click)="deployerVersCamunda(p); closeMenu()" [disabled]="deployingProcessusId === p.id">
+          {{ deployingProcessusId === p.id ? 'Déploiement…' : 'Déployer vers Camunda' }}
+        </button>
         <button (click)="openEditProcessusModal(p); closeMenu()">Modifier</button>
         <div class="row-menu-sep"></div>
         <button (click)="toggle(p.id!); closeMenu()">
           {{ p.actif ? 'Désactiver' : 'Activer' }}
         </button>
-        <button (click)="delete(p.id!); closeMenu()" class="row-menu-danger">Supprimer</button>
+        <button (click)="confirmDeleteProcessus(p); closeMenu()" class="row-menu-danger">Supprimer</button>
       </div>
     </div>
   </div>
@@ -1226,6 +1241,9 @@
         </div>
         <div class="bpmn-seul-actions">
           <button (click)="exporterBpmnSeul()" class="btn btn-secondary btn-sm">⬇️ Exporter BPMN</button>
+          <button (click)="deployerBpmnSeul()" class="btn btn-secondary btn-sm" [disabled]="deployingProcessusId === bpmnModalProcessus?.id">
+            {{ deployingProcessusId === bpmnModalProcessus?.id ? '⏳ Déploiement…' : '🚀 Déployer vers Camunda' }}
+          </button>
           <button (click)="fermerBpmnModal()" class="btn-close">✕</button>
         </div>
       </div>
@@ -1253,6 +1271,26 @@
         <button (click)="executeDeleteTache()" class="btn btn-danger" [disabled]="deleting">
           <span *ngIf="!deleting">🗑️ Confirmer</span>
           <span *ngIf="deleting">⏳ Suppression...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================== POPUP CONFIRM SUPPRESSION PROCESSUS ====================== -->
+  <div *ngIf="processusToDelete" class="popup-overlay popup-overlay-3" (click)="cancelDeleteProcessus()">
+    <div class="popup-content popup-confirm" (click)="$event.stopPropagation()">
+      <div class="confirm-icon">⚠️</div>
+      <h3>Supprimer ce processus ?</h3>
+      <p>Vous êtes sur le point de supprimer :</p>
+      <div class="confirm-task-info">
+        <strong>{{ processusToDelete.nom }}</strong>
+      </div>
+      <p class="confirm-warning">⚠️ Cette action est <strong>irréversible</strong> et supprimera également les tâches associées.</p>
+      <div class="form-actions">
+        <button (click)="cancelDeleteProcessus()" class="btn btn-secondary">Annuler</button>
+        <button (click)="executeDeleteProcessus()" class="btn btn-danger" [disabled]="deletingProcessus">
+          <span *ngIf="!deletingProcessus">🗑️ Confirmer</span>
+          <span *ngIf="deletingProcessus">⏳ Suppression...</span>
         </button>
       </div>
     </div>

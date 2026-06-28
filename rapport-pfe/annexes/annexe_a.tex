@@ -1,0 +1,21 @@
+\chapter{Exemple de code DRL g\'en\'er\'e}
+\label{annexe:drl}
+
+% Exemple tire de DOCUMENTATION_IA_NLP.md - a remplacer/completer par
+% d'autres extraits pertinents (config Keycloak, extrait de modele
+% TypeScript, exemple de XML BPMN genere, etc.)
+
+\begin{lstlisting}[language=Java, caption={Exemple de r\`egle DRL g\'en\'er\'ee \`a partir d'une phrase en langage naturel}, label={lst:drl-exemple}]
+package com.eforce.regles;
+
+import com.eforce.model.Declaration;
+
+rule "INSPECTION_RISQUE_ELEVE"
+  salience 100
+when
+  $d : Declaration(scoreRisque > 60)
+then
+  $d.setAction("INSPECTION_PHYSIQUE_OBLIGATOIRE");
+  update($d);
+end
+\end{lstlisting}

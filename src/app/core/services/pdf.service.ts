@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PdfService {
 
-  private apiUrl = 'http://localhost:8081/api/process';
+  private apiUrl = `${environment.apiUrl}/process`;
 
   constructor(private http: HttpClient) {}
 

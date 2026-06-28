@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-create-user',
@@ -24,7 +25,7 @@ export class CreateUserComponent {
     userInfo: true
   };
 
- private readonly apiUrl = 'http://localhost:8081/api/users/create';
+ private readonly apiUrl = `${environment.apiUrl}/users/create`;
 
   constructor(private http: HttpClient, private router: Router) {}
 
